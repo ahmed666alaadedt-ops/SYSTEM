@@ -327,7 +327,7 @@ func _build_shopping_tower() -> void:
 		armory_tower.set_meta("target_landmark", "Republic Bridge / جسر الجمهورية")
 		armory_tower.set_meta("target_river", "Tigris / نهر دجلة")
 		armory_tower.set_meta("target_bank_connection", PackedStringArray(["Al-Karkh / الكرخ", "Al-Rusafa / الرصافة"]))
-		armory_tower.set_meta("geospatial_relocation_pending", not republic_bridge_route.is_empty())
+		armory_tower.set_meta("geospatial_relocation_pending", republic_bridge_route.is_empty())
 		armory_tower.set_meta("real_world_anchor_verified", false)
 		armory_tower.set_meta("tower_network_role", "republic_bridge_outpost" if not republic_bridge_route.is_empty() else "core_district_pending")
 		if not republic_bridge_route.is_empty():
