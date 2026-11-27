@@ -39,6 +39,7 @@ func _initialize() -> void:
 	call_deferred("_run")
 
 func _run() -> void:
+	print("QA TRACE: Starting Baghdad tower operations acceptance.")
 	var packed := load("res://MainScene.tscn") as PackedScene
 	if packed == null:
 		_fail("MainScene.tscn could not load.")
@@ -73,7 +74,9 @@ func _run() -> void:
 	# and verify that each exhibit is named, uniquely identified and physically interactable.
 	# Validate every one of the 34 floors, not only representative samples.
 	for museum_floor in range(1, 35):
+		print("QA TRACE: Generating Antiques Tower floor %d / 34." % museum_floor)
 		var museum_room := operations.call("_ensure_floor_room", "antiques_heritage_tower_baghdad", museum_floor) as Node3D
+		await process_frame
 		if museum_room == null:
 			_fail("Antiques Tower could not generate museum floor %d." % museum_floor)
 			return
