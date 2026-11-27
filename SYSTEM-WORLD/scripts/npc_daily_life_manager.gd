@@ -123,12 +123,12 @@ func _seed_baghdad_residents_if_needed() -> void:
 			await get_tree().process_frame
 
 	seeded = true
-	print("SYSTEM NPC Life: seeded_city_residents=", existing.size() + created_adults.size() + created_children,
+	print("SYSTEM NPC Life: seeded_city_residents=", society_manager.npcs.size(),
 		" | existing minors=", existing_minor_count, " | new minors=", created_children, " | total society records=", society_manager.npcs.size())
 
 
 func _configure_resident(npc_id: String, index: int, occupation: String) -> void:
-	var npc: Dictionary = society_manager.call("get_npc", npc_id)
+	var npc: Dictionary = society_manager.npcs.get(npc_id, {})
 	if npc.is_empty():
 		return
 	var home_number := int(index / 3) + 1
