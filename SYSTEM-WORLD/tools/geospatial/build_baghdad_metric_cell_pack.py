@@ -33,6 +33,8 @@ KEEP_TAGS = {
     "oneway", "access", "service", "tunnel", "layer", "leisure",
     "shop", "tourism", "historic", "man_made", "water", "place",
     "religion", "operator", "aeroway", "barrier", "foot", "cycleway",
+    "healthcare", "emergency", "office", "craft", "cuisine", "opening_hours",
+    "public_transport", "brand", "building:use", "addr:street", "addr:city",
     "entrance", "door", "wheelchair", "level", "indoor"
 }
 
