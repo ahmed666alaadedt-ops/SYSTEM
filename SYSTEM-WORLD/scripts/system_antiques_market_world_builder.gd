@@ -88,6 +88,11 @@ static func _build_secret_trader_lounge(root: Node3D, radius: float, gold: Stand
 		head.position = dealer.position + Vector3(0.0, 1.1, 0.0)
 		head.material_override = gold
 		root.add_child(head)
+		_add_interaction(root, "SecretTraderInteraction_%02d" % stall_index, 30,
+			"secret_trader_lounge", "تحدث إلى تاجر الظلال رقم %02d" % (stall_index + 1),
+			Vector3(x, 1.0, -radius * 0.34 + 2.2))
+		var trader_interaction := root.get_node("SecretTraderInteraction_%02d" % stall_index) as Area3D
+		trader_interaction.set_meta("system_secret_trader_id", "shadow_trader_%02d" % (stall_index + 1))
 	_add_label(root, "SecretMarketTitle", "السوق السري | THE HIDDEN EXCHANGE", Vector3(0.0, 7.2, -radius * 0.48), 21)
 	_add_label(root, "SecretMarketWarning", "تجار نادرون • تحقق من المنشأ قبل أي صفقة", Vector3(0.0, 5.8, -radius * 0.46), 14)
 	_add_interaction(root, "SecretTraderLoungeInteraction", 30, "secret_trader_lounge",
