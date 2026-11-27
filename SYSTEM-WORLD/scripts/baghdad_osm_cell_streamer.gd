@@ -457,6 +457,13 @@ func _is_vehicle_road(tags: Dictionary) -> bool:
 	var highway := str(tags.get("highway", "")).to_lower()
 	if highway not in VEHICLE_HIGHWAYS:
 		return false
+	# Conditional access and reversible one-way rules need a time-aware traffic
+	# controller; do not silently treat them as unrestricted two-way streets.
+	for conditional_key in ["access:conditional", "vehicle:conditional", "motor_vehicle:conditional", "oneway:conditional"]:
+		if not str(tags.get(conditional_key, "")).strip_edges().is_empty():
+			return false
+	if str(tags.get("oneway", "")).to_lower() == "reversible":
+		return false
 	for access_key in ["access", "vehicle", "motor_vehicle", "motorcar"]:
 		var access_value := str(tags.get(access_key, "")).to_lower()
 		if access_value in ["no", "private", "agricultural", "forestry"]:
