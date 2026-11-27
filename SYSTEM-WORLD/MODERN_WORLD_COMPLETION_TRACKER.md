@@ -822,3 +822,15 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Add emulator-backed transaction tests for concurrent buyers, duplicate requests, seller cancellation races, insufficient balance, and rollback on failed ownership transfer.
 - [ ] Deploy Firebase Functions and verify authenticated end-to-end transactions in a controlled test environment before enabling player-to-player trading.
 - Note: the server transaction path is implemented in functions/src/artifact_market.ts but is not live until server-owned wallets/artifact inventory are provisioned and the client is connected. No real player credits or artifacts have been moved by this code yet.
+
+
+## Modern city greenery and pedestrian density pass — 27 November 2026
+
+- [x] Preserve the existing modern-world map, city anchors, Baghdad OSM cell pack and streaming architecture; this pass does not regenerate or replace the map.
+- [x] Replace the twelve isolated green-belt discs per city with dense park pockets: each valid pocket receives up to five trees and eight shrubs, with terrain/land checks and batched MultiMesh rendering.
+- [x] Raise natural forest vegetation counts from 28 to 36 trees, 24 to 48 shrubs, and 90 to 150 ground-cover clumps.
+- [x] Raise the visible civilian pedestrian cap from 32 to 72 and reduce resident refresh churn by moving the refresh interval from 3 to 5 seconds.
+- [ ] Run Godot 4.3 import, city-generation runtime and visual inspection to verify park placement, tree/shrub transforms, pedestrian variety and collision/navigation clearance.
+- [ ] Profile Android frame time, memory and thermal behavior with the denser park meshes and 72 visible civilian actors; tune LOD/streaming from measured results before calling density complete.
+- [ ] Verify that Baghdad's streamed OSM cells receive equivalent dense public-park landscaping where the city-cell content is loaded.
+- Note: source implementation is committed; the map itself is preserved. Density and mobile performance are not yet runtime/visual verified.
