@@ -504,7 +504,11 @@ func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, mate
 	var geometry: Dictionary = feature.get("geometry", {})
 	var lines := _extract_lines(geometry)
 	var feature_id := str(feature.get("id", "unknown"))
-	var republic_bridge_centerline := prefix == "OSMBridge" and feature_id in ["4080878", "754157537"]
+	var feature_tags: Dictionary = feature.get("tags", {})
+	var bridge_tag := str(feature_tags.get("bridge", "")).to_lower()
+	var is_bridge := bridge_tag != "" and bridge_tag != "no"
+	var republic_bridge_centerline := feature_id in ["4080878", "754157537"] and (prefix == "OSMBridge" or (prefix == "OSMRoad" and is_bridge))
+	var non_republic_bridge_lift := maxf(lift, 4.0) if is_bridge else lift
 	var built := 0
 	for line in lines:
 		if line.size() < 2:
@@ -522,10 +526,10 @@ func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, mate
 			var b2 := p0 - side
 			var c2 := p1 + side
 			var d2 := p1 - side
-			var a_height := 18.08 if republic_bridge_centerline else _terrain_height(a2) + lift
-			var b_height := 18.08 if republic_bridge_centerline else _terrain_height(b2) + lift
-			var c_height := 18.08 if republic_bridge_centerline else _terrain_height(c2) + lift
-			var d_height := 18.08 if republic_bridge_centerline else _terrain_height(d2) + lift
+			var a_height := 18.08 if republic_bridge_centerline else _terrain_height(a2) + non_republic_bridge_lift
+			var b_height := 18.08 if republic_bridge_centerline else _terrain_height(b2) + non_republic_bridge_lift
+			var c_height := 18.08 if republic_bridge_centerline else _terrain_height(c2) + non_republic_bridge_lift
+			var d_height := 18.08 if republic_bridge_centerline else _terrain_height(d2) + non_republic_bridge_lift
 			var a := Vector3(a2.x, a_height, a2.y)
 			var b := Vector3(b2.x, b_height, b2.y)
 			var c := Vector3(c2.x, c_height, c2.y)
