@@ -210,6 +210,10 @@ func _plant_transform(category: String, point: Vector2, y: float) -> Transform3D
 func _rings(geometry: Dictionary) -> Array[PackedVector2Array]:
 	var result: Array[PackedVector2Array] = []
 	var geometry_type := str(geometry.get("type", ""))
+	if geometry_type == "GeometryCollection":
+		for child in geometry.get("geometries", []):
+			result.append_array(_rings(child))
+		return result
 	var coordinates: Variant = geometry.get("coordinates", [])
 	var polygons: Array = []
 	if geometry_type == "Polygon":
