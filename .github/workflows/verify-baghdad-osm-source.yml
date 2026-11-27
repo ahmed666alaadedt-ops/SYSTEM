@@ -356,6 +356,56 @@ jobs:
               print("Validated Baghdad core + Republic Bridge metric cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells; bridge and Tigris present.")
           PY
 
+      - name: Build citywide Baghdad road overview at 1 km streaming resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          python3 "$GITHUB_WORKSPACE/SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py" \
+            --input-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
+            --output "$RUNNER_TEMP/baghdad-source/baghdad-citywide-roads-1km.zip" \
+            --cell-size 1000 \
+            --layers roads \
+            --bounds-geojson "$RUNNER_TEMP/baghdad-source/baghdad-boundary.geojson" \
+            --source-timestamp "$(python3 -c 'import json; print(json.load(open("baghdad-source-verification.json"))["snapshot_timestamp"])')"
+          python3 - <<'PY'
+          import json
+          import zipfile
+          from pathlib import Path
+
+          path = Path("baghdad-citywide-roads-1km.zip")
+          with zipfile.ZipFile(path) as archive:
+              manifest = json.loads(archive.read("manifest.json"))
+              names = [name for name in archive.namelist() if name.startswith("cells/")]
+              assert manifest["region_id"] == "iraq_baghdad_region"
+              assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
+              assert manifest["cell_size_m"] == 1000.0
+              assert manifest["layers_included"] == ["roads"]
+              min_x, max_x, min_z, max_z = manifest["cell_bounds_inclusive"]
+              assert (max_x - min_x + 1) >= 20, manifest["cell_bounds_inclusive"]
+              assert (max_z - min_z + 1) >= 20, manifest["cell_bounds_inclusive"]
+              assert len(names) == manifest["cell_count"] and len(names) >= 100
+              occupied = set()
+              road_parts = 0
+              unique_ids = set()
+              quadrants = set()
+              mid_x, mid_z = (min_x + max_x) / 2, (min_z + max_z) / 2
+              for name in names:
+                  tile = json.loads(archive.read(name))
+                  x, z = int(tile["cell_x"]), int(tile["cell_z"])
+                  roads = tile.get("layers", {}).get("roads", [])
+                  if roads:
+                      occupied.add((x, z))
+                      road_parts += len(roads)
+                      unique_ids.update(str(item.get("id", "")) for item in roads)
+                      quadrants.add((x >= mid_x, z >= mid_z))
+              assert len(occupied) >= 100, f"Only {len(occupied)} road-occupied cells"
+              assert road_parts >= 500, f"Only {road_parts} road fragments"
+              assert len(unique_ids) >= 100, f"Only {len(unique_ids)} distinct OSM road ways"
+              assert len(quadrants) == 4, f"Road coverage missing one or more municipal quadrants: {quadrants}"
+              print("Verified citywide Baghdad road overview:", len(occupied), "occupied 1 km cells;", road_parts, "road fragments;", len(unique_ids), "unique OSM ways; four quadrants covered.")
+          PY
+
       - name: Add attribution and source notes
         shell: bash
         run: |
@@ -384,6 +434,7 @@ jobs:
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
             ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-bridge-extended.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-citywide-roads-1km.zip
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
             ${{ runner.temp }}/baghdad-source/iraq.osm.pbf.sha256
           if-no-files-found: error
