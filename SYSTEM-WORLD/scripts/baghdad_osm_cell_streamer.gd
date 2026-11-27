@@ -345,7 +345,7 @@ func _load_cell(cell: Vector2i) -> void:
 		_build_area_feature(cell_root, feature, land_material, 0.035, "OSMLanduse")
 	var vegetation_stats: Dictionary = vegetation_builder.build_cell(
 		cell_root, cell, layers.get("landuse", []), layers.get("natural-water", []),
-		Callable(self, "_terrain_height")
+		Callable(self, "_terrain_height"), layers.get("roads", []), cell_size
 	)
 	counts["vegetation"] = int(vegetation_stats.get("total", 0))
 	cell_root.set_meta("vegetation_target_total", BaghdadVegetationCellBuilderScript.TARGET_PLANT_COUNT)
