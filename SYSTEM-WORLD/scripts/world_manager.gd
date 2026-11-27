@@ -266,6 +266,17 @@ func _create_modern_city() -> void:
 		baghdad_regional_roads.load_radius = 1
 		root.add_child(baghdad_regional_roads)
 
+	# A separate 1 km low-detail city layer supplies buildings, shops, worship
+	# places, public facilities, parks, waterways and rail without duplicating
+	# the 200 m detailed core or the dedicated road overview.
+	if FileAccess.file_exists("res://data/geography/baghdad/regional_urban/manifest.json"):
+		var baghdad_regional_urban := BaghdadOSMCellStreamerScript.new()
+		baghdad_regional_urban.name = "BaghdadRegionalUrbanStreamer"
+		baghdad_regional_urban.data_root = "res://data/geography/baghdad/regional_urban"
+		baghdad_regional_urban.load_radius = 0
+		baghdad_regional_urban.overview_mode = true
+		root.add_child(baghdad_regional_urban)
+
 	var monster_gate_manager := ModernWorldMonsterGateManagerScript.new()
 	monster_gate_manager.name = "ModernWorldMonsterGateManager"
 	root.add_child(monster_gate_manager)
