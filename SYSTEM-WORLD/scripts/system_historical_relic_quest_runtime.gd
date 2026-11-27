@@ -30,6 +30,9 @@ func begin_quest(p_progression: Node, p_player: CharacterBody3D, p_world_manager
 	world_manager = p_world_manager
 	return_position = p_return_position
 	active = true
+	if is_instance_valid(player):
+		player.velocity = Vector3.ZERO
+		player.global_position = global_position + Vector3(0.0, 2.0, -10.0)
 	objective_index = 0
 	_refresh_status("ابدأ بقراءة الألواح بالترتيب: النجمة، النهر، التاج.")
 	return {"success": true, "quest_id": QUEST_ID, "message": "بدأت مهمة أصداء بابل التاريخية. اتبع الألواح القديمة بالترتيب."}
@@ -151,6 +154,11 @@ func _make_interaction(node_name: String, point: Vector3, prompt: String) -> Are
 	area.add_to_group("system_interactable")
 	area.set_meta("system_location_id", "historical_relic_trial_" + node_name.to_lower())
 	area.set_meta("system_interaction_prompt", prompt)
+	var shape_node := CollisionShape3D.new()
+	var shape := SphereShape3D.new()
+	shape.radius = 2.8
+	shape_node.shape = shape
+	area.add_child(shape_node)
 	return area
 
 
