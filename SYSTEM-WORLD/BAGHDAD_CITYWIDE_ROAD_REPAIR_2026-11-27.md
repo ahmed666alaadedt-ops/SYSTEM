@@ -17,7 +17,12 @@ The existing detailed OSM artifact is intentionally limited to 200 m cells with 
 - Updated the source and canonical Android workflows to publish, install and validate the extra road pack on repair branches.
 
 ## Validation status
-Not yet verified by a completed CI run at the time this checkpoint was written. The source workflow must successfully regenerate the municipal road pack, and the canonical Godot/Android workflow must pass the extended OSM runtime test and APK export. No physical-device visual, collision, navigation or performance acceptance is claimed.
+- **Source workflow:** passed on 2026-11-27, run [46046395053](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/46046395053).
+- **Verified municipal OSM source:** 64,593 distinct road ways in the Baghdad municipal clip.
+- **Generated citywide overview pack:** 1 km cells; projected bounds [-17, 18, -20, 15]; 927 occupied cells; 81,859 clipped road fragments; all four municipal bounding-box quadrants contain road cells. ZIP size 3,608,423 bytes.
+- **Detailed core pack preserved:** 200 m cells; 276 occupied cells; 47 mapped entrance points; Republic Bridge and Tigris source IDs remain present.
+- **Canonical Godot/Android runtime validation:** pending a new build that downloads the successful source artifact and exercises both the detailed pack and the citywide road streamer.
+- No physical-device visual, collision, vehicle navigation or performance acceptance is claimed.
 
 ## Guardrails
 - Do not delete or replace the existing detailed Baghdad OSM pack.
