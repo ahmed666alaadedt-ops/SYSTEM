@@ -1671,6 +1671,7 @@ func create_mobile_controls() -> void:
 	mobile_controls.skill_one_pressed.connect(_on_mobile_skill_one_pressed)
 	mobile_controls.skill_two_pressed.connect(_on_mobile_skill_two_pressed)
 	mobile_controls.relic_echo_pressed.connect(_on_mobile_relic_echo_pressed)
+	mobile_controls.relic_aegis_pressed.connect(_on_mobile_relic_aegis_pressed)
 	mobile_controls.dodge_pressed.connect(_on_mobile_dodge_pressed)
 
 
@@ -1693,6 +1694,61 @@ func _on_mobile_skill_two_pressed() -> void:
 		return
 	if is_instance_valid(modern_world_combat_system):
 		modern_world_combat_system.call("skill_two")
+
+
+func _on_mobile_relic_aegis_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if player_progression == null or player == null:
+		return
+	var result: Dictionary = player_progression.call("record_system_skill_use", "ashur_guardian_aegis")
+	if not bool(result.get("success", false)):
+		var reason := str(result.get("reason", "UNKNOWN"))
+		var message := "درع الحارس الآشوري غير متاح."
+		if reason == "SKILL_NOT_LEARNED":
+			message = "أكمل مهمة حراس نينوى وتدرب ثلاث مرات أولاً."
+		elif reason == "SKILL_COOLDOWN":
+			message = "درع الحارس الآشوري يحتاج انتظار %.0f ثانية." % float(result.get("remaining_seconds", 0.0))
+		elif reason == "SYSTEM_ENERGY_LOW":
+			message = "تحتاج 35 طاقة لتفعيل درع الحارس الآشوري."
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = message
+			interaction_prompt_label.show()
+		return
+	player.set_meta("system_assyrian_aegis_until_msec", Time.get_ticks_msec() + 12000)
+	_create_assyrian_aegis_visual()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "درع الحارس الآشوري نشط: تقليل الضرر 65% لمدة 12 ثانية."
+		interaction_prompt_label.show()
+
+
+func _create_assyrian_aegis_visual() -> void:
+	var previous := player.get_node_or_null("AssyrianGuardianAegis")
+	if previous != null:
+		previous.queue_free()
+	var shield := MeshInstance3D.new()
+	shield.name = "AssyrianGuardianAegis"
+	var sphere := SphereMesh.new()
+	sphere.radius = 1.25
+	sphere.height = 2.5
+	shield.mesh = sphere
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.88, 0.58, 0.18, 0.24)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.metallic = 0.7
+	material.roughness = 0.18
+	material.emission_enabled = true
+	material.emission = Color(0.95, 0.52, 0.12)
+	shield.material_override = material
+	shield.position = Vector3(0.0, 1.0, 0.0)
+	player.add_child(shield)
+	var pulse := create_tween()
+	pulse.set_loops()
+	pulse.tween_property(shield, "scale", Vector3.ONE * 1.08, 0.8)
+	pulse.tween_property(shield, "scale", Vector3.ONE, 0.8)
+	await get_tree().create_timer(12.0).timeout
+	if is_instance_valid(shield):
+		shield.queue_free()
 
 
 func _on_mobile_relic_echo_pressed() -> void:
