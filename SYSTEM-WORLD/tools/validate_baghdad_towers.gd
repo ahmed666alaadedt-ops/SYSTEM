@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldManagerScript = preload("res://scripts/world_manager.gd")
+
 const BAGHDAD_DISTRICT_TOWER_IDS := [
 	"hunter_association_tower_baghdad",
 	"business_investment_tower_baghdad",
