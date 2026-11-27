@@ -274,7 +274,7 @@ export const createArtifactListing = onCall(async (request) => {
       throw new HttpsError("not-found", "القطعة أو ملف البائع غير موجود.");
     }
     const item = itemSnapshot.data()!;
-    if (item.ownerId !== sellerId || item.status !== "owned") {
+    if (item.ownerId !== sellerId || item.status !== "owned" || item.activeHistoricalQuestSessionId) {
       throw new HttpsError("failed-precondition", "لا تملك هذه القطعة أو أنها محجوزة في صفقة أخرى.");
     }
 
