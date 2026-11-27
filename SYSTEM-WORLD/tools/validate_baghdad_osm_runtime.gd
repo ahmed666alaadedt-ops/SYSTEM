@@ -310,6 +310,7 @@ func _run_validation() -> void:
 	var mock_crime_manager := Node.new()
 	mock_world_root.add_child(mock_crime_manager)
 	var baghdad_npc_vehicle = NPC_VEHICLE_SCRIPT.new()
+	mock_world_root.add_child(baghdad_npc_vehicle)
 	baghdad_npc_vehicle.configure("npc_test_baghdad", "citizen_test", "Test Driver", "Baghdad", mock_crime_manager, Vector3.ZERO, 0)
 	if str(baghdad_npc_vehicle.get_meta("system_road_route_source", "")) != "procedural_fallback":
 		_fail("Baghdad NPC vehicle did not safely retain its fallback while OSM cells were unavailable.")
@@ -319,6 +320,7 @@ func _run_validation() -> void:
 		_fail("Baghdad civilian NPC vehicle did not upgrade to real OSM routing after cells became available.")
 		return
 	var other_city_npc_vehicle = NPC_VEHICLE_SCRIPT.new()
+	mock_world_root.add_child(other_city_npc_vehicle)
 	other_city_npc_vehicle.configure("npc_test_tokyo", "citizen_tokyo", "Test Driver", "Tokyo", mock_crime_manager, Vector3.ZERO, 1)
 	if str(other_city_npc_vehicle.get_meta("system_road_route_source", "")) != "procedural_fallback" or other_city_npc_vehicle.route_points.size() != 4:
 		_fail("Non-Baghdad NPC vehicles did not preserve their city-local fallback route.")
