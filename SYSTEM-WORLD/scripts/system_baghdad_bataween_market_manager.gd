@@ -202,6 +202,27 @@ func _build_market() -> void:
 	_add_market_sign()
 	_add_market_gate()
 	_add_historical_relic_quest_altar()
+
+	var hidden_trace := Node3D.new()
+	hidden_trace.name = "HiddenBabylonianInscriptionTrace"
+	hidden_trace.position = Vector3(13.0, 0.25, 27.0)
+	hidden_trace.visible = false
+	hidden_trace.add_to_group("system_hidden_historical_trace")
+	var trace_marker := MeshInstance3D.new()
+	trace_marker.name = "EchoTraceMarker"
+	var marker_mesh := SphereMesh.new()
+	marker_mesh.radius = 0.65
+	marker_mesh.height = 1.3
+	trace_marker.mesh = marker_mesh
+	trace_marker.material_override = _brass_material
+	hidden_trace.add_child(trace_marker)
+	var trace_label := Label3D.new()
+	trace_label.name = "EchoTraceLabel"
+	trace_label.text = "نقش بابلي مخفي — أثر يقود إلى سر قديم"
+	trace_label.font_size = 16
+	trace_label.position = Vector3(0.0, 1.6, 0.0)
+	hidden_trace.add_child(trace_label)
+	add_child(hidden_trace)
 	_add_main_aisles()
 	_build_stalls()
 	_add_lighting()
