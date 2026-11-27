@@ -176,6 +176,10 @@ export const appraiseMyArtifactAuthenticity = onCall(async (request) => {
     ]);
     if (!itemSnapshot.exists) throw new HttpsError("not-found", "القطعة ليست ضمن مقتنياتك.");
     const item = itemSnapshot.data()!;
+    if (item.ownerId !== playerId || item.status !== "owned" ||
+        item.activeListingId || item.activeAuctionId || item.activeExchangeId) {
+      throw new HttpsError("failed-precondition", "يجب أن تكون القطعة بحيازتك وغير محجوزة في السوق.");
+    }
     if (existingReport.exists) {
       const previous = existingReport.data()!;
       return {
@@ -186,10 +190,6 @@ export const appraiseMyArtifactAuthenticity = onCall(async (request) => {
         provenanceSummary: String(previous.provenanceSummary || ""),
         alreadyAppraised: true
       };
-    }
-    if (item.ownerId !== playerId || item.status !== "owned" ||
-        item.activeListingId || item.activeAuctionId || item.activeExchangeId) {
-      throw new HttpsError("failed-precondition", "يجب أن تكون القطعة بحيازتك وغير محجوزة في السوق.");
     }
     const existingAuthenticity = String(item.authenticity || "unverified");
     const registry = registrySnapshot.exists ? registrySnapshot.data()! : null;
