@@ -46,3 +46,28 @@ Treat the supplied image as the visual-fidelity target for Baghdad, not as permi
 - Do not replace the swamp-land world or the five-tower Baghdad layout.
 - Keep the Power Tower independent.
 - Do not merge to main or claim complete until validation and explicit approval.
+
+## Exact composition cues from the supplied reference image
+These are explicit visual requirements in addition to the general target above. Preserve the range of shapes and the layered composition; do not reduce the reference to generic glass towers beside a river.
+
+### Building silhouettes and facade language
+- A varied skyline: slender tall towers, broad sculptural towers, curved sail-like profiles, tapered crowns, angular crowns, and facades that lean or sweep in smooth arcs.
+- Include the prominent tall central tower language: a narrow, tapering high-rise with a curved top/crown and a visible structural lattice/diagrid treatment, plus neighboring curved towers with luminous cyan edge lines.
+- Mix rounded/arched building cut-outs, concave and convex facades, stepped terraces, podiums, layered horizontal bands and complex rooflines.
+- Use glass curtain walls, metal ribs, fine structural grids, visible floor divisions, dense window patterns, warm interior office lights and restrained cyan/blue architectural accents.
+- Towers must have distinct silhouettes and believable proportions; do not clone one tower mesh repeatedly. Surround landmark towers with a dense, varied background skyline.
+
+### Bridge and transport structures
+- Include a major cable-stayed bridge crossing the river: tall sculptural pylons, clearly separated fan-shaped cable arrays, realistic deck thickness, support structure, barriers, road surface, lane markings and integrated night lighting.
+- Retain other bridges and river crossings as distinct structures; do not represent all crossings with one repeated bridge model.
+- Include elevated curving expressways, sweeping ramps, multi-level junctions and waterfront roads, with visible columns, guardrails, lane markings, signs and traffic.
+- Ensure bridge pylons, cables, bridge deck, road approaches and river banks meet continuously with correct scale and alignment.
+
+### Riverfront, public realm and atmosphere
+- Keep the broad river visible as a major part of the composition, with reflective night water, physically coherent reflections of towers and bridge lights, shoreline promenades, stepped embankments, piers and marina edges.
+- Add varied boats and passenger vessels at different distances and scales, with navigation lights and wakes; retain waterfront pedestrian zones, trees, planted terraces and crowds.
+- Recreate the depth of the image: foreground waterfront and roads, middle-ground river and bridge, and a dense illuminated skyline receding into the night atmosphere.
+- Include the aerial light trails / distant moving traffic visible in the sky as a restrained city-transport effect where appropriate, without making it obscure the architecture.
+
+### Acceptance rule
+A Baghdad scene is not accepted as matching this reference if it only has generic towers, a flat water plane, a simple bridge slab, repeated primitive buildings or decorative neon strips. Review the complete composition and each major structure from aerial and street-level views. Preserve the approved Baghdad five-tower district identity and keep the independent Power Tower separate.
