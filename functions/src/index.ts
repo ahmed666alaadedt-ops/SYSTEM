@@ -393,6 +393,13 @@ export {
 } from "./relic_quest_rewards";
 
 export {
+  browseSecretAntiqueOffers,
+  purchaseSecretAntiqueOffer,
+  appraiseMyArtifactAuthenticity,
+  getMyAntiquesReputation
+} from "./antique_market_services";
+
+export {
   createArtifactAuction,
   browseArtifactAuctions,
   placeArtifactAuctionBid,
