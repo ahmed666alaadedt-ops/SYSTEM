@@ -23,6 +23,12 @@ func _initialize() -> void:
 		assert(interaction.get_node_or_null("CollisionShape3D") != null,
 			"Facility interaction must have a collision shape.")
 		assert(experience.get_child_count() >= 8, "Facility must contain its 3D interior objects and signage.")
+		if int(entry.floor) == 30:
+			for trader_index in range(5):
+				var trader_area := experience.get_node_or_null("SecretTraderInteraction_%02d" % trader_index) as Area3D
+				assert(trader_area != null, "Every hidden trader booth must be individually interactive.")
+				assert(not str(trader_area.get_meta("system_secret_trader_id", "")).is_empty(),
+					"Each hidden trader must have a stable identity.")
 		floor_root.queue_free()
 	print("ANTIQUES_MARKET_3D_FACILITIES_TESTS_PASSED")
 	quit(0)
