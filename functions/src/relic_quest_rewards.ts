@@ -108,6 +108,9 @@ export const requestHistoricalRelicReturn = onCall(async (request) => {
       quest.objectives.every((id) => session.completedObjectives?.[id] === true);
   });
   if (!sessionDoc) throw new HttpsError("failed-precondition", "لا توجد جلسة موثوقة مكتملة الأهداف تنتظر الإرجاع.");
+  if (ownedArtifact.activeHistoricalQuestSessionId !== sessionDoc.id) {
+    throw new HttpsError("failed-precondition", "قفل التحفة لا يطابق جلسة المهمة النشطة.");
+  }
   const requestRef = db.collection("historicalRelicReturnRequests").doc(sessionDoc.id);
   const requestSnapshot = await requestRef.get();
   if (requestSnapshot.exists) {
@@ -195,6 +198,10 @@ export const startHistoricalRelicQuestSession = onCall(async (request) => {
       completedObjectives: {},
       status: "active",
       startedAt: FieldValue.serverTimestamp()
+    });
+    transaction.update(artifactRef, {
+      activeHistoricalQuestSessionId: sessionRef.id,
+      historicalQuestStartedAt: FieldValue.serverTimestamp()
     });
     transaction.update(startRequestRef, {
       status: "accepted", sessionId: sessionRef.id, acceptedBy: serverUid,
@@ -352,8 +359,9 @@ export const completeHistoricalRelicQuest = onCall(async (request) => {
     if (!artifact.exists) throw new HttpsError("not-found", "التحفة غير موجودة في مجموعة اللاعب.");
     const artifactData = artifact.data()!;
     if (artifactData.status !== "owned" || artifactData.ownerId !== playerId ||
-        artifactData.activeListingId || artifactData.activeAuctionId || artifactData.activeExchangeId) {
-      throw new HttpsError("failed-precondition", "يجب أن تكون التحفة مملوكة وغير محجوزة في السوق.");
+        artifactData.activeListingId || artifactData.activeAuctionId || artifactData.activeExchangeId ||
+        artifactData.activeHistoricalQuestSessionId !== sessionId) {
+      throw new HttpsError("failed-precondition", "يجب أن تكون التحفة مملوكة ومقفلة لهذه الجلسة وغير محجوزة في السوق.");
     }
     if (existingSkill.exists && existingSkill.data()!.questId !== questId) {
       throw new HttpsError("already-exists", "المهارة مسجلة من مصدر مختلف.");
@@ -364,6 +372,7 @@ export const completeHistoricalRelicQuest = onCall(async (request) => {
         status: "returned_to_history",
         returnedToHistoricalSite: quest.historicalSiteId,
         historicalQuestId: questId,
+        activeHistoricalQuestSessionId: FieldValue.delete(),
         returnedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp()
       });
@@ -371,6 +380,12 @@ export const completeHistoricalRelicQuest = onCall(async (request) => {
         artifactId, ownerId: playerId, action: "returned_to_historical_site",
         historicalSiteId: quest.historicalSiteId, questId, actorId: serverUid,
         createdAt: FieldValue.serverTimestamp()
+      });
+    }
+    if (!quest.returnRequired) {
+      transaction.update(artifactRef, {
+        activeHistoricalQuestSessionId: FieldValue.delete(),
+        historicalQuestCompletedAt: FieldValue.serverTimestamp()
       });
     }
     if (!existingSkill.exists) {
