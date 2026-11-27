@@ -237,7 +237,7 @@ func _run_validation() -> void:
 	if not direction_test_streamer._is_vehicle_road({"highway": "residential"}):
 		_fail("Residential roads were incorrectly excluded from motor traffic.")
 		return
-	if direction_test_streamer._is_vehicle_road({"highway": "footway"}) or direction_test_streamer._is_vehicle_road({"highway": "service", "access": "private"}) or direction_test_streamer._is_vehicle_road({"highway": "primary", "motor_vehicle": "no"}):
+	if direction_test_streamer._is_vehicle_road({"highway": "footway"}) or direction_test_streamer._is_vehicle_road({"highway": "service", "access": "private"}) or direction_test_streamer._is_vehicle_road({"highway": "primary", "motor_vehicle": "no"}) or direction_test_streamer._is_vehicle_road({"highway": "primary", "oneway:conditional": "yes @ (Mo-Fr)"}) or direction_test_streamer._is_vehicle_road({"highway": "primary", "oneway": "reversible"}):
 		_fail("Pedestrian-only or explicitly restricted roads entered the vehicle graph.")
 		return
 	var one_way_forward: Array[Vector3] = direction_test_streamer.get_vehicle_navigation_path(
