@@ -28,6 +28,7 @@ var weapon_type: WeaponType = WeaponType.SWORD
 var is_blocking := false
 var is_dodging := false
 var can_attack := true
+var active_skill_damage_multiplier := 1.0
 
 var weapon_pivot: Node3D
 var weapon_visual: MeshInstance3D
@@ -205,6 +206,7 @@ func heavy_attack() -> void:
 
 
 func _apply_melee_damage(damage: float, distance: float) -> void:
+	damage *= active_skill_damage_multiplier
 	if actor == null or not is_instance_valid(actor):
 		return
 
@@ -245,6 +247,40 @@ func _apply_melee_damage(damage: float, distance: float) -> void:
 	_create_impact_effect(result.get("position", to))
 
 
+func activate_system_skill(skill_id: String) -> Dictionary:
+	if actor == null or not is_instance_valid(actor):
+		return {"success": false, "reason": "COMBAT_ACTOR_UNAVAILABLE"}
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	if progression == null or not progression.has_method("record_system_skill_use"):
+		return {"success": false, "reason": "SKILL_PROGRESSION_UNAVAILABLE"}
+	var result: Dictionary = progression.call("record_system_skill_use", skill_id)
+	if not bool(result.get("success", false)):
+		return result
+	match skill_id:
+		"ancient_lightning":
+			_apply_melee_damage(heavy_damage * 2.0, attack_range * 1.8)
+			_shake_camera(0.28, 0.22)
+		"shadow_cloak":
+			actor.set_meta("system_shadow_cloak_active", true)
+			actor.global_position += (-actor.global_transform.basis.z).normalized() * 4.5
+			get_tree().create_timer(5.0).timeout.connect(func():
+				if is_instance_valid(actor):
+					actor.set_meta("system_shadow_cloak_active", false)
+			)
+		"titan_embodiment":
+			actor.set_meta("system_titan_embodiment_active", true)
+			active_skill_damage_multiplier = 1.8
+			get_tree().create_timer(8.0).timeout.connect(func():
+				active_skill_damage_multiplier = 1.0
+				if is_instance_valid(actor):
+					actor.set_meta("system_titan_embodiment_active", false)
+			)
+		_:
+			return {"success": false, "reason": "UNSUPPORTED_SYSTEM_SKILL"}
+	result["activated"] = true
+	return result
+
+
 func start_block() -> void:
 	if actor == null:
 		return
@@ -259,10 +295,12 @@ func stop_block() -> void:
 
 
 func receive_damage(incoming_damage: float) -> float:
-	if is_dodging:
+	if is_dodging or (actor != null and is_instance_valid(actor) and actor.has_meta("system_shadow_cloak_active") and bool(actor.get_meta("system_shadow_cloak_active", false))):
 		return 0.0
 
 	var final_damage := incoming_damage
+	if actor != null and is_instance_valid(actor) and actor.has_meta("system_titan_embodiment_active") and bool(actor.get_meta("system_titan_embodiment_active", false)):
+		final_damage *= 0.5
 
 	if is_blocking:
 		final_damage *= 0.25
