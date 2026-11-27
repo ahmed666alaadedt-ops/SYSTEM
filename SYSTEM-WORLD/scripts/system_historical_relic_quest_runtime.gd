@@ -145,7 +145,7 @@ func handle_interaction(target: Node) -> Dictionary:
 	objective_index += 1
 	if objective == "recover_relic":
 		return _complete_quest()
-	var next_name := ["لوح النهر", "لوح التاج", "استعادة الأثر"][objective_index - 1]
+	var next_name: String = ["لوح النهر", "لوح التاج", "استعادة الأثر"][objective_index - 1]
 	_refresh_status("تم فك الرمز. هدفك التالي: " + next_name)
 	return {"handled": true, "success": true, "message": "تم تسجيل الرمز القديم. " + next_name}
 
