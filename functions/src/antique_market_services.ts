@@ -133,7 +133,7 @@ export const purchaseSecretAntiqueOffer = onCall(async (request) => {
       artifactId,
       sellerId: "secret_trader_guild",
       buyerId,
-      sellerName: "تاجر الظلال",
+      sellerName: offer.sellerName,
       buyerName: playerName,
       price: offer.price,
       fee: 0,
