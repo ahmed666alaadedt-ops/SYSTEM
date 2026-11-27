@@ -86,5 +86,17 @@ func _initialize() -> void:
 	var activation: Dictionary = progression.record_system_skill_use("rare_skill_celestial_lightning")
 	assert(activation.get("success", false),
 		"A verified rare relic skill should consume energy and enter cooldown.")
+	progression.apply_server_verified_relic_skills([
+		"rare_skill_celestial_lightning",
+		"rare_skill_earth_guardian",
+		"rare_skill_shadow_avatar"
+	])
+	var guardian: Dictionary = progression.activate_relic_skill_effect("rare_skill_earth_guardian")
+	assert(guardian.get("success", false), "Earth Guardian should activate after a server unlock.")
+	assert(progression.get_defense_bonus() >= 45.0, "Earth Guardian must affect the player's combat defense.")
+	var shadow: Dictionary = progression.activate_relic_skill_effect("rare_skill_shadow_avatar")
+	assert(shadow.get("success", false), "Shadow Avatar should activate after a server unlock.")
+	assert(progression.get_combat_damage_bonus() >= 55.0, "Shadow Avatar must affect combat damage.")
+	assert(progression.get_movement_multiplier() > 1.0, "Shadow Avatar must improve movement while active.")
 	print("ARTIFACT_RELIC_QUEST_MANAGER_TESTS_PASSED")
 	quit(0)
