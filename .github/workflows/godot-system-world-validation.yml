@@ -91,9 +91,46 @@ jobs:
           "$GODOT" --headless --path "$PROJECT" --script res://tools/diagnose_null_meshes.gd > "$RUNNER_TEMP/null-mesh-diagnostic.log" 2>&1
           godot_status=$?
           grep -E "SYSTEM MESH DIAGNOSTIC|SYSTEM POST-SWITCH|SYSTEM WORLD LOAD TEST|SYSTEM TRANSIENT" "$RUNNER_TEMP/null-mesh-diagnostic.log" | tail -n 160 || true
-          echo "Headless renderer null-mesh engine messages: $(grep -c 'ERROR: Parameter "m" is null' "$RUNNER_TEMP/null-mesh-diagnostic.log" || true)"
+          renderer_error_count=$(grep -c 'ERROR: Parameter "m" is null' "$RUNNER_TEMP/null-mesh-diagnostic.log" || true)
+          echo "Godot 4.3 dummy-renderer lifecycle errors (upstream #86806; fix merged as #102261): $renderer_error_count"
           if grep -E "SCRIPT ERROR|Parse Error" "$RUNNER_TEMP/null-mesh-diagnostic.log"; then exit 1; fi
           exit "$godot_status"
+
+      - name: Compare fixed Dummy RenderingServer lifecycle in Godot 4.4.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          GODOT_DIR="$RUNNER_TEMP/godot-4.4.1"
+          PROJECT_44="$RUNNER_TEMP/SYSTEM-WORLD-godot-4.4.1"
+          mkdir -p "$GODOT_DIR" "$PROJECT_44"
+          curl -L --fail --retry 3 \
+            "https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip" \
+            -o "$RUNNER_TEMP/godot-4.4.1.zip"
+          unzip -q "$RUNNER_TEMP/godot-4.4.1.zip" -d "$GODOT_DIR"
+          GODOT_44="$GODOT_DIR/Godot_v4.4.1-stable_linux.x86_64"
+          chmod +x "$GODOT_44"
+          cp -a "$PROJECT/." "$PROJECT_44/"
+          rm -rf "$PROJECT_44/.godot"
+          "$GODOT_44" --headless --editor --path "$PROJECT_44" --import > "$RUNNER_TEMP/godot-4.4.1-import.log" 2>&1
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/godot-4.4.1-import.log"; then
+            echo "Godot 4.4.1 import/parse failed."
+            exit 1
+          fi
+          set +e
+          timeout 240s "$GODOT_44" --headless --path "$PROJECT_44" \
+            --script res://tools/diagnose_null_meshes.gd > "$RUNNER_TEMP/godot-4.4.1-mesh-diagnostic.log" 2>&1
+          godot_status=$?
+          set -e
+          renderer_error_count=$(grep -c 'ERROR: Parameter "m" is null' "$RUNNER_TEMP/godot-4.4.1-mesh-diagnostic.log" || true)
+          grep -E "SYSTEM MESH DIAGNOSTIC|SYSTEM POST-SWITCH MESH DIAGNOSTIC|SYSTEM WORLD LOAD TEST|SYSTEM MESH DIAGNOSTIC TOTALS" "$RUNNER_TEMP/godot-4.4.1-mesh-diagnostic.log" | tail -n 80 || true
+          echo "Godot 4.4.1 dummy-renderer mesh_get_surface_count errors: $renderer_error_count"
+          if [ "$godot_status" -ne 0 ]; then exit "$godot_status"; fi
+          if [ "$renderer_error_count" -gt 0 ]; then
+            echo "The upstream dummy-renderer lifecycle error is still present under Godot 4.4.1."
+            exit 1
+          fi
+          echo "Godot 4.4.1 dummy-renderer lifecycle comparison passed with zero matching errors."
 
       - name: Launch main scene headlessly
         shell: bash
