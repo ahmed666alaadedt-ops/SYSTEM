@@ -414,6 +414,45 @@ jobs:
             exit 1
           fi
 
+      - name: Validate the generated real OSM cell pack in Godot runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_DIR="$RUNNER_TEMP/godot"
+          GODOT="$GODOT_DIR/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          PACK="$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-5x5.zip"
+          LOG="$RUNNER_TEMP/baghdad-osm-runtime-validation.log"
+          mkdir -p "$GODOT_DIR" "$PROJECT/data/geography/baghdad/cell_pack"
+          curl -L --fail --retry 3 \
+            "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip" \
+            -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$GODOT_DIR"
+          chmod +x "$GODOT"
+          unzip -q "$PACK" -d "$PROJECT/data/geography/baghdad/cell_pack"
+          test -s "$PROJECT/data/geography/baghdad/cell_pack/manifest.json"
+          "$GODOT" --headless --editor --path "$PROJECT" --quit
+          set +e
+          timeout 180s "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_baghdad_osm_runtime.gd 2>&1 | tee "$LOG"
+          GODOT_STATUS=${PIPESTATUS[0]}
+          set -e
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Baghdad OSM runtime validation failed" "$LOG"; then
+            echo "::error::Generated real OSM cell pack failed Godot runtime validation."
+            exit 1
+          fi
+          if ! grep -q "Baghdad OSM runtime validation passed:" "$LOG"; then
+            echo "::error::Godot did not reach the Baghdad real OSM runtime pass marker."
+            exit 1
+          fi
+          if [ "$GODOT_STATUS" -ne 0 ]; then
+            if grep -q 'ERROR: Parameter "m" is null.' "$LOG"; then
+              echo "::warning::OSM runtime assertions passed; unrelated global null-mesh diagnostic remains."
+            else
+              exit "$GODOT_STATUS"
+            fi
+          fi
+
       - name: Upload Baghdad OSM audit diagnostics, including failed reports
         if: always()
         uses: actions/upload-artifact@v4
