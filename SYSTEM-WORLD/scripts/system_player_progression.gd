@@ -5,6 +5,11 @@ class_name SYSTEMPlayerProgression
 signal progress_changed(level: int, total_xp: int, xp_in_level: int, xp_to_next: int)
 signal level_up(new_level: int)
 signal attribute_changed(attribute: String, new_value: int)
+signal elemental_activation_receipt_received(skill_id: String, receipt: Dictionary)
+signal elemental_activation_rejected(skill_id: String, reason: String)
+
+var _elemental_request_sequence := 0
+var _pending_elemental_requests: Dictionary = {}
 
 const MAX_LEVEL := 100
 const MAX_SYSTEM_ENERGY := 100.0
@@ -140,6 +145,34 @@ func _ready() -> void:
 	_emit_progress()
 	set_process(true)
 	_create_nen_burst_button()
+	_connect_elemental_authority_bridge()
+
+
+func _connect_elemental_authority_bridge() -> void:
+	var bridge := get_tree().root.find_child("SYSTEMAndroidBridge", true, false)
+	if bridge == null or not bridge.has_signal("marketplace_result_received"):
+		return
+	var callback := Callable(self, "_on_elemental_authority_result")
+	if not bridge.is_connected("marketplace_result_received", callback):
+		bridge.connect("marketplace_result_received", callback)
+
+
+func _on_elemental_authority_result(request_id: String, payload: Dictionary) -> void:
+	if not _pending_elemental_requests.has(request_id):
+		return
+	var skill_id := str(_pending_elemental_requests[request_id])
+	_pending_elemental_requests.erase(request_id)
+	if not bool(payload.get("success", false)):
+		elemental_activation_rejected.emit(skill_id, str(payload.get("error", "ELEMENTAL_AUTHORIZATION_FAILED")))
+		return
+	var data: Variant = payload.get("data", {})
+	if not data is Dictionary or not bool(data.get("success", false)):
+		elemental_activation_rejected.emit(skill_id, "ELEMENTAL_RECEIPT_INVALID")
+		return
+	if str(data.get("skillId", "")) != skill_id or str(data.get("status", "")) != "authorized_pending_combat" or str(data.get("activationId", "")).is_empty():
+		elemental_activation_rejected.emit(skill_id, "ELEMENTAL_RECEIPT_MISMATCH")
+		return
+	elemental_activation_receipt_received.emit(skill_id, data.duplicate(true))
 
 
 func _process(delta: float) -> void:
@@ -1221,6 +1254,18 @@ func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionar
 			return {"success": false, "reason": "SKILL_STUDY_PERMIT_REQUIRED"}
 		if int(system_skill_practice.get(key, 0)) < 3:
 			return {"success": false, "reason": "SKILL_PRACTICE_INCOMPLETE", "practice_count": int(system_skill_practice.get(key, 0))}
+		# Elemental abilities must be authorized by Firebase before any local cost or effect.
+		# The receipt is only a pending authorization; a trusted live game server must consume it.
+		var bridge := get_tree().root.find_child("SYSTEMAndroidBridge", true, false)
+		if bridge == null or not bridge.has_method("request_elemental_activation"):
+			return {"success": false, "reason": "ELEMENTAL_AUTHORITY_BRIDGE_UNAVAILABLE"}
+		_elemental_request_sequence += 1
+		var request_id := "elemental_%d_%d" % [Time.get_ticks_msec(), _elemental_request_sequence]
+		_pending_elemental_requests[request_id] = key
+		if not bool(bridge.call("request_elemental_activation", key, request_id)):
+			_pending_elemental_requests.erase(request_id)
+			return {"success": false, "reason": "ELEMENTAL_AUTHORITY_REQUEST_FAILED"}
+		return {"success": true, "pending": true, "skill_id": key, "request_id": request_id, "reason": "WAITING_FOR_TRUSTED_COMBAT_SERVER"}
 		var usage: Dictionary = record_system_skill_use(key)
 		if not bool(usage.get("success", false)):
 			return usage
