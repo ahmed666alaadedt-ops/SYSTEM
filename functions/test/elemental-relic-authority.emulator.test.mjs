@@ -64,3 +64,31 @@ test("a non-awakened relic and an insufficient Nen rank cannot authorize an elem
   });
   await assert.rejects(() => call("authorizeElementalRelicActivation", uid, { skillId: "primordial_flame_burst" }));
 });
+
+test("elemental relic rewards require a completed mission roster and cannot be replayed", async () => {
+  const uid = playerId + "_quest_reward";
+  const server = "trusted_game_server";
+  const sessionId = "elemental_mission_session_" + uid;
+  await db.collection("players").doc(uid).set({ userId: uid });
+  await assert.rejects(() => call("grantElementalRelicFromCompletedMission", server, {
+    playerId: uid, sessionId, eventId: "relic_reward_01", artifactId: "primordial_flame_heart"
+  }, { gameServer: true }));
+  await db.collection("hunterGuildMissionSessions").doc(sessionId).set({
+    status: "completed", rosterPlayerIds: [uid], missionId: "verified_mission_01"
+  });
+  const result = await call("grantElementalRelicFromCompletedMission", server, {
+    playerId: uid, sessionId, eventId: "relic_reward_01", artifactId: "primordial_flame_heart"
+  }, { gameServer: true });
+  assert.equal(result.success, true);
+  assert.equal(result.alreadyIssued, false);
+  const artifact = await db.collection("artifactOwnership").doc(uid).collection("items").doc("primordial_flame_heart").get();
+  assert.equal(artifact.data().awakened, true);
+  assert.equal(artifact.data().relicSkillId, "primordial_flame_burst");
+  const replay = await call("grantElementalRelicFromCompletedMission", server, {
+    playerId: uid, sessionId, eventId: "relic_reward_01", artifactId: "primordial_flame_heart"
+  }, { gameServer: true });
+  assert.equal(replay.alreadyIssued, true);
+  await assert.rejects(() => call("grantElementalRelicFromCompletedMission", server, {
+    playerId: uid, sessionId, eventId: "relic_reward_02", artifactId: "stormlightning_crown"
+  }, { gameServer: true }));
+});
