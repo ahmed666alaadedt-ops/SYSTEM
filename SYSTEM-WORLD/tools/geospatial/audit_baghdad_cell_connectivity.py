@@ -404,7 +404,7 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
             expected_feature_keys = {feature_key for _cell, feature_key in expected_union}
             actual_feature_keys = {feature_key for _cell, feature_key in actual_union}
             # The clipped source covers the whole Baghdad municipality, while
-            # this 5x5 pack intentionally covers only its configured cell bounds.
+            # the generated pack intentionally covers its configured municipal cell bounds.
             # Only IDs with at least one expected in-bounds cell fragment can be
             # called missing from this pack.
             missing_feature_keys = sorted(expected_feature_keys - actual_feature_keys)
@@ -487,6 +487,12 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
             # Candidate keys come from BOTH the expected source and actual pack,
             # and every continuity measurement below is taken from actual_union.
             cell_set = set(cells)
+            expected_keys_by_cell: dict[tuple[int, int], set[tuple[str, str, str]]] = defaultdict(set)
+            actual_keys_by_cell: dict[tuple[int, int], set[tuple[str, str, str]]] = defaultdict(set)
+            for cell, feature_key in expected_union:
+                expected_keys_by_cell[cell].add(feature_key)
+            for cell, feature_key in actual_union:
+                actual_keys_by_cell[cell].add(feature_key)
             neighbor_pairs = set()
             for x, z in cell_set:
                 for neighbor in ((x + 1, z), (x, z + 1)):
@@ -531,10 +537,10 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                 report["errors"].append(message)
 
             for cell_a, cell_b in sorted(neighbor_pairs):
-                expected_a_keys = {key for cell, key in expected_union if cell == cell_a}
-                expected_b_keys = {key for cell, key in expected_union if cell == cell_b}
-                actual_a_keys = {key for cell, key in actual_union if cell == cell_a}
-                actual_b_keys = {key for cell, key in actual_union if cell == cell_b}
+                expected_a_keys = expected_keys_by_cell.get(cell_a, set())
+                expected_b_keys = expected_keys_by_cell.get(cell_b, set())
+                actual_a_keys = actual_keys_by_cell.get(cell_a, set())
+                actual_b_keys = actual_keys_by_cell.get(cell_b, set())
                 expected_shared = expected_a_keys & expected_b_keys
                 actual_shared = actual_a_keys & actual_b_keys
                 # Include actual-only keys so unexpected cell geometry cannot
