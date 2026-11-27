@@ -33,14 +33,15 @@ func _run() -> void:
 	if built != 1:
 		_fail("Synthetic five-floor Baghdad apartment footprint did not build.")
 		return
+	streamer.call("_flush_facade_window_multimesh", streamer)
 	var building := streamer.get_node_or_null("OSMBuilding_apartment_block_facade_validation_apartment_001") as MeshInstance3D
-	var windows := streamer.get_node_or_null("OSMBuildingWindows_facade_validation_apartment_001") as MultiMeshInstance3D
+	var windows := streamer.get_node_or_null("BaghdadCellFacadeWindows") as MultiMeshInstance3D
 	if building == null or windows == null or windows.multimesh == null:
 		_fail("High-detail apartment is missing its instanced facade-window resource.")
 		return
 	var window_count := windows.multimesh.instance_count
-	if window_count <= 0 or window_count > 64:
-		_fail("Facade window count is outside the mobile-safe 1..64 per-building budget.")
+	if window_count <= 0 or window_count > 32:
+		_fail("Facade window count is outside the mobile-safe 1..32 per-building budget.")
 		return
 	if int(building.get_meta("system_facade_window_count", 0)) != window_count:
 		_fail("Building facade metadata does not match the MultiMesh instance count.")
@@ -50,6 +51,9 @@ func _run() -> void:
 		return
 	if str(windows.get_meta("system_facade_window_sampling", "")) != "even_distribution_across_facades":
 		_fail("Facade windows were not sampled evenly across the building sides.")
+		return
+	if int(windows.get_meta("system_facade_window_draw_calls_per_cell", 0)) != 1:
+		_fail("Facade windows are not aggregated into one MultiMesh draw call per cell.")
 		return
 
 	var overview_parent := Node3D.new()
@@ -65,7 +69,7 @@ func _run() -> void:
 		return
 
 	print("Baghdad facade detail validation passed: high-detail 200 m cell apartment generated ", window_count,
-		" instanced windows; regional 1 km overview remains extrusion-only; per-building window budget <= 64.")
+		" instanced windows in one cell-level MultiMesh; regional 1 km overview remains extrusion-only; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
 	quit(0)
 
