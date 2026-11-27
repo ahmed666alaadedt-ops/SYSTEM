@@ -36,7 +36,7 @@ func _run_facility_checks() -> bool:
 		if str(interaction.get_meta("system_antique_facility_type", "")) != str(entry["type"]):
 			push_error("Antiques floor %d interaction routes to the wrong service." % floor_number)
 			return false
-		if interaction.get_node_or_null("CollisionShape3D") == null:
+		if interaction.get_node_or_null("InteractionCollisionShape") == null:
 			push_error("Antiques floor %d interaction has no collision shape." % floor_number)
 			return false
 		if experience.get_child_count() < 8:
