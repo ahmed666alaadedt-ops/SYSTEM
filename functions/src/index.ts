@@ -392,6 +392,7 @@ export {
   recordHistoricalRelicQuestObjective,
   recordHistoricalRelicReturn,
   completeHistoricalRelicQuest,
+  listMyHistoricalRelicQuestSessions,
   listMyRareRelicSkills
 } from "./relic_quest_rewards";
 
