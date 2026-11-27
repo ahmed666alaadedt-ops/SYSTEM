@@ -1746,9 +1746,11 @@ func _create_assyrian_aegis_visual() -> void:
 	pulse.set_loops()
 	pulse.tween_property(shield, "scale", Vector3.ONE * 1.08, 0.8)
 	pulse.tween_property(shield, "scale", Vector3.ONE, 0.8)
-	await get_tree().create_timer(12.0).timeout
-	if is_instance_valid(shield):
-		shield.queue_free()
+	var expiry_timer := get_tree().create_timer(12.0)
+	expiry_timer.timeout.connect(func() -> void:
+		if is_instance_valid(shield):
+			shield.queue_free()
+	)
 
 
 func _on_mobile_relic_echo_pressed() -> void:
