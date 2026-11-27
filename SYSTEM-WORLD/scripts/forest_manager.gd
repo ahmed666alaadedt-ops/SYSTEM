@@ -2,9 +2,9 @@
 extends Node3D
 class_name SystemForestManager
 
-const TREE_COUNT_PER_SIDE := 14
-const SHRUB_COUNT_PER_SIDE := 12
-const GRASS_COUNT := 90
+const TREE_COUNT_PER_SIDE := 18
+const SHRUB_COUNT_PER_SIDE := 24
+const GRASS_COUNT := 150
 
 var rng := RandomNumberGenerator.new()
 
