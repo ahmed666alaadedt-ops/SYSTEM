@@ -150,6 +150,10 @@ func connect_android_runtime_bridge() -> void:
 	var world_callback := Callable(self, "_on_android_world_entry_requested")
 	if not SYSTEMAndroidBridge.world_entry_requested.is_connected(world_callback):
 		SYSTEMAndroidBridge.world_entry_requested.connect(world_callback)
+	var marketplace_callback := Callable(self, "_on_android_marketplace_result")
+	if SYSTEMAndroidBridge.has_signal("marketplace_result_received") and not SYSTEMAndroidBridge.marketplace_result_received.is_connected(marketplace_callback):
+		SYSTEMAndroidBridge.marketplace_result_received.connect(marketplace_callback)
+	call_deferred("_request_relic_state_refresh")
 
 	if world_manager != null and world_manager.has_signal("world_changed"):
 		var changed_callback := Callable(self, "_on_runtime_world_changed")
@@ -161,6 +165,35 @@ func connect_android_runtime_bridge() -> void:
 
 	if SYSTEMAndroidBridge.has_pending_world_request():
 		call_deferred("_consume_pending_android_world_request")
+
+
+func _request_relic_state_refresh() -> void:
+	if not is_instance_valid(SYSTEMAndroidBridge):
+		return
+	var request_id := "relic_state_refresh_" + str(Time.get_ticks_msec())
+	if not SYSTEMAndroidBridge.request_marketplace_operation("refresh_relic_state", {}, request_id):
+		push_warning("SYSTEM relic state: Android server refresh is not connected yet.")
+
+
+func _on_android_marketplace_result(request_id: String, payload: Dictionary) -> void:
+	if not request_id.begins_with("relic_state_refresh_"):
+		return
+	if not bool(payload.get("success", false)):
+		push_warning("SYSTEM relic state refresh failed: " + str(payload.get("error", "unknown")))
+		return
+	var data: Dictionary = payload.get("data", {})
+	var skill_rows: Array = data.get("skills", [])
+	var verified_skill_ids: Array = []
+	for row in skill_rows:
+		if row is Dictionary:
+			verified_skill_ids.append(str(row.get("skillId", "")))
+	if player_progression != null and player_progression.has_method("apply_server_verified_relic_skills"):
+		player_progression.call("apply_server_verified_relic_skills", verified_skill_ids)
+	if artifact_relic_quest_manager != null and artifact_relic_quest_manager.has_method("apply_server_skill_receipts"):
+		artifact_relic_quest_manager.call("apply_server_skill_receipts", skill_rows)
+	print("SYSTEM relic state refreshed from Firebase: skills=", verified_skill_ids.size(),
+		" owned_artifacts=", (data.get("ownedArtifacts", []) as Array).size(),
+		" market_listings=", (data.get("marketListings", []) as Array).size())
 
 
 func _consume_pending_android_world_request() -> void:
@@ -487,6 +520,8 @@ func create_modern_world_combat_system() -> void:
 	add_child(modern_world_combat_system)
 	modern_world_combat_system.call("bind_actor", player, camera, player_progression)
 	modern_world_combat_system.attack_performed.connect(_on_power_tower_attack_performed)
+	if player_progression != null and player_progression.has_signal("relic_skill_activation_requested"):
+		player_progression.relic_skill_activation_requested.connect(modern_world_combat_system.use_relic_skill)
 
 
 func create_baghdad_tower_operations_manager() -> void:
