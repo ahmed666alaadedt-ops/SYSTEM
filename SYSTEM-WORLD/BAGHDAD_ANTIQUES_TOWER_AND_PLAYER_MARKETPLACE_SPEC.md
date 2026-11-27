@@ -341,3 +341,10 @@ The trusted combat server now has `resolveElementalRelicCombat`, restricted to t
 Emulator coverage now exercises lightning against a boss with elemental resistance, single-use receipt enforcement, and server-side water/earth/air outcomes.
 
 **Integration boundary remains:** the current Godot world enemies and player movement/health components are still local runtime objects. A trusted realtime game-server adapter must publish authoritative combatant/vitals documents and reconcile these resolver results back into live sessions before claiming secure online PvP/PvE. The callable resolver and Firestore emulator tests do not, by themselves, connect live Godot combatants to an online authoritative simulation.
+
+
+### Android ↔ Godot elemental activation request bridge
+
+The canonical Godot autoload `SYSTEMAndroidBridge` now allowlists `elemental_authorize` and exposes `request_elemental_activation(skill_id, request_id)`. The Android host routes that request through `FirebaseElementalRelicRepository` to the authenticated callable `authorizeElementalRelicActivation`. The client validates the returned receipt fields before forwarding the result through the existing `marketplace_result` response signal.
+
+This bridge only requests authorization and returns the receipt metadata. It does not publish local Nen/progression as trusted data, invoke the server-only combat resolver, or apply damage/healing/movement locally. Live online combat remains fail-closed until the trusted realtime game server owns combatant state and consumes the receipt.
