@@ -51,24 +51,30 @@ func _process(delta: float) -> void:
 
 
 func _seed_baghdad_residents_if_needed() -> void:
-	var existing: Array = society_manager.call("get_living_npcs", MODERN_WORLD_ID)
-	var existing_minors: Array[Dictionary] = []
-	var existing_adults: Array[Dictionary] = []
-	for resident in existing:
-		if not resident is Dictionary:
+	# Read the society dictionary directly: get_living_npcs() deep-copies every
+	# record, which creates a large avoidable memory spike at 50,000 residents.
+	var population: Dictionary = society_manager.get("npcs")
+	var existing_count := population.size()
+	var existing_minor_count := 0
+	var existing_adult_count := 0
+	for resident_value in population.values():
+		if not resident_value is Dictionary:
+			continue
+		var resident: Dictionary = resident_value
+		if not bool(resident.get("alive", false)) or int(resident.get("world_id", -1)) != MODERN_WORLD_ID:
 			continue
 		if float(resident.get("age_years", 0.0)) < 18.0:
-			existing_minors.append(resident)
+			existing_minor_count += 1
 		else:
-			existing_adults.append(resident)
+			existing_adult_count += 1
 
 	# Older saves may already contain the full starter headcount but no children.
 	# Top up each demographic independently so the visible city always has
 	# family-age variety without duplicating the entire starter population.
-	var created_adults: Array[String] = []
-	var adults_needed := maxi(0, STARTER_RESIDENT_COUNT - existing_adults.size())
+	var created_adults_preview: Array[String] = []
+	var adults_needed := maxi(0, STARTER_RESIDENT_COUNT - existing_adult_count)
 	for offset in range(adults_needed):
-		var index := existing_adults.size() + offset
+		var index := existing_adult_count + offset
 		var age := 18.0 + float((index * 7) % 64)
 		var occupation := str(OCCUPATIONS[index % OCCUPATIONS.size()])
 		var npc_id: String = society_manager.call(
@@ -81,28 +87,26 @@ func _seed_baghdad_residents_if_needed() -> void:
 		)
 		if npc_id.is_empty():
 			continue
-		created_adults.append(npc_id)
+		if created_adults_preview.size() < 8:
+			created_adults_preview.append(npc_id)
 		_configure_resident(npc_id, index, occupation)
 		if offset % NPC_SEED_BATCH_SIZE == NPC_SEED_BATCH_SIZE - 1:
 			await get_tree().process_frame
 
-	for pair_index in range(0, mini(8, created_adults.size() - 1), 2):
-		var first_id := created_adults[pair_index]
-		var second_id := created_adults[pair_index + 1]
+	for pair_index in range(0, mini(8, created_adults_preview.size() - 1), 2):
+		var first_id := created_adults_preview[pair_index]
+		var second_id := created_adults_preview[pair_index + 1]
 		var first: Dictionary = society_manager.call("get_npc", first_id)
 		var second: Dictionary = society_manager.call("get_npc", second_id)
 		if float(first.get("age_years", 0.0)) >= 18.0 and float(second.get("age_years", 0.0)) >= 18.0:
 			society_manager.call("marry_npcs", first_id, second_id)
 
-	var child_ages: Array[float] = []
-	for child_index in range(STARTER_MINOR_COUNT):
-		child_ages.append(6.0 + float(child_index % 12))
-	var children_needed := maxi(0, STARTER_MINOR_COUNT - existing_minors.size())
+	var children_needed := maxi(0, STARTER_MINOR_COUNT - existing_minor_count)
 	var created_children := 0
 	for offset in range(children_needed):
-		var child_index := existing_minors.size() + offset
+		var child_index := existing_minor_count + offset
 		var child_name := "Baghdad Child " + str(child_index + 1)
-		var age := float(child_ages[child_index % child_ages.size()])
+		var age := 6.0 + float(child_index % 12)
 		var child_id: String = society_manager.call(
 			"create_npc",
 			child_name,
@@ -120,7 +124,7 @@ func _seed_baghdad_residents_if_needed() -> void:
 
 	seeded = true
 	print("SYSTEM NPC Life: seeded_city_residents=", existing.size() + created_adults.size() + created_children,
-		" | existing minors=", existing_minors.size(), " | new minors=", created_children)
+		" | existing minors=", existing_minor_count, " | new minors=", created_children, " | total society records=", society_manager.npcs.size())
 
 
 func _configure_resident(npc_id: String, index: int, occupation: String) -> void:
