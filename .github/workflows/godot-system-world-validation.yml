@@ -66,7 +66,14 @@ jobs:
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           LOG="$RUNNER_TEMP/dense-city-life-validation.log"
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_dense_city_life.gd 2>&1 | tee "$LOG"
+          set +e
+          timeout 180s "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_dense_city_life.gd 2>&1 | tee "$LOG"
+          GODOT_STATUS=${PIPESTATUS[0]}
+          set -e
+          if [ "$GODOT_STATUS" -ne 0 ]; then
+            echo "::error::Dense city vegetation validator exited with status $GODOT_STATUS."
+            exit "$GODOT_STATUS"
+          fi
           if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Dense city life validation failed" "$LOG"; then
             echo "::error::Dense city life validation failed."
             exit 1
