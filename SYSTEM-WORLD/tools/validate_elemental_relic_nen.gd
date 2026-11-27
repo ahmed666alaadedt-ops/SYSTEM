@@ -60,7 +60,7 @@ func _run() -> void:
 	actor.velocity = Vector3.ZERO
 	var air: Dictionary = progression.call("activate_relic_skill", "stormwind_aerial_step", actor)
 	_assert(bool(air.get("success", false)), "Air relic did not apply its movement impulse.")
-	_assert(actor.velocity.y >= 5.5 and absf(actor.velocity.z) >= 10.0, "Air relic movement impulse was not applied.")
+	_assert(actor.velocity.y >= 5.5 and actor.has_meta("system_nen_air_dash_direction") and int(actor.get_meta("system_nen_air_dash_until_msec", 0)) > Time.get_ticks_msec(), "Air relic dash request was not handed to the player movement controller.")
 
 	_prepare_skill("tideheart_restoration", 3, 1500, 10)
 	health.set("current_health", 50.0)
