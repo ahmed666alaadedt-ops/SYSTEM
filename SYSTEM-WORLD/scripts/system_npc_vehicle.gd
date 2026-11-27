@@ -65,7 +65,7 @@ func configure(
 			city_anchor + Vector3(34.0, 0.0, 24.0),
 			city_anchor + Vector3(-34.0, 0.0, 24.0)
 		]
-		if _baghdad_osm_waiting_for_cells():
+		if _baghdad_osm_waiting_for_vehicle_graph():
 			is_driving = false
 			set_meta("system_road_route_source", "waiting_for_osm_vehicle_graph")
 		else:
@@ -96,12 +96,9 @@ func _get_baghdad_osm_streamer() -> Node:
 	return world_root.get_node_or_null("BaghdadOSMCellStreamer")
 
 
-func _baghdad_osm_waiting_for_cells() -> bool:
+func _baghdad_osm_waiting_for_vehicle_graph() -> bool:
 	var streamer := _get_baghdad_osm_streamer()
-	if streamer == null or not bool(streamer.get("enabled")):
-		return false
-	var loaded_value: Variant = streamer.get("loaded_cells")
-	return loaded_value is Dictionary and loaded_value.is_empty()
+	return streamer != null and bool(streamer.get("enabled"))
 
 
 func _build_real_osm_vehicle_loop(slot: int) -> Array[Vector3]:
