@@ -1,0 +1,140 @@
+name: Diagnose Godot Null Mesh Renderer
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/baghdad-streaming-lifecycle
+    paths:
+      - "SYSTEM-WORLD/tools/diagnose_null_meshes.gd"
+      - "SYSTEM-WORLD/MainScene.tscn"
+      - "SYSTEM-WORLD/scripts/**"
+      - ".github/workflows/diagnose-godot-null-mesh-renderer.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: godot-null-mesh-renderer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compare-renderers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Godot display dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes xvfb libgl1-mesa-dri mesa-utils
+          glxinfo -B
+
+      - name: Download Godot 4.3
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/godot"
+          curl -L --fail --retry 3 \
+            "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip" \
+            -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+
+      - name: Import project resources
+        shell: bash
+        run: |
+          set -o pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          "$GODOT" --headless --editor --path "$GITHUB_WORKSPACE/SYSTEM-WORLD" --quit \
+            2>&1 | tee "$RUNNER_TEMP/import.log"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/import.log"; then
+            exit 1
+          fi
+
+      - name: Run null-mesh scan with headless dummy renderer
+        shell: bash
+        run: |
+          set -o pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set +e
+          timeout 180s "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/diagnose_null_meshes.gd \
+            2>&1 | tee "$RUNNER_TEMP/dummy-renderer.log"
+          status=${PIPESTATUS[0]}
+          set -e
+          echo "$status" > "$RUNNER_TEMP/dummy-renderer.exit"
+          grep -E "SYSTEM MESH DIAGNOSTIC|SYSTEM WORLD LOAD TEST|Parameter \"m\" is null|SCRIPT ERROR|Parse Error" \
+            "$RUNNER_TEMP/dummy-renderer.log" | tail -n 100 || true
+
+      - name: Run same scan with Mesa OpenGL under Xvfb
+        shell: bash
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          set -o pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set +e
+          timeout 240s xvfb-run -a "$GODOT" --path "$PROJECT" \
+            --rendering-method gl_compatibility --rendering-driver opengl3 \
+            --script res://tools/diagnose_null_meshes.gd \
+            2>&1 | tee "$RUNNER_TEMP/opengl-renderer.log"
+          status=${PIPESTATUS[0]}
+          set -e
+          echo "$status" > "$RUNNER_TEMP/opengl-renderer.exit"
+          grep -E "SYSTEM MESH DIAGNOSTIC|SYSTEM WORLD LOAD TEST|Parameter \"m\" is null|SCRIPT ERROR|Parse Error" \
+            "$RUNNER_TEMP/opengl-renderer.log" | tail -n 100 || true
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/opengl-renderer.log"; then
+            echo "::error::OpenGL renderer reported a script/resource error."
+            exit 1
+          fi
+          if ! grep -q "SYSTEM MESH DIAGNOSTIC:" "$RUNNER_TEMP/opengl-renderer.log"; then
+            echo "::error::OpenGL diagnostic did not reach its mesh report."
+            exit 1
+          fi
+
+      - name: Compare renderer logs and publish diagnosis
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+          root = Path("$RUNNER_TEMP")
+          report = {}
+          for name in ("dummy-renderer", "opengl-renderer"):
+              log_path = root / f"{name}.log"
+              text = log_path.read_text(errors="replace") if log_path.exists() else ""
+              report[name] = {
+                  "exit_code": (root / f"{name}.exit").read_text().strip()
+                      if (root / f"{name}.exit").exists() else "not_run",
+                  "null_mesh_engine_errors": len(re.findall(r'ERROR: Parameter "m" is null\\.', text)),
+                  "mesh_diagnostic": next((line.strip() for line in text.splitlines()
+                      if "SYSTEM MESH DIAGNOSTIC:" in line), None),
+                  "world_load_tests": [line.strip() for line in text.splitlines()
+                      if "SYSTEM WORLD LOAD TEST:" in line],
+                  "script_errors": [line.strip() for line in text.splitlines()
+                      if re.search(r"SCRIPT ERROR|Parse Error|Failed to load script", line)],
+              }
+          out = Path("godot-renderer-comparison.json")
+          out.write_text(json.dumps(report, indent=2) + "\\n")
+          print(out.read_text())
+          PY
+
+      - name: Upload renderer comparison logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-null-mesh-renderer-comparison
+          path: |
+            ${{ runner.temp }}/dummy-renderer.log
+            ${{ runner.temp }}/opengl-renderer.log
+            ${{ runner.temp }}/dummy-renderer.exit
+            ${{ runner.temp }}/opengl-renderer.exit
+            godot-renderer-comparison.json
+          if-no-files-found: warn
