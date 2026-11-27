@@ -11,6 +11,10 @@ var is_blocking := false
 var attack_damage := 34.0
 var heavy_damage := 90.0
 var attack_range := 65.0
+var artifact_skill_next_hit_multiplier := 1.0
+var artifact_skill_damage_multiplier := 1.0
+var artifact_skill_range_multiplier := 1.0
+var artifact_skill_expires_msec := 0
 
 
 func bind_actor(player: CharacterBody3D, combat_camera: Camera3D, player_progression: Node = null) -> void:
@@ -76,6 +80,48 @@ func skill_two() -> Dictionary:
 
 
 
+func activate_artifact_skill(skill_id: String) -> Dictionary:
+	if not is_instance_valid(actor) or not can_attack:
+		return {"success": false, "reason": "COMBAT_ACTOR_UNAVAILABLE"}
+	var skill_key := skill_id.strip_edges().to_lower()
+	var player_progression := _get_progression()
+	if player_progression == null or not player_progression.has_method("record_system_skill_use"):
+		return {"success": false, "reason": "PROGRESSION_UNAVAILABLE"}
+	var use_result: Dictionary = player_progression.call("record_system_skill_use", skill_key)
+	if not bool(use_result.get("success", false)):
+		return use_result
+	match skill_key:
+		"babylon_seal":
+			artifact_skill_next_hit_multiplier = 2.0
+			artifact_skill_damage_multiplier = 1.0
+			artifact_skill_range_multiplier = 1.0
+			artifact_skill_expires_msec = Time.get_ticks_msec() + 15000
+		"pharos_sight":
+			artifact_skill_next_hit_multiplier = 1.0
+			artifact_skill_damage_multiplier = 1.0
+			artifact_skill_range_multiplier = 1.5
+			artifact_skill_expires_msec = Time.get_ticks_msec() + 8000
+		"atlantis_tide_guard":
+			artifact_skill_next_hit_multiplier = 1.0
+			artifact_skill_damage_multiplier = 1.35
+			artifact_skill_range_multiplier = 1.0
+			artifact_skill_expires_msec = Time.get_ticks_msec() + 10000
+		_:
+			return {"success": false, "reason": "UNKNOWN_ARTIFACT_SKILL"}
+	return {"success": true, "skill_id": skill_key, "combat_state": get_artifact_skill_state(), "energy": use_result.get("remaining_energy", 0)}
+
+
+func get_artifact_skill_state() -> Dictionary:
+	var active := Time.get_ticks_msec() < artifact_skill_expires_msec
+	return {
+		"active": active,
+		"next_hit_multiplier": artifact_skill_next_hit_multiplier if active else 1.0,
+		"damage_multiplier": artifact_skill_damage_multiplier if active else 1.0,
+		"range_multiplier": artifact_skill_range_multiplier if active else 1.0,
+		"expires_msec": artifact_skill_expires_msec
+	}
+
+
 func _get_progression() -> Node:
 	if is_instance_valid(progression):
 		return progression
@@ -103,12 +149,22 @@ func _get_attack_cooldown_multiplier() -> float:
 
 
 func _fire_hitscan(damage: float, distance: float) -> void:
+	var resolved_damage := damage
+	var resolved_distance := distance
+	if Time.get_ticks_msec() < artifact_skill_expires_msec:
+		resolved_damage *= artifact_skill_damage_multiplier * artifact_skill_next_hit_multiplier
+		resolved_distance *= artifact_skill_range_multiplier
+		artifact_skill_next_hit_multiplier = 1.0
+	else:
+		artifact_skill_damage_multiplier = 1.0
+		artifact_skill_range_multiplier = 1.0
+		artifact_skill_next_hit_multiplier = 1.0
 	var origin := actor.global_position + Vector3.UP * 1.35
 	var direction := -actor.global_transform.basis.z
 	if is_instance_valid(camera):
 		origin = camera.global_position
 		direction = -camera.global_transform.basis.z
-	var query := PhysicsRayQueryParameters3D.create(origin,origin + direction.normalized() * distance)
+	var query := PhysicsRayQueryParameters3D.create(origin,origin + direction.normalized() * resolved_distance)
 	query.exclude = [actor.get_rid()]
 	query.collide_with_areas = true
 	var result := actor.get_world_3d().direct_space_state.intersect_ray(query)
@@ -123,8 +179,8 @@ func _fire_hitscan(damage: float, distance: float) -> void:
 		_spawn_hit_flash(result.get("position",origin))
 		return
 	if target != null and target.has_method("take_damage"):
-		target.call("take_damage",damage,actor)
-		attack_performed.emit(damage,target)
+		target.call("take_damage",resolved_damage,actor)
+		attack_performed.emit(resolved_damage,target)
 		_spawn_hit_flash(result.get("position",origin))
 
 
