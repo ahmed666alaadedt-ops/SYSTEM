@@ -858,3 +858,18 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Run Godot 4.3 validation and measure the full 50,000-record seed, save/load time, memory, CPU and Android frame pacing.
 - [ ] Profile the five-second nearest-resident refresh and 200-record simulation batch at 50,000 records; optimize only from measured results.
 - Note: code target updated; runtime population creation and mobile performance are not yet verified.
+
+
+## Baghdad million-plant vegetation streaming foundation — 27 November 2026
+
+- [x] Lock the Baghdad vegetation target at 1,000,000 plants across the six approved categories: 150,000 large shade trees, 100,000 palms, 150,000 ornamental/fruit trees, 250,000 shrubs/hedges, 250,000 flowers/groundcover, and 100,000 aquatic/riparian plants.
+- [x] Add a deterministic per-cell vegetation builder driven by verified OSM green-landuse and natural-water polygons; no plants are placed on arbitrary unverified coordinates.
+- [x] Integrate vegetation creation into Baghdad OSM cell load/unload lifecycle so each cell's MultiMesh batches are released with that cell.
+- [x] Batch plant categories with MultiMesh, disable per-plant collision/shadows, apply a per-cell instance safety cap, and bound distant visibility to avoid creating one scene node per plant.
+- [x] Add runtime validation using synthetic park and water polygons to exercise vegetation placement and MultiMesh creation.
+- [ ] Run the updated Godot 4.3 workflow and resolve any parser/runtime issues.
+- [ ] Expand the installed OSM cell pack from its current 5×5 (1 km²) coverage to the reviewed Baghdad municipal extent before claiming citywide million-plant placement.
+- [ ] Add mapped roadside planting corridors and validated green-space coverage where the current OSM landuse layer is sparse; keep plants clear of roads, buildings, bridges, paths and river navigation.
+- [ ] Add and profile explicit near/far vegetation LOD meshes on Android; current pass uses batched category meshes, a 450 m visibility bound, and cell streaming, but Android frame-time/memory validation is still pending.
+- [ ] Compare realized category counts against the six citywide quotas after full municipal cell coverage is installed; current generator is density-driven by mapped green/water polygon area and does not falsely fill unmapped areas.
+- Note: 1,000,000 is the approved citywide target, not the number currently instantiated. The checked-in OSM pack still contains only 25 metric cells of 200 m × 200 m each. The new runtime path creates vegetation only for streamed cells and only on mapped green/water geometry; full-city coverage and device profiling remain required.
