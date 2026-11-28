@@ -67,6 +67,8 @@ func register_city_airport(city_id: String, city_name: String, world_position: V
 	airport_root.set_meta("system_airport_city_id", city_id)
 	airport_root.set_meta("system_airport_city_name", city_name)
 	airport_root.set_meta("system_coordinate_source", coordinate_source)
+	airport_root.set_meta("system_airport_geometry_source", "authored_gameplay_terminal_not_verified_osm_airport")
+	airport_root.set_meta("system_public_civil_transport", true)
 	add_child(airport_root)
 	_build_civil_terminal(airport_root, city_name)
 	_build_runway_and_apron(airport_root)
@@ -237,8 +239,27 @@ func _build_civil_terminal(parent: Node3D, city_name: String) -> void:
 		_add_box(parent, "WaitingSeat_%02d" % seat_index, Vector3(-24.0 + float(col) * 16.0, 1.2, 8.0 + float(row) * 5.0), Vector3(6, 1.1, 2.2), shell_material)
 	_add_box(parent, "CheckInCounter", Vector3(-25, 2, 15), Vector3(24, 2, 3), shell_material)
 	_add_box(parent, "BaggageCarousel", Vector3(0, 1.5, -31), Vector3(28, 1.0, 5), shell_material)
+	var ticket_area := Area3D.new()
+	ticket_area.name = "AirportTicketAndBoardingInteraction"
+	ticket_area.add_to_group("system_interactable")
+	ticket_area.position = Vector3(0, 3, 12)
+	var ticket_shape := CollisionShape3D.new()
+	var ticket_box := BoxShape3D.new()
+	ticket_box.size = Vector3(72, 6, 28)
+	ticket_shape.shape = ticket_box
+	ticket_area.add_child(ticket_shape)
+	ticket_area.set_meta("system_interaction_prompt", "شراء تذكرة أو الصعود إلى الرحلة")
+	ticket_area.set_meta("system_transport_hub_type", "civil_airport")
+	parent.add_child(ticket_area)
+	for passenger_index in range(16):
+		var spawn := Marker3D.new()
+		spawn.name = "AirportPassengerSpawn_%02d" % passenger_index
+		spawn.position = Vector3(-32.0 + float(passenger_index % 8) * 9.0, 0.2, 18.0 + float(int(passenger_index / 8)) * 8.0)
+		spawn.set_meta("system_npc_spawn_role", "airport_passenger")
+		parent.add_child(spawn)
 	parent.set_meta("system_terminal_features", ["check_in", "departure_boards", "boarding_gates", "waiting_lounge", "baggage_arrivals", "npc_passenger_spawn_points"])
-	parent.set_meta("system_terminal_interior_state", "authored_exterior_and_interactive_layout_pending_player_ui_and_npc_binding")
+	parent.set_meta("system_passenger_spawn_point_count", 16)
+	parent.set_meta("system_terminal_interior_state", "authored_terminal_layout; passenger_ui_and_live_npc_binding_pending")
 	parent.set_meta("system_terminal_city_name", city_name)
 
 
@@ -272,6 +293,17 @@ func _build_baghdad_airship_station() -> void:
 	_add_box(_airship_station, "AirshipStationSign", Vector3(0, 15, 28), Vector3(34, 3, 0.8), glow)
 	for index in range(10):
 		_add_box(_airship_station, "AirshipWaitingBench_%02d" % index, Vector3(-32.0 + float(index % 5) * 16.0, 2.2, -16.0 + float(int(index / 5)) * 28.0), Vector3(7, 1.0, 2.0), platform_material)
+	var boarding_area := Area3D.new()
+	boarding_area.name = "AirshipBoardingInteraction"
+	boarding_area.add_to_group("system_interactable")
+	var boarding_shape := CollisionShape3D.new()
+	var boarding_box := BoxShape3D.new()
+	boarding_box.size = Vector3(70, 8, 42)
+	boarding_shape.shape = boarding_box
+	boarding_area.add_child(boarding_shape)
+	boarding_area.set_meta("system_interaction_prompt", "شراء تذكرة المنطاد والصعود")
+	boarding_area.set_meta("system_transport_route_id", "baghdad_airship_loop")
+	_airship_station.add_child(boarding_area)
 	_airship_station.set_meta("system_route_id", "baghdad_airship_loop")
 	_airship_station.set_meta("system_boarding_flow", ["ticket_validation", "waiting_lounge", "boarding_bridge", "passenger_cabin", "arrival_platform"])
 	_airship_station.set_meta("system_access_state", "fictional_game_transport_hub")
