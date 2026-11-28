@@ -350,7 +350,9 @@ func _run_validation() -> void:
 	for synthetic_tags in [
 		{"building": "public", "religion": "muslim"},
 		{"building": "religious", "religion": "christian"},
-		{"amenity": "place_of_worship", "religion": "muslim"}
+		{"amenity": "place_of_worship", "religion": "muslim"},
+		{"building": "chapel", "religion": "christian"},
+		{"building": "cathedral", "religion": "christian"}
 	]:
 		var synthetic := {
 			"id": "runtime_worship_%d" % synthetic_index,
