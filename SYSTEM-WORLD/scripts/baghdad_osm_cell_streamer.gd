@@ -731,7 +731,7 @@ func _add_procedural_facade_windows(
 ) -> int:
 	# The 1 km regional overview stays as a cheap extrusion LOD. Only the
 	# 200 m playable cells collect close-range facade windows.
-	if overview_mode or height < 5.0 or ring.size() < 3 or kind in ["mosque", "church"]:
+	if overview_mode or height < 5.0 or ring.size() < 3 or kind in ["mosque", "church", "shrine", "monastery"]:
 		return 0
 	var window_size := Vector3(1.1, 1.4, 0.12)
 	var spacing := 4.2
@@ -826,7 +826,7 @@ func _collect_modern_facade_architecture(
 	# Lightweight modern architectural rhythm for close-range 200 m cells:
 	# vertical corner fins and a continuous roofline cornice. All instances
 	# are packed into one cell-level MultiMesh to keep Android draw calls low.
-	if overview_mode or ring.size() < 3 or height < 5.0 or kind in ["mosque", "church"]:
+	if overview_mode or ring.size() < 3 or height < 5.0 or kind in ["mosque", "church", "shrine", "monastery"]:
 		return 0
 	var transforms: Array = parent.get_meta("system_facade_architecture_transforms", [])
 	var colors: Array = parent.get_meta("system_facade_architecture_colors", [])
