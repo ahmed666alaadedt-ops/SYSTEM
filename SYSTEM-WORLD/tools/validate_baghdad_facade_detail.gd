@@ -140,8 +140,37 @@ func _run() -> void:
 		_fail("Villa entrance is missing its lintel or covered entry canopy.")
 		return
 
+	var palace_feature := {
+		"id": "facade_validation_palace_001",
+		"geometry": {
+			"type": "Polygon",
+			"coordinates": [[[80.0, 0.0], [112.0, 0.0], [112.0, 26.0], [80.0, 26.0], [80.0, 0.0]]]
+		},
+		"tags": {
+			"building": "palace",
+			"height": "18",
+			"name:ar": "قصر اختبار الواجهة"
+		}
+	}
+	var palace_road := [{
+		"id": "facade_validation_palace_road_001",
+		"geometry": {"type": "LineString", "coordinates": [[60.0, 13.0], [75.0, 13.0]]},
+		"tags": {"highway": "tertiary"}
+	}]
+	var palace_built := int(streamer.call("_build_building_feature", streamer, palace_feature, palace_road))
+	if palace_built != 1:
+		_fail("Synthetic Baghdad palace footprint did not build.")
+		return
+	var palace_entrance := streamer.get_node_or_null("LuxuryResidentialEntrance_facade_validation_palace_001") as Node3D
+	if palace_entrance == null or str(palace_entrance.get_meta("system_luxury_building_kind", "")) != "palace":
+		_fail("Close-range palace renderer did not create its distinct road-facing entrance treatment.")
+		return
+	if streamer.get_node_or_null("LuxuryEntryColumn_facade_validation_palace_001_L") == null or streamer.get_node_or_null("LuxuryEntryCanopy_facade_validation_palace_001") == null:
+		_fail("Palace entrance is missing its architectural columns or covered entry canopy.")
+		return
+
 	print("Baghdad facade detail validation passed: five-floor apartment generated ", window_count,
-		" instanced windows across five vertical facade bands; regional 1 km overview remains extrusion-only; close-range villa includes a road-facing columned entry canopy; per-building window budget <= 32.")
+		" instanced windows across five vertical facade bands; regional 1 km overview remains extrusion-only; close-range villa and palace include road-facing columned entry canopies; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
 	quit(0)
 
