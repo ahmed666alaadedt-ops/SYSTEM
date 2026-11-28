@@ -35,6 +35,43 @@ func _run_validation() -> void:
 		_fail("Arabic OSM villa/palace names were not preserved.")
 		return
 	print("Baghdad luxury-residential tagging QA passed: villa/palace classes, mapped dimensions and Arabic names.")
+	# OSM entrance points must resolve to their true nearby footprint, while
+	# private and geometrically ambiguous matches remain non-enterable/review-only.
+	var entrance_test_root := Node3D.new()
+	root.add_child(entrance_test_root)
+	var entrance_buildings := [
+		{"id": "entrance_building_public", "geometry": {"type": "Polygon", "coordinates": [[[0.0, 0.0], [10.0, 0.0], [10.0, 8.0], [0.0, 8.0], [0.0, 0.0]]]}, "tags": {"building": "yes"}},
+		{"id": "entrance_building_private", "geometry": {"type": "Polygon", "coordinates": [[[20.0, 0.0], [30.0, 0.0], [30.0, 8.0], [20.0, 8.0], [20.0, 0.0]]]}, "tags": {"building": "yes", "access": "private"}},
+		{"id": "entrance_building_ambiguous_a", "geometry": {"type": "Polygon", "coordinates": [[[40.0, 0.0], [50.0, 0.0], [50.0, 8.0], [40.0, 8.0], [40.0, 0.0]]]}, "tags": {"building": "yes"}},
+		{"id": "entrance_building_ambiguous_b", "geometry": {"type": "Polygon", "coordinates": [[[50.5, 0.0], [60.5, 0.0], [60.5, 8.0], [50.5, 8.0], [50.5, 0.0]]]}, "tags": {"building": "yes"}}
+	]
+	var entrance_cases := [
+		{"id": "verified_nearby", "point": [10.5, 4.0], "expected": "associated", "building": "entrance_building_public"},
+		{"id": "private_access", "point": [25.0, 4.0], "expected": "restricted", "building": "entrance_building_private"},
+		{"id": "ambiguous_match", "point": [50.25, 4.0], "expected": "review_ambiguous", "building": "entrance_building_ambiguous_a"}
+	]
+	for entrance_case in entrance_cases:
+		var entrance_feature := {
+			"id": "runtime_entrance_" + str(entrance_case.id),
+			"geometry": {"type": "Point", "coordinates": entrance_case.point},
+			"tags": {"entrance": "main"}
+		}
+		if int(streamer._build_entrance_feature(entrance_test_root, entrance_feature, entrance_buildings)) != 1:
+			_fail("Mapped OSM entrance point did not build: " + str(entrance_case.id))
+			return
+		var entrance_node := entrance_test_root.get_node_or_null("OSMEntrance_runtime_entrance_%s" % str(entrance_case.id)) as Node3D
+		if entrance_node == null or str(entrance_node.get_meta("system_building_association_status", "")) != str(entrance_case.expected):
+			_fail("OSM entrance association status is incorrect: " + str(entrance_case.id))
+			return
+		if str(entrance_node.get_meta("system_associated_building_id", "")) != str(entrance_case.building):
+			_fail("OSM entrance association did not retain the nearest mapped building ID: " + str(entrance_case.id))
+			return
+		var entrance_interaction := entrance_node.get_node_or_null("MappedEntranceInteraction") as StaticBody3D
+		if entrance_interaction == null or str(entrance_interaction.get_meta("system_building_association_status", "")) != str(entrance_case.expected):
+			_fail("OSM entrance interaction lost its building association status: " + str(entrance_case.id))
+			return
+	entrance_test_root.free()
+	print("Baghdad OSM entrance association QA passed: nearest footprint, private access and ambiguous matches are distinguished.")
 	if not streamer.enabled:
 		_fail("Baghdad OSM cell pack did not enable.")
 		return
