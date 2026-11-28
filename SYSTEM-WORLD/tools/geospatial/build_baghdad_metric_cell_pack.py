@@ -36,7 +36,15 @@ KEEP_TAGS = {
     "wetland", "tidal", "seasonal", "marsh",
     "healthcare", "emergency", "office", "craft", "cuisine", "opening_hours",
     "public_transport", "brand", "building:use", "addr:street", "addr:city",
-    "entrance", "door", "wheelchair", "level", "indoor"
+    "entrance", "door", "wheelchair", "level", "indoor",
+    "lit", "street_lamp", "crossing", "crossing:island", "traffic_signals",
+    "traffic_calming", "bus", "bus_stop", "shelter", "bench",
+    "drinking_water", "waste_basket", "toilets", "fountain", "playground",
+    "parking", "bicycle_parking", "motorcycle_parking", "parking:lane",
+    "kerb", "tactile_paving", "incline", "smoothness", "footway",
+    "sidewalk", "sidewalk:left", "sidewalk:right", "cycleway:left",
+    "cycleway:right", "lanes:forward", "lanes:backward", "turn:lanes",
+    "junction", "access:conditional", "fee", "network", "route"
 }
 
 
