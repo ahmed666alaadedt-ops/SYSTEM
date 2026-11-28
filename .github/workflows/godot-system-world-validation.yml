@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - feature/baghdad-five-plus-power-tower-20261122
+      - fix/baghdad-citywide-osm-road-network-20261127
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/godot-system-world-validation.yml"
