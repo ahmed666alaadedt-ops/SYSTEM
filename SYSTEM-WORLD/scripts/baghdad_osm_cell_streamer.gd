@@ -241,7 +241,8 @@ func _load_cell(cell: Vector2i) -> void:
 	var road_count := 0
 	for feature in road_features:
 		var road_tags: Dictionary = feature.get("tags", {})
-		road_count += _build_line_feature(cell_root, feature, _road_width(road_tags), _road_surface_material(road_tags), 0.16, "OSMRoad")
+		if not _is_hidden_restricted_map_feature(road_tags):
+			road_count += _build_line_feature(cell_root, feature, _road_width(road_tags), _road_surface_material(road_tags), 0.16, "OSMRoad")
 	if not overview_mode:
 		_flush_road_marking_multimesh(cell_root)
 		_flush_sidewalk_multimesh(cell_root)
@@ -267,12 +268,16 @@ func _load_cell(cell: Vector2i) -> void:
 		water_count += _build_line_feature(cell_root, feature, _water_width(feature.get("tags", {})), water_material, 0.10, "OSMWaterway")
 	var bridge_count := 0
 	for feature in layers.get("bridges", []):
-		bridge_count += _build_line_feature(cell_root, feature, maxf(_road_width(feature.get("tags", {})), 3.0), bridge_material, 0.28, "OSMBridge")
+		var bridge_tags: Dictionary = feature.get("tags", {})
+		if not _is_hidden_restricted_map_feature(bridge_tags):
+			bridge_count += _build_line_feature(cell_root, feature, maxf(_road_width(bridge_tags), 3.0), bridge_material, 0.28, "OSMBridge")
 	for feature in layers.get("railway", []):
-		_build_line_feature(cell_root, feature, 2.2, bridge_material, 0.20, "OSMRailway")
+		var railway_tags: Dictionary = feature.get("tags", {})
+		if not _is_hidden_restricted_map_feature(railway_tags):
+			_build_line_feature(cell_root, feature, 2.2, bridge_material, 0.20, "OSMRailway")
 	for feature in layers.get("landuse", []):
 		var landuse_tags: Dictionary = feature.get("tags", {})
-		if not _is_sensitive_state_site(landuse_tags):
+		if not _is_hidden_restricted_map_feature(landuse_tags):
 			_build_area_feature(cell_root, feature, land_material, 0.035, "OSMLanduse")
 	for feature in layers.get("natural-water", []):
 		_build_area_feature(cell_root, feature, water_material, 0.08, "OSMNaturalWater")
@@ -459,7 +464,7 @@ func _is_polygon_worship_feature(feature: Dictionary) -> bool:
 
 func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	var tags: Dictionary = feature.get("tags", {})
-	if _is_sensitive_state_site(tags):
+	if _is_hidden_restricted_map_feature(tags):
 		return 0
 	var geometry: Dictionary = feature.get("geometry", {})
 	var geometry_type := str(geometry.get("type", ""))
@@ -1574,6 +1579,8 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary, building_featu
 	if str(geometry.get("type", "")) != "Point":
 		return 0
 	var tags: Dictionary = feature.get("tags", {})
+	if _is_hidden_restricted_map_feature(tags):
+		return 0
 	var entrance_kind := str(tags.get("entrance", "")).to_lower()
 	var door_kind := str(tags.get("door", "")).to_lower()
 	if entrance_kind == "no" or door_kind == "no":
@@ -1584,6 +1591,9 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary, building_featu
 	var point := Vector2(float(coordinates[0]), float(coordinates[1]))
 	var position := Vector3(point.x, _terrain_height(point), point.y)
 	var feature_id := str(feature.get("id", "unknown"))
+	var association := _find_entrance_building_association(point, building_features, tags)
+	if bool(association.get("sensitive_site", false)):
+		return 0
 	var location_id := "baghdad_osm_entrance_" + feature_id
 	var entrance_label := "مدخل مبنى موثق من بيانات OpenStreetMap"
 	if entrance_kind == "main":
@@ -1598,7 +1608,6 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary, building_featu
 	root.name = "OSMEntrance_%s" % feature_id
 	root.position = position
 	root.set_meta("osm_feature_id", feature_id)
-	var association := _find_entrance_building_association(point, building_features, tags)
 	root.set_meta("system_associated_building_id", str(association.get("building_id", "")))
 	root.set_meta("system_building_association_status", str(association.get("status", "unmatched")))
 	root.set_meta("system_building_association_distance_m", float(association.get("distance_m", -1.0)))
@@ -1699,8 +1708,9 @@ func _find_entrance_building_association(point: Vector2, building_features: Arra
 		return {"status": "review_ambiguous", "building_id": best_id, "distance_m": best_distance}
 	var access := str(best_tags.get("access", "")).to_lower()
 	var entrance_access := str(entrance_tags.get("access", "")).to_lower()
-	if entrance_access in ["no", "private"] or access in ["no", "private"]:
-		return {"status": "restricted", "building_id": best_id, "distance_m": best_distance}
+	var sensitive_site := _is_sensitive_state_site(best_tags)
+	if sensitive_site or entrance_access in ["no", "private", "restricted", "military"] or access in ["no", "private", "restricted", "military"]:
+		return {"status": "restricted", "building_id": best_id, "distance_m": best_distance, "sensitive_site": true}
 	if best_distance <= 2.0:
 		return {"status": "associated", "building_id": best_id, "distance_m": best_distance}
 	if best_distance <= 5.0:
@@ -1711,7 +1721,7 @@ func _find_entrance_building_association(point: Vector2, building_features: Arra
 func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
 	var tags: Dictionary = feature.get("tags", {})
-	if _is_sensitive_state_site(tags):
+	if _is_hidden_restricted_map_feature(tags):
 		return 0
 	if str(geometry.get("type", "")) != "Point":
 		if str(tags.get("aeroway", "")).to_lower() != "":
@@ -2315,6 +2325,11 @@ func _building_height(tags: Dictionary) -> float:
 	if kind in ["commercial", "office", "retail"]:
 		return 12.0
 	return 6.0
+
+
+func _is_hidden_restricted_map_feature(tags: Dictionary) -> bool:
+	var access := str(tags.get("access", "")).to_lower()
+	return _is_sensitive_state_site(tags) or access in ["private", "no", "restricted", "military"]
 
 
 func _is_sensitive_state_site(tags: Dictionary) -> bool:
