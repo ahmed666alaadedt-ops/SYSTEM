@@ -346,6 +346,8 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 			var historic_kind := str(tags.get("historic", "")).to_lower()
 			var leisure_kind := str(tags.get("leisure", "")).to_lower()
 			var aeroway_kind := str(tags.get("aeroway", "")).to_lower()
+			var public_transport_kind := str(tags.get("public_transport", "")).to_lower()
+			var railway_kind := str(tags.get("railway", "")).to_lower()
 			if amenity_kind in ["hospital", "clinic", "doctors", "pharmacy"] or healthcare_kind != "":
 				facility_type = "healthcare"
 			elif amenity_kind in ["school", "university", "college", "kindergarten"] or str(tags.get("education", "")).to_lower() != "":
@@ -354,6 +356,8 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 				facility_type = "police"
 			elif amenity_kind in ["fire_station", "post_office", "bank", "townhall", "library"] or office_kind != "" or craft_kind != "":
 				facility_type = "civic"
+			elif amenity_kind == "marketplace" or shop_kind in ["mall", "department_store"]:
+				facility_type = "market"
 			elif shop_kind != "":
 				facility_type = "shop"
 			elif amenity_kind in ["restaurant", "cafe", "fast_food", "food_court"]:
@@ -364,7 +368,7 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 				facility_type = "heritage"
 			elif leisure_kind != "":
 				facility_type = "leisure"
-			elif aeroway_kind != "":
+			elif amenity_kind in ["bus_station", "bus_stop", "ferry_terminal", "parking"] or public_transport_kind in ["station", "platform", "stop_position"] or railway_kind in ["station", "halt", "tram_stop", "subway_entrance"] or aeroway_kind != "":
 				facility_type = "transport"
 		if facility_type != "":
 			instance.set_meta("system_facility_type", facility_type)
@@ -440,6 +444,8 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	var craft := str(tags.get("craft", "")).to_lower()
 	var office := str(tags.get("office", "")).to_lower()
 	var aeroway := str(tags.get("aeroway", "")).to_lower()
+	var public_transport := str(tags.get("public_transport", "")).to_lower()
+	var railway := str(tags.get("railway", "")).to_lower()
 	var facility_type := "public_service"
 	var display_name := "مرفق خدمي"
 	var worship_type := _worship_facility_type(tags)
@@ -466,6 +472,9 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	elif amenity in ["police", "police_station"]:
 		facility_type = "police"
 		display_name = "مركز شرطة"
+	elif amenity == "marketplace" or shop in ["mall", "department_store"]:
+		facility_type = "market"
+		display_name = "سوق أو مركز تسوق"
 	elif shop != "":
 		facility_type = "shop"
 		display_name = "محل تجاري"
@@ -487,6 +496,9 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	elif leisure != "":
 		facility_type = "leisure"
 		display_name = "مرفق ترفيهي أو حديقة"
+	elif amenity in ["bus_station", "bus_stop", "ferry_terminal", "parking"] or public_transport in ["station", "platform", "stop_position"] or railway in ["station", "halt", "tram_stop", "subway_entrance"]:
+		facility_type = "transport"
+		display_name = "مرفق نقل عام"
 	elif aeroway != "":
 		facility_type = "transport"
 		display_name = "مرفق طيران"
