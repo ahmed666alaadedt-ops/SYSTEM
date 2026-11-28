@@ -98,6 +98,7 @@ func _build_bidirectional_city_routes() -> void:
 			var origin_id := str(city_ids[i])
 			var destination_id := str(city_ids[j])
 			_register_route_pair(origin_id, destination_id, "aircraft")
+			_register_route_pair(origin_id, destination_id, "fictional_airship")
 
 
 func _register_route_pair(origin_id: String, destination_id: String, transport_type: String) -> void:
@@ -108,10 +109,13 @@ func _register_route_pair(origin_id: String, destination_id: String, transport_t
 	var origin_position: Vector3 = origin.get("position", Vector3.ZERO)
 	var destination_position: Vector3 = destination.get("position", Vector3.ZERO)
 	var distance: float = origin_position.distance_to(destination_position)
-	var duration_minutes := maxi(5, int(ceil(distance / 230.0 / 60.0)))
+	var transport_speed := 230.0 if transport_type == "aircraft" else AIRSHIP_SPEED_MPS
+	var minimum_duration := 5 if transport_type == "aircraft" else 10
+	var route_capacity := CITY_AIRCRAFT_CAPACITY if transport_type == "aircraft" else AIRSHIP_MAX_CAPACITY
+	var duration_minutes := maxi(minimum_duration, int(ceil(distance / transport_speed / 60.0)))
 	var route_id := origin_id + "__" + destination_id + "__" + transport_type
 	var reverse_id := destination_id + "__" + origin_id + "__" + transport_type
-	routes[route_id] = {"route_id": route_id, "origin_city_id": origin_id, "destination_city_id": destination_id, "transport_type": transport_type, "duration_minutes": duration_minutes, "capacity": CITY_AIRCRAFT_CAPACITY, "enabled": true}
+	routes[route_id] = {"route_id": route_id, "origin_city_id": origin_id, "destination_city_id": destination_id, "transport_type": transport_type, "duration_minutes": duration_minutes, "capacity": route_capacity, "enabled": true}
 	routes[reverse_id] = {"route_id": reverse_id, "origin_city_id": destination_id, "destination_city_id": origin_id, "transport_type": transport_type, "duration_minutes": duration_minutes, "capacity": CITY_AIRCRAFT_CAPACITY, "enabled": true}
 
 
