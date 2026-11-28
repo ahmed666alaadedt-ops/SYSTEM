@@ -464,7 +464,7 @@ jobs:
                           religion = str(tags.get("religion", "")).lower()
                           building = str(tags.get("building", "")).lower()
                           osm_key = (str(item.get("osm_type", "")), str(item.get("id", "")))
-                          if amenity == "place_of_worship" or building in ("mosque", "church", "synagogue", "temple", "monastery"):
+                          if amenity == "place_of_worship" or building in ("mosque", "church", "synagogue", "temple", "monastery", "shrine"):
                               record = worship_objects.setdefault(osm_key, {"tags": {}, "geometries": set()})
                               record["tags"].update(tags)
                               record["geometries"].add(str(item.get("geometry", {}).get("type", "unknown")))
@@ -481,7 +481,7 @@ jobs:
                               facility_types["education"] += 1
           assert totals["buildings"] >= 1000, f"Too few mapped Baghdad building footprints: {totals['buildings']}"
           assert totals["amenities"] >= 10, f"Too few mapped public/commercial POIs: {totals['amenities']}"
-          actual_worship = {"mosque": 0, "church": 0, "other_or_unspecified": 0, "conflict": 0}
+          actual_worship = {"mosque": 0, "church": 0, "shrine": 0, "other_or_unspecified": 0, "conflict": 0}
           actual_geometry = {key: {} for key in actual_worship}
           for record in worship_objects.values():
               tags = record["tags"]
@@ -498,6 +498,8 @@ jobs:
                   category = "mosque"
               elif building == "church":
                   category = "church"
+              elif building == "shrine":
+                  category = "shrine"
               else:
                   category = "other_or_unspecified"
               geometries = record["geometries"]
@@ -505,7 +507,7 @@ jobs:
               actual_worship[category] += 1
               actual_geometry[category][geometry] = actual_geometry[category].get(geometry, 0) + 1
           assert len(worship_objects) == expected_worship["unique_worship_objects"], (len(worship_objects), expected_worship)
-          for category, expected_key in (("mosque", "mosques"), ("church", "churches"), ("other_or_unspecified", "other_or_unspecified"), ("conflict", "conflicting_tags")):
+          for category, expected_key in (("mosque", "mosques"), ("church", "churches"), ("shrine", "shrines"), ("other_or_unspecified", "other_or_unspecified"), ("conflict", "conflicting_tags")):
               assert actual_worship[category] == expected_worship[expected_key], (category, actual_worship, expected_worship)
               assert actual_geometry[category] == audit["preferred_geometry_counts"][category], (category, actual_geometry[category], audit["preferred_geometry_counts"][category])
           print("Verified citywide Baghdad urban overview:", len(names), "occupied 1 km cells")
