@@ -5,12 +5,15 @@ on:
     branches:
       - main
       - feature/baghdad-five-plus-power-tower-20261122
+      - 'fix/**'
     paths:
       - ".github/workflows/verify-baghdad-osm-source.yml"
       - "SYSTEM-WORLD/data/geography/real_world_registry.json"
       - "SYSTEM-WORLD/tools/geospatial/clip_osm_geojson_layers.py"
       - "SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py"
+      - "SYSTEM-WORLD/tools/geospatial/audit_baghdad_religious_sites.py"
       - "SYSTEM-WORLD/scripts/baghdad_osm_cell_streamer.gd"
+      - "SYSTEM-WORLD/scripts/modern_world_air_transport_manager.gd"
       - "SYSTEM-WORLD/scripts/world_manager.gd"
       - "SYSTEM-WORLD/scripts/modern_world_region_manager.gd"
       - "SYSTEM-WORLD/scripts/modern_continent_manager.gd"
@@ -19,6 +22,10 @@ on:
       - "SYSTEM-WORLD/tools/validate_baghdad_osm_runtime.gd"
       - "SYSTEM-WORLD/tools/validate_baghdad_towers.gd"
   workflow_dispatch:
+
+concurrency:
+  group: verify-baghdad-osm-source-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -191,11 +198,13 @@ jobs:
           osmium tags-filter baghdad-municipality-candidate.osm.pbf w/waterway -o waterways.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf w/bridge -o bridges.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/landuse -o landuse.osm.pbf
-          osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/amenity -o amenities.osm.pbf
+          # Keep public amenities plus named commercial, visitor, heritage, leisure and specialist services.
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/amenity nwr/shop nwr/tourism nwr/historic nwr/leisure nwr/healthcare nwr/craft nwr/office nwr/emergency nwr/aeroway n/public_transport n/highway=bus_stop n/railway=station n/railway=halt n/railway=tram_stop n/railway=subway_entrance -o amenities.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf w/railway -o railway.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/natural=water -o natural-water.osm.pbf
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/natural=wetland nwr/wetland -o wetlands.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf n/entrance n/door n/building=entrance -o entrances.osm.pbf
-          for layer in buildings roads waterways bridges landuse amenities railway natural-water entrances; do
+          for layer in buildings roads waterways bridges landuse amenities railway natural-water wetlands entrances; do
             osmium fileinfo --extended --json "$layer.osm.pbf" > "$layer-fileinfo.json"
           done
           osmium export --geometry-types=point,polygon --attributes type,id --output buildings.geojson buildings.osm.pbf
@@ -206,6 +215,7 @@ jobs:
           osmium export --geometry-types=point,linestring,polygon --attributes type,id --output amenities.geojson amenities.osm.pbf
           osmium export --geometry-types=point,linestring --attributes type,id --output railway.geojson railway.osm.pbf
           osmium export --geometry-types=point,polygon --attributes type,id --output natural-water.geojson natural-water.osm.pbf
+          osmium export --geometry-types=point,polygon --attributes type,id --output wetlands.geojson wetlands.osm.pbf
           osmium export --geometry-types=point --attributes type,id --output entrances.geojson entrances.osm.pbf
           python3 - <<'PY'
           import hashlib
@@ -220,11 +230,11 @@ jobs:
               Path("baghdad-clip-fileinfo.json").read_text(encoding="utf-8")
           )
           report["feature_layer_counts"] = {}
-          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "entrances"]:
+          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "wetlands", "entrances"]:
               layer_info = json.loads(Path(f"{layer}-fileinfo.json").read_text(encoding="utf-8"))
               report["feature_layer_counts"][layer] = layer_info.get("data", {}).get("count", {})
           report["geojson_layer_stats"] = {}
-          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "entrances"]:
+          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "wetlands", "entrances"]:
               geojson = json.loads(Path(f"{layer}.geojson").read_text(encoding="utf-8"))
               geometry_counts = {}
               for feature in geojson.get("features", []):
@@ -234,6 +244,24 @@ jobs:
                   "feature_count": len(geojson.get("features", [])),
                   "geometry_types": geometry_counts,
               }
+          amenities = json.loads(Path("amenities.geojson").read_text(encoding="utf-8")).get("features", [])
+          civil_aeroway_counts = {}
+          civil_aeroway_geometry_counts = {}
+          for feature in amenities:
+              properties = feature.get("properties") or {}
+              aeroway = str(properties.get("aeroway", "")).lower()
+              if not aeroway:
+                  continue
+              if properties.get("military") or properties.get("security"):
+                  continue
+              if str(properties.get("access", "")).lower() in {"private", "no", "restricted"}:
+                  continue
+              civil_aeroway_counts[aeroway] = civil_aeroway_counts.get(aeroway, 0) + 1
+              geometry_type = (feature.get("geometry") or {}).get("type", "null")
+              civil_aeroway_geometry_counts[geometry_type] = civil_aeroway_geometry_counts.get(geometry_type, 0) + 1
+          report["public_civil_aeroway_feature_counts"] = civil_aeroway_counts
+          report["public_civil_aeroway_geometry_counts"] = civil_aeroway_geometry_counts
+          report["public_civil_aeroway_feature_total"] = sum(civil_aeroway_counts.values())
           report["contributor_metadata_cleaning_applied"] = [
               "version", "timestamp", "changeset", "uid", "user"
           ]
@@ -276,6 +304,16 @@ jobs:
               encoding="utf-8",
           )
           PY
+
+      - name: Audit all Baghdad religious sites across amenity and building layers
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          python3 "$GITHUB_WORKSPACE/SYSTEM-WORLD/tools/geospatial/audit_baghdad_religious_sites.py" \
+            --input-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
+            --source-verification "$RUNNER_TEMP/baghdad-source/baghdad-source-verification.json" \
+            --output "$RUNNER_TEMP/baghdad-source/baghdad-religious-sites-audit.json"
 
       - name: Verify Republic Bridge and Tigris against the current OSM snapshot
         shell: bash
@@ -356,6 +394,172 @@ jobs:
               print("Validated Baghdad core + Republic Bridge metric cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells; bridge and Tigris present.")
           PY
 
+      - name: Build citywide Baghdad road overview at 1 km streaming resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          python3 "$GITHUB_WORKSPACE/SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py" \
+            --input-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
+            --output "$RUNNER_TEMP/baghdad-source/baghdad-citywide-roads-1km.zip" \
+            --cell-size 1000 \
+            --layers roads \
+            --bounds-geojson "$RUNNER_TEMP/baghdad-source/baghdad-boundary.geojson" \
+            --source-timestamp "$(python3 -c 'import json; print(json.load(open("baghdad-source-verification.json"))["snapshot_timestamp"])')"
+          python3 - <<'PY'
+          import json
+          import zipfile
+          from pathlib import Path
+
+          path = Path("baghdad-citywide-roads-1km.zip")
+          with zipfile.ZipFile(path) as archive:
+              manifest = json.loads(archive.read("manifest.json"))
+              names = [name for name in archive.namelist() if name.startswith("cells/")]
+              assert manifest["region_id"] == "iraq_baghdad_region"
+              assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
+              assert manifest["cell_size_m"] == 1000.0
+              assert manifest["layers_included"] == ["roads"]
+              min_x, max_x, min_z, max_z = manifest["cell_bounds_inclusive"]
+              assert (max_x - min_x + 1) >= 20, manifest["cell_bounds_inclusive"]
+              assert (max_z - min_z + 1) >= 20, manifest["cell_bounds_inclusive"]
+              assert len(names) == manifest["cell_count"] and len(names) >= 100
+              occupied = set()
+              road_parts = 0
+              unique_ids = set()
+              quadrants = set()
+              mid_x, mid_z = (min_x + max_x) / 2, (min_z + max_z) / 2
+              for name in names:
+                  tile = json.loads(archive.read(name))
+                  x, z = int(tile["cell_x"]), int(tile["cell_z"])
+                  roads = tile.get("layers", {}).get("roads", [])
+                  if roads:
+                      occupied.add((x, z))
+                      road_parts += len(roads)
+                      unique_ids.update(str(item.get("id", "")) for item in roads)
+                      quadrants.add((x >= mid_x, z >= mid_z))
+              assert len(occupied) >= 100, f"Only {len(occupied)} road-occupied cells"
+              assert road_parts >= 500, f"Only {road_parts} road fragments"
+              assert len(unique_ids) >= 100, f"Only {len(unique_ids)} distinct OSM road ways"
+              assert len(quadrants) == 4, f"Road coverage missing one or more municipal quadrants: {quadrants}"
+              print("Verified citywide Baghdad road overview:", len(occupied), "occupied 1 km cells;", road_parts, "road fragments;", len(unique_ids), "unique OSM ways; four quadrants covered.")
+          PY
+
+      - name: Build citywide Baghdad urban detail overview at 1 km streaming resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          python3 "$GITHUB_WORKSPACE/SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py" \
+            --input-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
+            --output "$RUNNER_TEMP/baghdad-source/baghdad-citywide-urban-1km.zip" \
+            --cell-size 1000 \
+            --layers buildings,waterways,bridges,landuse,amenities,railway,natural-water,wetlands,entrances \
+            --bounds-geojson "$RUNNER_TEMP/baghdad-source/baghdad-boundary.geojson" \
+            --source-timestamp "$(python3 -c 'import json; print(json.load(open("baghdad-source-verification.json"))["snapshot_timestamp"])')"
+          python3 - <<'PY'
+          import json
+          import zipfile
+          from pathlib import Path
+
+          path = Path("baghdad-citywide-urban-1km.zip")
+          expected_layers = ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "wetlands", "entrances"]
+          totals = {key: 0 for key in expected_layers}
+          audit = json.loads(Path("baghdad-religious-sites-audit.json").read_text(encoding="utf-8"))
+          expected_worship = audit["totals"]
+          worship_objects = {}
+          facility_types = {"hospital": 0, "police": 0, "shop": 0, "food": 0, "education": 0, "market": 0, "transport": 0}
+          transit_feature_count = 0
+          with zipfile.ZipFile(path) as archive:
+              manifest = json.loads(archive.read("manifest.json"))
+              names = [name for name in archive.namelist() if name.startswith("cells/") and name.endswith(".json")]
+              assert manifest["region_id"] == "iraq_baghdad_region"
+              assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
+              assert manifest["cell_size_m"] == 1000.0
+              assert manifest["layers_included"] == expected_layers
+              assert len(names) == manifest["cell_count"] and len(names) >= 100
+              for name in names:
+                  tile = json.loads(archive.read(name))
+                  layers = tile.get("layers", {})
+                  for layer in expected_layers:
+                      totals[layer] += len(layers.get(layer, []))
+                  for layer in ("amenities", "buildings"):
+                      for item in layers.get(layer, []):
+                          tags = item.get("tags", {})
+                          amenity = str(tags.get("amenity", "")).lower()
+                          religion = str(tags.get("religion", "")).lower()
+                          building = str(tags.get("building", "")).lower()
+                          public_transport = str(tags.get("public_transport", "")).lower()
+                          railway = str(tags.get("railway", "")).lower()
+                          highway = str(tags.get("highway", "")).lower()
+                          osm_key = (str(item.get("osm_type", "")), str(item.get("id", "")))
+                          if amenity in ("place_of_worship", "monastery") or building in ("mosque", "church", "synagogue", "temple", "monastery", "shrine"):
+                              record = worship_objects.setdefault(osm_key, {"tags": {}, "geometries": set()})
+                              record["tags"].update(tags)
+                              record["geometries"].add(str(item.get("geometry", {}).get("type", "unknown")))
+                          shop = str(tags.get("shop", "")).lower()
+                          if amenity == "hospital" or tags.get("healthcare"):
+                              facility_types["hospital"] += 1
+                          if amenity in ("police", "police_station"):
+                              facility_types["police"] += 1
+                          if shop:
+                              facility_types["shop"] += 1
+                          if amenity in ("restaurant", "cafe", "fast_food", "food_court"):
+                              facility_types["food"] += 1
+                          if amenity in ("school", "university", "college", "kindergarten"):
+                              facility_types["education"] += 1
+                          if amenity == "marketplace" or shop in ("mall", "department_store"):
+                              facility_types["market"] += 1
+                          is_transit = (
+                              amenity in ("bus_station", "bus_stop", "ferry_terminal", "parking", "taxi")
+                              or public_transport in ("station", "platform", "stop_position")
+                              or railway in ("station", "halt", "tram_stop", "subway_entrance")
+                              or highway in ("bus_stop", "platform")
+                          )
+                          if is_transit:
+                              transit_feature_count += 1
+                              facility_types["transport"] += 1
+          assert totals["buildings"] >= 1000, f"Too few mapped Baghdad building footprints: {totals['buildings']}"
+          assert transit_feature_count > 0, "No mapped Baghdad public-transport stops/stations survived source extraction"
+          assert totals["amenities"] >= 10, f"Too few mapped public/commercial POIs: {totals['amenities']}"
+          actual_worship = {"mosque": 0, "church": 0, "shrine": 0, "monastery": 0, "other_or_unspecified": 0, "conflict": 0}
+          actual_geometry = {key: {} for key in actual_worship}
+          for record in worship_objects.values():
+              tags = record["tags"]
+              amenity = str(tags.get("amenity", "")).lower()
+              religion = str(tags.get("religion", "")).lower()
+              building = str(tags.get("building", "")).lower()
+              if amenity == "monastery" or building == "monastery":
+                  category = "monastery"
+              elif (religion in ("muslim", "islam") and building == "church") or (religion in ("christian", "christianity") and building == "mosque"):
+                  category = "conflict"
+              elif amenity == "place_of_worship" and religion in ("muslim", "islam"):
+                  category = "mosque"
+              elif amenity == "place_of_worship" and religion in ("christian", "christianity"):
+                  category = "church"
+              elif building == "mosque":
+                  category = "mosque"
+              elif building == "church":
+                  category = "church"
+              elif building == "shrine":
+                  category = "shrine"
+              else:
+                  category = "other_or_unspecified"
+              geometries = record["geometries"]
+              geometry = "Polygon" if "Polygon" in geometries else "MultiPolygon" if "MultiPolygon" in geometries else "Point" if "Point" in geometries else "LineString"
+              actual_worship[category] += 1
+              actual_geometry[category][geometry] = actual_geometry[category].get(geometry, 0) + 1
+          assert len(worship_objects) == expected_worship["unique_worship_objects"], (len(worship_objects), expected_worship)
+          for category, expected_key in (("mosque", "mosques"), ("church", "churches"), ("shrine", "shrines"), ("monastery", "monasteries"), ("other_or_unspecified", "other_or_unspecified"), ("conflict", "conflicting_tags")):
+              assert actual_worship[category] == expected_worship[expected_key], (category, actual_worship, expected_worship)
+              assert actual_geometry[category] == audit["preferred_geometry_counts"][category], (category, actual_geometry[category], audit["preferred_geometry_counts"][category])
+          print("Verified citywide Baghdad urban overview:", len(names), "occupied 1 km cells")
+          print("Urban feature totals:", json.dumps(totals, ensure_ascii=False, sort_keys=True))
+          print("Deduplicated religious features in streamed pack:", json.dumps(actual_worship, ensure_ascii=False, sort_keys=True))
+          print("Religious geometry coverage:", json.dumps(actual_geometry, ensure_ascii=False, sort_keys=True))
+          print("Classified facilities:", json.dumps(facility_types, ensure_ascii=False, sort_keys=True))
+          print("Mapped Baghdad transit POI features:", transit_feature_count)
+          PY
+
       - name: Add attribution and source notes
         shell: bash
         run: |
@@ -381,9 +585,12 @@ jobs:
             ${{ runner.temp }}/baghdad-source/baghdad-municipality-candidate.osm.pbf
             ${{ runner.temp }}/baghdad-source/baghdad-clip-fileinfo.json
             ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
+            ${{ runner.temp }}/baghdad-source/baghdad-religious-sites-audit.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
             ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-bridge-extended.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-citywide-roads-1km.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-citywide-urban-1km.zip
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
             ${{ runner.temp }}/baghdad-source/iraq.osm.pbf.sha256
           if-no-files-found: error

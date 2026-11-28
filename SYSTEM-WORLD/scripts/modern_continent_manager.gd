@@ -469,9 +469,38 @@ func _build_coastal_beaches() -> void:
 	beach_surface.generate_normals()
 	var beaches := MeshInstance3D.new()
 	beaches.name = "NaturalCoastlineBeaches"
-	beaches.mesh = beach_surface.commit()
+	var beach_mesh := _commit_surface_tool_if_valid(beach_surface)
+	if beach_mesh == null:
+		return
+	beaches.mesh = beach_mesh
+	beaches.material_override = beach_material
 	beaches.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(beaches)
+
+
+func _commit_surface_tool_if_valid(surface: SurfaceTool) -> ArrayMesh:
+	# Empty SurfaceTools must never become MeshInstance3D resources. Godot's
+	# dummy/headless renderer can emit repeated mesh_get_surface_count errors
+	# for zero-surface ArrayMesh resources even when scene-node checks look clean.
+	var arrays: Array = surface.commit_to_arrays()
+	if arrays.size() <= Mesh.ARRAY_VERTEX:
+		return null
+	var raw_vertices: Variant = arrays[Mesh.ARRAY_VERTEX]
+	if typeof(raw_vertices) != TYPE_PACKED_VECTOR3_ARRAY:
+		return null
+	var vertices: PackedVector3Array = raw_vertices
+	if vertices.size() < 3:
+		return null
+	var raw_indices: Variant = arrays[Mesh.ARRAY_INDEX]
+	if raw_indices is PackedInt32Array:
+		var indices: PackedInt32Array = raw_indices
+		if not indices.is_empty() and indices.size() < 3:
+			return null
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if not mesh.get_rid().is_valid():
+		return null
+	return mesh
 
 
 func _build_cave_entrances() -> void:
@@ -702,7 +731,11 @@ func _build_highways() -> void:
 	road_surface.generate_normals()
 	var road_visual := MeshInstance3D.new()
 	road_visual.name = "ContinentalHighwayNetwork"
-	road_visual.mesh = road_surface.commit()
+	var highway_mesh := _commit_surface_tool_if_valid(road_surface)
+	if highway_mesh == null:
+		return
+	road_visual.mesh = highway_mesh
+	road_visual.material_override = road_material
 	road_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(road_visual)
 
@@ -754,32 +787,87 @@ func _river_channel_depth(x: float, z: float) -> float:
 func _build_baghdad_tigris_surface() -> void:
 	if not baghdad_bridge_reference_loaded or baghdad_tigris_route.size() < 2:
 		return
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.025, 0.24, 0.34, 0.96)
-	material.roughness = 0.18
-	material.metallic = 0.18
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var water_shader := Shader.new()
+	water_shader.code = """
+shader_type spatial;
+render_mode cull_disabled, depth_draw_opaque;
+varying vec3 world_position;
+void vertex() {
+	world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+void fragment() {
+	float wave_a = sin(world_position.x * 0.035 + world_position.z * 0.012 + TIME * 0.52);
+	float wave_b = sin(world_position.z * 0.052 - world_position.x * 0.018 - TIME * 0.38);
+	float ripple = wave_a * 0.55 + wave_b * 0.45;
+	float glint = smoothstep(0.72, 0.96, ripple);
+	vec3 deep_water = vec3(0.012, 0.13, 0.20);
+	vec3 lit_water = vec3(0.035, 0.30, 0.38);
+	ALBEDO = mix(deep_water, lit_water, clamp(0.48 + ripple * 0.24, 0.0, 1.0));
+	ROUGHNESS = 0.22;
+	METALLIC = 0.16;
+	EMISSION = vec3(0.004, 0.018, 0.024) + glint * vec3(0.018, 0.045, 0.052);
+}
+"""
+	var material := ShaderMaterial.new()
+	material.shader = water_shader
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(material)
+	var foam_material := StandardMaterial3D.new()
+	foam_material.albedo_color = Color(0.42, 0.75, 0.78, 0.42)
+	foam_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	foam_material.roughness = 0.34
+	foam_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var foam_surface := SurfaceTool.new()
+	foam_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	foam_surface.set_material(foam_material)
 	for index in range(baghdad_tigris_route.size() - 1):
 		var start: Vector2 = baghdad_tigris_route[index]
 		var finish: Vector2 = baghdad_tigris_route[index + 1]
-		var direction := (finish - start).normalized()
-		var bank_offset := Vector2(-direction.y, direction.x) * BAGHDAD_TIGRIS_HALF_WIDTH
+		var segment := finish - start
+		if segment.length_squared() < 0.01:
+			continue
+		var direction := segment.normalized()
+		var side := Vector2(-direction.y, direction.x)
+		var bank_offset := side * BAGHDAD_TIGRIS_HALF_WIDTH
 		var a_left := start + bank_offset
 		var a_right := start - bank_offset
 		var b_left := finish + bank_offset
 		var b_right := finish - bank_offset
 		_add_surface_quad(surface, Vector3(a_left.x, SEA_LEVEL + 0.28, a_left.y), Vector3(a_right.x, SEA_LEVEL + 0.28, a_right.y), Vector3(b_left.x, SEA_LEVEL + 0.28, b_left.y), Vector3(b_right.x, SEA_LEVEL + 0.28, b_right.y))
+		for side_sign in [-1.0, 1.0]:
+			var inner_a := start + side * (BAGHDAD_TIGRIS_HALF_WIDTH - 0.12) * float(side_sign)
+			var outer_a := start + side * (BAGHDAD_TIGRIS_HALF_WIDTH + 0.18) * float(side_sign)
+			var inner_b := finish + side * (BAGHDAD_TIGRIS_HALF_WIDTH - 0.12) * float(side_sign)
+			var outer_b := finish + side * (BAGHDAD_TIGRIS_HALF_WIDTH + 0.18) * float(side_sign)
+			_add_surface_quad(foam_surface,
+				Vector3(inner_a.x, SEA_LEVEL + 0.33, inner_a.y),
+				Vector3(outer_a.x, SEA_LEVEL + 0.33, outer_a.y),
+				Vector3(inner_b.x, SEA_LEVEL + 0.33, inner_b.y),
+				Vector3(outer_b.x, SEA_LEVEL + 0.33, outer_b.y))
 	surface.generate_normals()
+	foam_surface.generate_normals()
 	var river := MeshInstance3D.new()
 	river.name = "BaghdadTigrisRiver"
-	river.mesh = surface.commit()
+	var river_mesh := _commit_surface_tool_if_valid(surface)
+	if river_mesh == null:
+		return
+	river.mesh = river_mesh
+	river.material_override = material
 	river.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	river.set_meta("system_geography_source", "OpenStreetMap way 24709603")
 	river.set_meta("system_geography_name", "Tigris River")
+	river.set_meta("system_water_shader", "world_space_animated_ripples")
 	add_child(river)
+	var foam_mesh := _commit_surface_tool_if_valid(foam_surface)
+	if foam_mesh != null:
+		var foam := MeshInstance3D.new()
+		foam.name = "BaghdadTigrisBankFoam"
+		foam.mesh = foam_mesh
+		foam.material_override = foam_material
+		foam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		foam.set_meta("system_water_edge_detail", "soft_bank_foam")
+		add_child(foam)
 
 
 func _build_baghdad_republic_bridge() -> void:
@@ -827,7 +915,12 @@ func _build_baghdad_republic_bridge() -> void:
 	surface.generate_normals()
 	var deck := MeshInstance3D.new()
 	deck.name = "RepublicBridgeDeck"
-	deck.mesh = surface.commit()
+	var deck_mesh := _commit_surface_tool_if_valid(surface)
+	if deck_mesh == null:
+		bridge.queue_free()
+		return
+	deck.mesh = deck_mesh
+	deck.material_override = deck_material
 	deck.set_meta("system_bridge_deck_height_m", BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT)
 	deck.set_meta("system_bridge_polygon_points", baghdad_bridge_outline.size())
 	bridge.add_child(deck)
@@ -858,17 +951,255 @@ func _build_baghdad_republic_bridge() -> void:
 		var rail := MeshInstance3D.new()
 		rail.name = "RepublicBridgeGuardrail_%02d" % index
 		var rail_mesh := BoxMesh.new()
-		rail_mesh.size = Vector3(0.55, 1.35, delta.length())
+		rail_mesh.size = Vector3(0.18, 1.15, delta.length())
 		rail.mesh = rail_mesh
-		rail.position = midpoint + Vector3(outward_2d.x, 0.0, outward_2d.y) * 0.65
+		rail.position = midpoint + Vector3(outward_2d.x, 0.0, outward_2d.y) * 0.52
 		rail.rotation.y = atan2(delta.x, delta.z)
 		rail.material_override = rail_material
 		bridge.add_child(rail)
+		var handrail := MeshInstance3D.new()
+		handrail.name = "RepublicBridgeHandrail_%02d" % index
+		var handrail_mesh := BoxMesh.new()
+		handrail_mesh.size = Vector3(0.24, 0.14, delta.length())
+		handrail.mesh = handrail_mesh
+		handrail.position = midpoint + Vector3(0.0, 1.12, 0.0) + Vector3(outward_2d.x, 0.0, outward_2d.y) * 0.52
+		handrail.rotation.y = atan2(delta.x, delta.z)
+		handrail.material_override = rail_material
+		bridge.add_child(handrail)
+	_add_baghdad_bridge_guardrail_posts(bridge, baghdad_bridge_outline, rail_material)
+	_add_baghdad_bridge_lane_markings(bridge)
+	_add_baghdad_bridge_lighting(bridge)
 	bridge.set_meta("system_bridge_deck_height_m", BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT)
 	bridge.set_meta("system_bridge_centerline_points", baghdad_bridge_centerline.size())
 	bridge.set_meta("system_bridge_secondary_centerline_points", baghdad_bridge_secondary_centerline.size())
 	bridge.set_meta("system_bridge_polygon_points", baghdad_bridge_outline.size())
 	print("SYSTEM Baghdad geography: Republic Bridge polygon deck, collision and guardrails generated from verified OSM way 1077808833.")
+
+
+func _add_baghdad_bridge_guardrail_posts(
+	bridge: Node3D,
+	outline: PackedVector2Array,
+	material: StandardMaterial3D
+) -> void:
+	var polygon_center := Vector2.ZERO
+	for point in outline:
+		polygon_center += point
+	polygon_center /= float(outline.size())
+	var transforms: Array[Transform3D] = []
+	for edge_index in range(outline.size()):
+		var start := outline[edge_index]
+		var finish := outline[(edge_index + 1) % outline.size()]
+		var edge := finish - start
+		var edge_length := edge.length()
+		if edge_length < 4.0:
+			continue
+		var midpoint := (start + finish) * 0.5
+		var outward := (midpoint - polygon_center).normalized()
+		var post_count := maxi(1, int(ceil(edge_length / 3.2)))
+		for post_index in range(post_count + 1):
+			var t := float(post_index) / float(post_count)
+			var point := start.lerp(finish, t) + outward * 0.52
+			transforms.append(Transform3D(
+				Basis.IDENTITY,
+				Vector3(point.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.58, point.y)
+			))
+	if transforms.is_empty():
+		return
+	var post_mesh := BoxMesh.new()
+	post_mesh.size = Vector3(0.14, 1.16, 0.14)
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.mesh = post_mesh
+	multimesh.instance_count = transforms.size()
+	for index in range(transforms.size()):
+		multimesh.set_instance_transform(index, transforms[index])
+	var posts := MultiMeshInstance3D.new()
+	posts.name = "RepublicBridgeGuardrailPosts"
+	posts.multimesh = multimesh
+	posts.material_override = material
+	posts.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	bridge.add_child(posts)
+	bridge.set_meta("system_bridge_guardrail_post_count", transforms.size())
+
+
+func _add_baghdad_bridge_lane_markings(bridge: Node3D) -> void:
+	var yellow_material := StandardMaterial3D.new()
+	yellow_material.albedo_color = Color(0.96, 0.78, 0.32)
+	yellow_material.roughness = 0.76
+	var white_material := StandardMaterial3D.new()
+	white_material.albedo_color = Color(0.88, 0.90, 0.88)
+	white_material.roughness = 0.76
+	var joint_material := StandardMaterial3D.new()
+	joint_material.albedo_color = Color(0.12, 0.15, 0.17)
+	joint_material.roughness = 0.9
+	var yellow_surface := SurfaceTool.new()
+	yellow_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	yellow_surface.set_material(yellow_material)
+	var white_surface := SurfaceTool.new()
+	white_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	white_surface.set_material(white_material)
+	var joint_surface := SurfaceTool.new()
+	joint_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	joint_surface.set_material(joint_material)
+	var centerlines: Array = [baghdad_bridge_centerline, baghdad_bridge_secondary_centerline]
+	for route_value in centerlines:
+		var route: Array = route_value
+		if route.size() < 2:
+			continue
+		var dash_distance_to_next := 0.0
+		var joint_distance_to_next := 24.0
+		for segment_index in range(route.size() - 1):
+			var start: Vector2 = route[segment_index]
+			var finish: Vector2 = route[segment_index + 1]
+			var segment := finish - start
+			var segment_length := segment.length()
+			if segment_length < 0.5:
+				continue
+			var direction := segment / segment_length
+			var side := Vector2(-direction.y, direction.x)
+			var cursor := dash_distance_to_next
+			while cursor < segment_length:
+				var dash_end := minf(cursor + 4.0, segment_length)
+				var a := start + direction * cursor
+				var b := start + direction * dash_end
+				for offset in [-3.1, 3.1]:
+					var half_width := 0.055
+					var a_left := a + side * (float(offset) - half_width)
+					var a_right := a + side * (float(offset) + half_width)
+					var b_left := b + side * (float(offset) - half_width)
+					var b_right := b + side * (float(offset) + half_width)
+					_add_surface_quad(white_surface,
+						Vector3(a_left.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.045, a_left.y),
+						Vector3(a_right.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.045, a_right.y),
+						Vector3(b_left.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.045, b_left.y),
+						Vector3(b_right.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.045, b_right.y))
+				var center_half_width := 0.075
+				var center_a_left := a + side * -center_half_width
+				var center_a_right := a + side * center_half_width
+				var center_b_left := b + side * -center_half_width
+				var center_b_right := b + side * center_half_width
+				_add_surface_quad(yellow_surface,
+					Vector3(center_a_left.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.05, center_a_left.y),
+					Vector3(center_a_right.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.05, center_a_right.y),
+					Vector3(center_b_left.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.05, center_b_left.y),
+					Vector3(center_b_right.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.05, center_b_right.y))
+				cursor += 7.0
+			dash_distance_to_next = cursor - segment_length
+			var joint_cursor := joint_distance_to_next
+			while joint_cursor < segment_length:
+				var joint_center := start + direction * joint_cursor
+				var along := direction * 0.055
+				var across := side * 6.25
+				_add_surface_quad(joint_surface,
+					Vector3((joint_center - along + across).x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.025, (joint_center - along + across).y),
+					Vector3((joint_center - along - across).x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.025, (joint_center - along - across).y),
+					Vector3((joint_center + along + across).x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.025, (joint_center + along + across).y),
+					Vector3((joint_center + along - across).x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.025, (joint_center + along - across).y))
+				joint_cursor += 24.0
+			joint_distance_to_next = joint_cursor - segment_length
+	yellow_surface.generate_normals()
+	white_surface.generate_normals()
+	joint_surface.generate_normals()
+	var yellow_mesh := _commit_surface_tool_if_valid(yellow_surface)
+	if yellow_mesh != null:
+		var yellow_lines := MeshInstance3D.new()
+		yellow_lines.name = "RepublicBridgeCenterlineMarkings"
+		yellow_lines.mesh = yellow_mesh
+		yellow_lines.material_override = yellow_material
+		yellow_lines.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		bridge.add_child(yellow_lines)
+	var white_mesh := _commit_surface_tool_if_valid(white_surface)
+	if white_mesh != null:
+		var white_lines := MeshInstance3D.new()
+		white_lines.name = "RepublicBridgeLaneMarkings"
+		white_lines.mesh = white_mesh
+		white_lines.material_override = white_material
+		white_lines.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		bridge.add_child(white_lines)
+	var joint_mesh := _commit_surface_tool_if_valid(joint_surface)
+	if joint_mesh != null:
+		var joints := MeshInstance3D.new()
+		joints.name = "RepublicBridgeExpansionJoints"
+		joints.mesh = joint_mesh
+		joints.material_override = joint_material
+		joints.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		bridge.add_child(joints)
+	bridge.set_meta("system_bridge_lane_marking_segments", baghdad_bridge_centerline.size() + baghdad_bridge_secondary_centerline.size())
+
+
+func _add_baghdad_bridge_lighting(bridge: Node3D) -> void:
+	var pole_mesh := CylinderMesh.new()
+	pole_mesh.top_radius = 0.075
+	pole_mesh.bottom_radius = 0.11
+	pole_mesh.height = 5.5
+	pole_mesh.radial_segments = 8
+	var head_mesh := BoxMesh.new()
+	head_mesh.size = Vector3(0.9, 0.14, 0.32)
+	var pole_material := StandardMaterial3D.new()
+	pole_material.albedo_color = Color(0.16, 0.19, 0.22)
+	pole_material.roughness = 0.5
+	pole_material.metallic = 0.78
+	var head_material := StandardMaterial3D.new()
+	head_material.albedo_color = Color(1.0, 0.78, 0.48)
+	head_material.emission_enabled = true
+	head_material.emission = Color(1.0, 0.62, 0.28)
+	head_material.emission_energy_multiplier = 1.35
+	var pole_transforms: Array[Transform3D] = []
+	var head_transforms: Array[Transform3D] = []
+	for route_value in [baghdad_bridge_centerline, baghdad_bridge_secondary_centerline]:
+		var route: Array = route_value
+		if route.size() < 2:
+			continue
+		var lamp_distance_to_next := 12.0
+		for segment_index in range(route.size() - 1):
+			var start: Vector2 = route[segment_index]
+			var finish: Vector2 = route[segment_index + 1]
+			var segment := finish - start
+			var segment_length := segment.length()
+			if segment_length < 0.5:
+				continue
+			var direction := segment / segment_length
+			var side := Vector2(-direction.y, direction.x)
+			var lamp_distance := lamp_distance_to_next
+			while lamp_distance < segment_length:
+				var center := start + direction * lamp_distance
+				for side_sign in [-1.0, 1.0]:
+					var point := center + side * 6.35 * float(side_sign)
+					var pole_position := Vector3(point.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 2.75, point.y)
+					var head_position := Vector3(point.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 5.48, point.y)
+					pole_transforms.append(Transform3D(Basis.IDENTITY, pole_position))
+					var head_right := Vector3(direction.x, 0.0, direction.y)
+					var head_forward := Vector3(-direction.y, 0.0, direction.x)
+					head_transforms.append(Transform3D(Basis(head_right, Vector3.UP, head_forward), head_position))
+				lamp_distance += 28.0
+			lamp_distance_to_next = lamp_distance - segment_length
+	if pole_transforms.is_empty():
+		return
+	var pole_multimesh := MultiMesh.new()
+	pole_multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	pole_multimesh.mesh = pole_mesh
+	pole_multimesh.instance_count = pole_transforms.size()
+	for index in range(pole_transforms.size()):
+		pole_multimesh.set_instance_transform(index, pole_transforms[index])
+	var poles := MultiMeshInstance3D.new()
+	poles.name = "RepublicBridgeLightPoles"
+	poles.multimesh = pole_multimesh
+	poles.material_override = pole_material
+	poles.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	bridge.add_child(poles)
+	var head_multimesh := MultiMesh.new()
+	head_multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	head_multimesh.mesh = head_mesh
+	head_multimesh.instance_count = head_transforms.size()
+	for index in range(head_transforms.size()):
+		head_multimesh.set_instance_transform(index, head_transforms[index])
+	var heads := MultiMeshInstance3D.new()
+	heads.name = "RepublicBridgeLampHeads"
+	heads.multimesh = head_multimesh
+	heads.material_override = head_material
+	heads.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	bridge.add_child(heads)
+	bridge.set_meta("system_bridge_light_count", pole_transforms.size())
 
 
 func _build_baghdad_bridge_access_causeway() -> void:
@@ -911,7 +1242,11 @@ func _build_baghdad_bridge_access_causeway() -> void:
 	surface.generate_normals()
 	var road := MeshInstance3D.new()
 	road.name = "BaghdadBridgeAccessCauseway"
-	road.mesh = surface.commit()
+	var access_mesh := _commit_surface_tool_if_valid(surface)
+	if access_mesh == null:
+		return
+	road.mesh = access_mesh
+	road.material_override = material
 	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	road.set_meta("system_generated_access_route", true)
 	road.set_meta("system_geography_source", "SYSTEM procedural playable connector; not OpenStreetMap road geometry")
@@ -969,7 +1304,11 @@ func _build_rivers_and_lakes() -> void:
 	river_surface.generate_normals()
 	var river_visual := MeshInstance3D.new()
 	river_visual.name = "ConnectedRiverNetwork"
-	river_visual.mesh = river_surface.commit()
+	var river_network_mesh := _commit_surface_tool_if_valid(river_surface)
+	if river_network_mesh == null:
+		return
+	river_visual.mesh = river_network_mesh
+	river_visual.material_override = water_material
 	river_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(river_visual)
 	_build_mountain_waterfalls()
@@ -1064,7 +1403,11 @@ func _build_mountain_waterfalls() -> void:
 	waterfall_surface.generate_normals()
 	var waterfall_visual := MeshInstance3D.new()
 	waterfall_visual.name = "MountainWaterfalls"
-	waterfall_visual.mesh = waterfall_surface.commit()
+	var waterfall_mesh := _commit_surface_tool_if_valid(waterfall_surface)
+	if waterfall_mesh == null:
+		return
+	waterfall_visual.mesh = waterfall_mesh
+	waterfall_visual.material_override = waterfall_material
 	waterfall_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(waterfall_visual)
 	print("SYSTEM WORLD: generated ", waterfall_count, " terrain-based waterfalls.")

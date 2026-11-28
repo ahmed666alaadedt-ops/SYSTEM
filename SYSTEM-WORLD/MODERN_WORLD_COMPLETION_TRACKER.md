@@ -2051,3 +2051,151 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [x] Marketplace Firestore rules emulator tests passed: 7/7. Callable marketplace transaction/emulator tests passed: 8/8 on workflow `45604503727`; includes fixed-price escrow/purchase, atomic buyer debit and seller credit, ownership transfer, self-purchase and insufficient-balance rejection, concurrent double-purchase race, cancellation/expiry, auctions, two-player exchanges, trusted reward replay protection and scheduled expiry workers.
 - [x] The TypeScript Cloud Functions build and Firestore rules compilation passed on the same workflow.
 - [ ] Still required before calling online trading live: trusted game-server claim and quest-reward source integration, production deployment/monitoring of functions and scheduled workers, and a real two-account Android device round trip. Do not deploy or merge without the user's separate approval.
+
+
+## Godot 4.3 headless dummy-renderer root-cause investigation — 27 November 2026
+
+- [x] Exact PR #49 head `77cddc9d7cecab73131d7f59469eb6d5390dbbbd`: the canonical Godot 4.3 diagnostic log contains 55,991 occurrences of `ERROR: Parameter "m" is null` at `mesh_get_surface_count`, across OSM runtime, child-character QA, main-scene launch, world-switch diagnostics, companion/NPC validation and Hunter tunnel tests.
+- [x] The scene diagnostic inspected 19,572 MeshInstance3D nodes and 130 MultiMeshInstance3D nodes. It found zero null mesh references, zero invalid mesh RIDs, zero zero-surface meshes and zero invalid MultiMesh resources in the initial scene and after each of the four world switches.
+- [x] Matched the exact error to upstream Godot issue #86806. Godot maintainers identified the cause as a Mesh resource being freed before its MeshInstance, then fixed Dummy RenderingServer dependency tracking in merged PR #102261. The issue is reproducible in Godot 4.3; the canonical project remains pinned to 4.3 for now.
+- [x] Same complete scene/world-switch diagnostic under Godot 4.4.1: 0 matching `mesh_get_surface_count` errors, with zero null meshes, invalid RIDs, zero-surface meshes or invalid MultiMesh resources. The corresponding Godot 4.3 scene/world-switch diagnostic emitted 9,393 matching errors; a separate complete Godot 4.3 APK validation job emitted 55,991 across its runtime/QA scripts.
+- [ ] Full Godot 4.4.1 compatibility audit and Android export remain open. This comparison is not permission to change the canonical Android/export engine version until import, runtime, gameplay QA, export templates, Android APK build and device testing all pass on the candidate version.
+- [ ] Keep the 4.3 dummy-renderer error visible in CI logs. A zero-null-mesh scan is not evidence that the headless renderer is clean.
+- [ ] Physical Android visual inspection and real-device frame-time/memory profiling remain separate acceptance requirements.
+
+
+## Baghdad OSM high-detail facade pass — 27 November 2026
+
+- [x] Added procedural instanced window facades to high-detail 200 m playable OSM cells. Residential houses, villas/palaces, apartment blocks and commercial buildings use different window sizes and spacing; a deterministic mix of cool glass and warm-lit windows prevents identical facades.
+- [x] Windows are aggregated into one cell-level MultiMesh (one facade draw call per 200 m cell), with a maximum of 32 windows per building and 1,200 per cell. This avoids one draw call per building and adds no separate collision bodies; normal cell streaming controls lifetime.
+- [x] Kept the 1 km citywide regional overview on extrusion-only LOD; it does not receive the close-range window geometry. Mosques and churches retain their specialized dome/minaret/cross silhouettes instead of generic window grids.
+- [ ] Synthetic facade validation must pass on the exact current PR head, including a five-floor apartment MultiMesh and an assertion that the 1 km overview remains extrusion-only.
+- [ ] This is a procedural facade-detail layer, not a claim that all Baghdad buildings have final bespoke architectural art, verified doors, interiors or photogrammetry.
+
+
+## Republic Bridge physical-detail pass — 27 November 2026
+
+- [x] Refined the surveyed Republic Bridge guardrails into slimmer continuous barriers and handrails, with guardrail posts instanced along the verified OSM bridge polygon.
+- [x] Added dashed yellow centerline markings, white lane separators and transverse expansion joints along both surveyed OSM centerlines.
+- [x] Added instanced metallic light poles and warm emissive lamp heads at regular intervals along both bridge approaches.
+- [x] All procedural bridge marking surfaces use the validated non-empty SurfaceTool commit helper; repeated posts and lamps use MultiMesh to limit draw calls.
+- [ ] Exact-HEAD Godot tower validation must prove the road markings, expansion joints, guardrail posts, poles and matching lamp heads are present and valid.
+- [ ] Bridge support piers and real nighttime illumination still require a separate structural/geographic review; do not infer their positions from the deck polygon alone.
+
+
+## Tigris water-surface detail pass — 27 November 2026
+
+- [x] Replaced the flat Baghdad Tigris color with a world-space, time-driven water shader that produces subtle moving ripple bands and glints while retaining the verified OSM way 24709603 source.
+- [x] Added narrow soft-foam ribbons along both banks from the same surveyed river route; degenerate zero-length route segments are skipped before surface generation.
+- [x] Explicitly assign materials after guarded ArrayMesh construction so the new commit helper does not discard the shader/foam materials.
+- [ ] Exact-head Godot validation must confirm the shader material, TIME-driven code and bank-foam mesh are present; real-device visual review remains required for reflections, transparency, current direction and mobile GPU cost.
+
+
+## Baghdad source-tagged building roof detail — 28 November 2026
+
+- [x] Retain OSM roof:shape, roof:material, roof:colour, roof:height, roof:levels, roof:angle and roof:orientation tags in the metric-cell pack for future geometry decisions.
+- [x] Preserve mapped roof metadata on detailed building nodes; unknown and unsupported roof shapes are explicitly retained without inventing a roof form.
+- [x] Generate a dedicated triangulated pyramidal roof mesh only when OSM explicitly tags roof:shape=pyramidal, using the real footprint interior anchor and mapped roof height/material/colour when available.
+- [x] Add a synthetic runtime validator for pyramidal roof mesh validity and source metadata.
+- [ ] Exact-head Godot/Android CI and visual inspection on real irregular OSM footprints remain required; gabled/hipped roof meshes are not yet generated.
+
+
+
+- [x] Distinguish mapped school/college/university/kindergarten, hospital/clinic/healthcare, civic/fire/police/government and hotel/hostel footprints in detailed OSM building generation.
+- [x] Give these source-tagged classes Arabic fallback names and separate facade material families while preserving worship classification precedence.
+- [x] Add validator coverage for education, healthcare, civic and hospitality building categories.
+- [ ] Confirm detailed 200 m OSM cell geometry and Arabic discovery presentation on the exact-head Godot run and Android device.
+
+## Baghdad concave building footprint anchors — 28 November 2026
+
+- [x] Replace arithmetic vertex averages with a triangulation-derived interior anchor for building discovery positions, road-frontage approach calculations and polygon worship landmark placement.
+- [x] Add a concave L-shaped regression fixture whose arithmetic vertex mean is outside the footprint; require the selected anchor to remain inside.
+- [ ] Confirm the exact-head Godot runtime validator passes and inspect irregular real OSM footprints in Baghdad; triangulation fallback remains on a boundary vertex if source geometry cannot triangulate.
+
+## Baghdad mapped public-service and shop POI interaction — 28 November 2026
+
+- [x] Replace generic non-worship amenity spheres with source-backed mapped POI roots and interaction bodies.
+- [x] Preserve Arabic/source names, amenity/shop/tourism/leisure/office category, operator, opening hours, cuisine, access and wheelchair tags.
+- [x] Keep POIs discoverable for information only; no marker grants access to an interior, business inventory, opening state or service that has not been implemented.
+- [x] Add runtime QA for a mapped clothing-shop POI, Arabic label, interaction body and wheelchair metadata.
+- [ ] Validate category-specific Arabic UI and actual Baghdad source coverage after Godot exact-head runtime tests.
+- [ ] Replace the generic marker mesh with category-specific, original 3D signage/models only after confirming source tags and mobile performance budgets.
+
+## Baghdad OSM street furniture, pedestrian safety and transit tag retention — 28 November 2026
+
+- [x] Extend the existing metric-cell pack tag allowlist to retain mapped street lighting (`lit`, `street_lamp`), crossings and traffic calming, bus stops/shelters, benches, drinking water, waste bins, toilets, fountains, playgrounds, parking and bicycle parking.
+- [x] Retain pedestrian accessibility and surface context including kerbs, tactile paving, footways, sidewalk sides, cycleway sides, incline and smoothness.
+- [x] Retain additional road operation tags for lane direction/turn lanes, junctions, conditional access, fees and route/network context.
+- [ ] Rebuild the metric-cell pack from the authoritative source GeoJSON and verify feature/tag counts; updating the allowlist alone does not change already-built cell packs.
+- [ ] Add dedicated 3D rendering and collision/interaction only for source-backed street furniture, crossings, transit stops and public facilities; do not invent fixture coordinates from generic road tags.
+- [ ] Validate lighting inference from `lit=yes` separately from mapped physical lamp nodes; inferred illumination is not a surveyed lamp inventory.
+
+## Baghdad OSM entrance access and accessibility metadata — 28 November 2026
+
+- [x] Preserve entrance/door type, entrance-level access, wheelchair, foot, indoor, level, service and emergency tags on mapped entrance nodes and interaction bodies.
+- [x] Treat an entrance explicitly tagged `access=no/private` as restricted even when its associated building footprint is public.
+- [x] Keep every mapped entrance non-enterable until a verified door/interior scene and transition flow exist; map discovery must not imply interior access.
+- [x] Add runtime validator cases for a private entrance on a public building and preservation of wheelchair/level/emergency metadata.
+- [ ] Run the exact-head Godot OSM runtime validator and Android build; source/test changes are not considered passed until CI reports success.
+- [ ] Verify real OSM entrances, doors and accessible paths against surveyed frontage and sidewalk geometry; tags may be missing or stale.
+
+## Baghdad citywide night illumination and in-world advertising expansion — 28 November 2026
+
+### Advertising identity and content rules
+- [x] Confirm the user's direction: Baghdad advertising is authored as part of the SYSTEM WORLD simulation, not generic filler panels. Campaign categories include missions/quests and events; products and equipment; antiques/artifacts and player-market offers; clothing/outfits; food/restaurants/hotels; jobs, services, shops, property, openings and city activities.
+- [x] Preserve the existing local tower campaign lifecycle, physical emissive display panels, internal/external placement, NPC advertising-manager attribution, campaign IDs, synchronized rotation, expiry and safe fallback. Extend the existing system rather than creating a duplicate advertising manager.
+- [ ] Replace the six-category sample campaign pool with data-driven campaign records that carry stable ID, category, Arabic title/body, optional image/material key, sponsor/source entity, destination action, valid-from/expiry, target district, display placement, NPC manager attribution and moderation/approval state.
+- [ ] Mission/event campaigns must deep-link to the actual in-game mission/event board; product, clothing and food campaigns must resolve to an existing catalog item or shop; antique campaigns must resolve to a real listed artifact and use the existing escrow/atomic marketplace purchase flow. Never display a purchasable item that is not actually available.
+- [ ] Support player-created shop and artifact listings only from the authoritative marketplace listing state. Seller-set prices and item ownership remain governed by the existing server-side escrow and transaction validation; advertising must never transfer items or currency by itself.
+- [ ] Add contextual rotation by district, nearby shop, time of day, active event and player-visible interest, with frequency caps and a quiet option for non-essential campaign overlays. Keep mission-critical notices distinct from paid/promotional placements.
+- [ ] Real-world advertiser campaigns are an optional, separately configured source. Any future integration must use approved, age-appropriate and region-appropriate creatives, clear "real advertisement" labeling, moderation, frequency caps, consent/privacy controls, and a safe no-network fallback. Do not add an ad SDK, collect advertising identifiers, contact an ad network, deploy monetization, or expose external links until separately approved.
+- [ ] In-world SYSTEM promotions and real-world paid ads must have distinct source/type metadata, visual labels and reporting; never disguise a real ad as an official mission, quest reward, SYSTEM service or player listing.
+
+### Citywide display scale and mobile rendering
+- [x] Confirm that the previously proposed million-scale advertising target means distributed visual placements/signage across the city, not one million independent high-resolution animated LED screens or draw calls.
+- [ ] Budget citywide ad surfaces by district/cell and LOD: nearby panels can animate/update; mid-distance signs use shared atlases/materials and reduced refresh; distant signs use static emissive textures/glow and pooled instances.
+- [ ] Use shared campaign atlases and instanced sign geometry, with a strict per-cell visible/update budget and deterministic fallback when a campaign asset is missing.
+- [ ] Count physical display placements, active campaign records, animated screens and per-frame updated screens separately in diagnostics. Do not equate the visual-placement target with dynamic Light3D nodes or independent network requests.
+- [ ] Add regression coverage for all six existing towers, city storefronts, restaurants, hotels, markets, bridges and public spaces; verify category-to-destination routing, expired/unavailable listing suppression, player-market escrow handoff, NPC manager attribution, real-ad labeling/consent gates and missing-content fallback.
+- [ ] Add mobile profiling gates for draw calls, GPU frame time, memory, texture-atlas residency and screen refresh rate. The million-scale target remains a design budget until representative Android profiling proves the chosen budgets.
+
+### Lighting and acceptance boundaries
+- [ ] Keep the citywide multi-million lighting plan based primarily on emissive/instanced fixtures, baked/static contribution and distance/region LOD; reserve real dynamic lights for nearby gameplay-relevant sources.
+- [ ] Report separately: authored/placed visual fixtures, active emissive instances, dynamic Light3D nodes, and tested Android performance. A target count is not an implementation or a verified frame-rate result.
+- [ ] Physical Android night-scene review, readability, visual density, glare control, performance and memory validation remain outstanding until tested on a device.
+
+## Baghdad worship display overrides, neutral civic architecture and inter-city aviation — 28 November 2026
+
+### Worship presentation override
+- [x] Implement a game-only shrine-to-mosque presentation adapter for mapped polygon footprints and point landmarks in the detailed and regional streamers. Source OSM tags and the raw `shrine` classification remain unchanged; game-facing building class and label are mosque-style. This is a presentation override, not a claim about real-world religious identity.
+- [x] Add synthetic runtime regression checks for source classification retention and mosque-style polygon/point presentation.
+- [ ] Complete exact-head CI and in-game review of every affected worship asset and silhouette.
+
+### Sensitive state/security sites
+- [x] Suppress synthetic/public-map POI rendering for police, military, security and government-tagged sensitive features.
+- [x] Keep sensitive building footprints only as generic neutral architectural shells, with no player-facing function/name, POI classification, interaction group, approach marker or facility-specific facade/roof details.
+- [x] Preserve original source data outside the player-facing scene; no sensitive location inventory is emitted by the runtime tests.
+- [ ] Review the complete source-tag coverage and exact-head runtime output before treating suppression as fully verified.
+
+### Civil airports and city-to-city passenger transport
+- [x] The Baghdad OSM source workflow already extracts `nwr/aeroway` features into the amenities GeoJSON, including point/line/polygon geometries; the cell pack retains `aeroway`, plus `military` and `security` tags for correct filtering.
+- [x] Add runtime handling for public civil runway/taxiway line geometry and apron polygons; sensitive/military-tagged aeroway features are suppressed by the neutral-site filter.
+- [x] Add an authored civil passenger-terminal and runway/apron blockout for the existing game-city anchors, with check-in, departure/arrival, gates, waiting seats, baggage carousel, ticket/boarding interaction area and 16 NPC passenger spawn markers per terminal. Baghdad is anchored to the world registry; other cities still use prototype-layout coordinates, so these terminals are fictional game placements rather than verified real airport locations.
+- [x] Add a parked 3D civil passenger-aircraft model at each authored terminal plus bilingual Arabic/English gate, ticket/check-in, departure, arrival and baggage signage. These are visual blockout assets; animated flight sequences and live timetable boards remain open.
+- [x] Add open terminal interior structure with floor slab, rear/side walls, glass facade, automatic doors, structural columns, check-in and baggage areas, and dynamically populated city-destination boards. The board exposes a route-selection signal/API; final player-facing travel UI remains open.
+- [x] Add walkable terminal floor/wall and airship-platform collision bodies, leave the central passenger entrance clear, and apply distance visibility ranges to airport/airship display meshes for mobile rendering.
+- [x] Extend the source-verification report to count public civil aeroway feature types and geometry types without publishing feature names or coordinates, excluding records tagged military/security or restricted/private.
+- [x] Add bidirectional city-to-city passenger routes for both conventional aircraft and fictional airships between registered city terminals. Aircraft routes use 180 seats and airship routes 60 seats, with mode-specific estimated duration, origin-presence validation for ticket purchase and boarding, and ticket states: pending payment → paid → in-transit (duration enforced) → arrived. Seat capacity is released after arrival; travel state can be exported/restored.
+- [x] Add the Baghdad Hunter × Hunter-inspired passenger airship as a moving circular city route and as an inter-city service class, with a boarding station/interaction, illuminated side advertising, SYSTEM WORLD identity and viewing cabin. Approved reference dimensions: 90 m overall length, 28 m balloon diameter, 45 m cabin, 40–60 passenger capacity (60 modeled seats). The Baghdad loop uses a 3 km radius, 190 m cruise altitude, 17.5 m/s cruise speed and 24-minute scheduled duration; its elevated boarding mast, elevator and bridge align with the route's station waypoint.
+- [x] Add an elevated airship passenger gate to every non-Baghdad city airport, with a 190 m mooring mast, elevator, collision-backed passenger bridge, ticket/boarding interaction and airship arrival/departure spawn marker. Baghdad uses its dedicated central airship station.
+- [ ] Connect ticket payment confirmation to the authoritative SYSTEM economy/escrow service; current manager accepts a payment receipt reference but does not debit currency itself.
+- [x] Automatically complete a ticket when its scheduled arrival time is reached and teleport the `system_player` to the destination terminal, resetting CharacterBody3D velocity. The existing world cell streamer follows the same player group and can react to the new position.
+- [ ] Add fallback/retry handling for destinations whose region is not yet loaded, and bind the 16 passenger spawn markers per terminal to live NPC passenger/crew population.
+- [ ] Add scheduled departures, live departure-board state, aircraft taxi/takeoff/landing/flight animation, and a complete walkable airport interior with connected jet bridges. Current terminal and aircraft meshes are an authored gameplay blockout, not final cinematic airport art.
+- [ ] Exact-head Godot CI, in-game visual review, Android performance review and destination-streaming validation remain required before declaring completion.
+
+### Acceptance boundaries
+- Code is authored for the items marked [x]; this does not mean they have passed exact-head CI or visual/device review yet.
+- Prototype-layout city coordinates are not real-world airport coordinates or verified public airport sites. OSM civil aeroway geometry remains source-driven and separate from authored gameplay terminals.
+- The airship is a fictional SYSTEM WORLD passenger service, not a real-world aviation claim.
+- Preserve the Draft PR and current branch workflow. Do not merge to main without explicit approval.

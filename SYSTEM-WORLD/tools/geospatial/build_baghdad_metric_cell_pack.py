@@ -21,19 +21,31 @@ ORIGIN_LON = 44.3661
 DEFAULT_CELL_SIZE = 200.0
 LAYERS = (
     "buildings", "roads", "waterways", "bridges",
-    "landuse", "amenities", "railway", "natural-water", "entrances"
+    "landuse", "amenities", "railway", "natural-water", "wetlands", "entrances"
 )
 LINE_LAYERS = {"roads", "waterways", "bridges", "railway"}
-AREA_LAYERS = {"landuse", "natural-water"}
+AREA_LAYERS = {"landuse", "natural-water", "wetlands"}
 KEEP_TAGS = {
     "name", "name:en", "name:ar", "ref", "highway", "building",
     "building:levels", "building:material", "height", "min_height",
-    "roof:shape", "roof:material", "bridge", "waterway", "natural",
+    "roof:shape", "roof:material", "roof:colour", "roof:height",
+    "roof:levels", "roof:angle", "roof:orientation", "bridge", "waterway", "natural",
     "landuse", "amenity", "railway", "surface", "maxspeed", "lanes",
     "oneway", "access", "service", "tunnel", "layer", "leisure",
     "shop", "tourism", "historic", "man_made", "water", "place",
-    "religion", "operator", "aeroway", "barrier", "foot", "cycleway",
-    "entrance", "door", "wheelchair", "level", "indoor"
+    "religion", "operator", "aeroway", "military", "security", "barrier", "foot", "cycleway",
+    "wetland", "tidal", "seasonal", "marsh",
+    "healthcare", "emergency", "office", "craft", "cuisine", "opening_hours",
+    "public_transport", "brand", "building:use", "addr:street", "addr:city",
+    "entrance", "door", "wheelchair", "level", "indoor",
+    "lit", "street_lamp", "crossing", "crossing:island", "traffic_signals",
+    "traffic_calming", "bus", "bus_stop", "shelter", "bench",
+    "drinking_water", "waste_basket", "toilets", "fountain", "playground",
+    "parking", "bicycle_parking", "motorcycle_parking", "parking:lane",
+    "kerb", "tactile_paving", "incline", "smoothness", "footway",
+    "sidewalk", "sidewalk:left", "sidewalk:right", "cycleway:left",
+    "cycleway:right", "lanes:forward", "lanes:backward", "turn:lanes",
+    "junction", "access:conditional", "fee", "network", "route"
 }
 
 
@@ -102,26 +114,44 @@ def main() -> None:
     parser.add_argument("--output", required=True, type=pathlib.Path)
     parser.add_argument("--cell-size", type=float, default=DEFAULT_CELL_SIZE)
     parser.add_argument("--source-timestamp", required=True)
-    parser.add_argument(
-        "--cell-bounds",
-        default="-2,2,-2,2",
-        help="inclusive min_x,max_x,min_z,max_z cell coordinates",
-    )
+    parser.add_argument("--layers", default=",".join(LAYERS),
+                        help="comma-separated source layers to include")
+    parser.add_argument("--bounds-geojson", type=pathlib.Path,
+                        help="derive inclusive metric cell bounds from a WGS84 boundary GeoJSON")
+    parser.add_argument("--cell-bounds", default="-2,2,-2,2",
+                        help="inclusive min_x,max_x,min_z,max_z cell coordinates")
     args = parser.parse_args()
     if args.cell_size <= 0:
         raise SystemExit("cell size must be positive")
-    min_x, max_x, min_z, max_z = (
-        int(value) for value in args.cell_bounds.split(",")
-    )
+    selected_layers = tuple(item.strip() for item in args.layers.split(",") if item.strip())
+    unknown_layers = sorted(set(selected_layers) - set(LAYERS))
+    if not selected_layers or unknown_layers:
+        raise SystemExit(f"invalid --layers selection: {unknown_layers or args.layers!r}")
+
+    project = _make_projector()
+    if args.bounds_geojson:
+        boundary_data = json.loads(args.bounds_geojson.read_text(encoding="utf-8"))
+        boundary_features = boundary_data.get("features", [])
+        if len(boundary_features) != 1 or not boundary_features[0].get("geometry"):
+            raise SystemExit("bounds GeoJSON must contain exactly one boundary geometry")
+        projected_boundary = transform(project, shape(boundary_features[0]["geometry"]))
+        if projected_boundary.is_empty or not projected_boundary.is_valid:
+            raise SystemExit("bounds boundary geometry is empty or invalid")
+        min_bx, min_bz, max_bx, max_bz = projected_boundary.bounds
+        min_x = math.floor(min_bx / args.cell_size)
+        max_x = math.floor(max_bx / args.cell_size)
+        min_z = math.floor(min_bz / args.cell_size)
+        max_z = math.floor(max_bz / args.cell_size)
+    else:
+        min_x, max_x, min_z, max_z = (int(value) for value in args.cell_bounds.split(","))
     if min_x > max_x or min_z > max_z:
         raise SystemExit("invalid cell bounds")
 
-    project = _make_projector()
     cells = defaultdict(lambda: defaultdict(list))
     source_counts = defaultdict(int)
     emitted_counts = defaultdict(int)
 
-    for layer in LAYERS:
+    for layer in selected_layers:
         source_path = args.input_dir / f"{layer}.geojson"
         if not source_path.is_file():
             raise SystemExit(f"missing required source layer: {source_path}")
@@ -196,6 +226,7 @@ def main() -> None:
         "axes": {"x": "east_m", "z": "south_m"},
         "cell_size_m": args.cell_size,
         "cell_bounds_inclusive": [min_x, max_x, min_z, max_z],
+        "layers_included": list(selected_layers),
         "source": "OpenStreetMap contributors; BBBike.org",
         "license": "ODbL-1.0",
         "source_snapshot": args.source_timestamp,

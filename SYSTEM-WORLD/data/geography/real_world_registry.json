@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "2026-11-19.1",
+  "version": "2026-11-28.5",
   "coordinate_reference_system": "EPSG:4326",
   "coordinate_order": "latitude_longitude",
   "world_model": "real_earth",
@@ -53,7 +53,819 @@
         "bridges and river crossings",
         "historic landmarks",
         "airports and railway infrastructure"
-      ]
+      ],
+      "landmarks": {
+        "baghdad_grand_festivities_square": {
+          "name": {
+            "ar": "ساحة الاحتفالات الكبرى",
+            "en": "Grand Festivities Square"
+          },
+          "type": "ceremonial_square",
+          "latitude": 33.30587,
+          "longitude": 44.38306,
+          "location": {
+            "ar": "الكرخ، المنطقة الخضراء",
+            "en": "Al-Karkh, Green Zone"
+          },
+          "source_ids": {
+            "osm_way": 835419642
+          },
+          "source_urls": [
+            "https://mapcarta.com/W835419642"
+          ],
+          "geometry_status": "coordinate_reference_verified; detailed_polygon_and_access_geometry_pending",
+          "visual_requirements": [
+            "full parade ground",
+            "reviewing pavilion",
+            "approach avenue",
+            "surrounding landscape and roads"
+          ]
+        },
+        "baghdad_unknown_soldier_monument": {
+          "name": {
+            "ar": "نصب الجندي المجهول",
+            "en": "Monument to the Unknown Soldier"
+          },
+          "type": "memorial_monument",
+          "latitude": 33.30852,
+          "longitude": 44.38916,
+          "location": {
+            "ar": "الكرخ، قرب ساحة الاحتفالات",
+            "en": "Al-Karkh, near Grand Festivities Square"
+          },
+          "source_ids": {
+            "osm_way": 1076927375
+          },
+          "source_urls": [
+            "https://mapcarta.com/W1076927375",
+            "https://rafidainiraq.com/en/unknownsoldier/"
+          ],
+          "geometry_status": "coordinate_reference_verified; monument_mesh_and_site_boundary_pending",
+          "visual_requirements": [
+            "tilted shield-like dome",
+            "spiral tower",
+            "raised circular hill/plaza",
+            "underground museum entrance"
+          ]
+        },
+        "baghdad_victory_arch": {
+          "name": {
+            "ar": "قوس النصر / سيوف القادسية",
+            "en": "Victory Arch / Swords of Qadisiyah"
+          },
+          "type": "memorial_arch",
+          "latitude": 33.30526,
+          "longitude": 44.38645,
+          "location": {
+            "ar": "الكرخ، المنطقة الخضراء، مدخل ساحة الاحتفالات",
+            "en": "Al-Karkh, Green Zone, entrance to Grand Festivities Square"
+          },
+          "source_ids": {
+            "osm_way": 1076927374
+          },
+          "source_urls": [
+            "https://mapcarta.com/W1076927374",
+            "https://architect-atlas.com/buildings/victory-arch-baghdad/"
+          ],
+          "geometry_status": "coordinate_reference_verified; full twin-arch geometry_pending",
+          "visual_requirements": [
+            "two monumental bronze forearms",
+            "crossed steel swords",
+            "accurate height and spacing",
+            "ceremonial road alignment"
+          ]
+        },
+        "baghdad_al_shaheed_monument": {
+          "name": {
+            "ar": "نصب الشهيد",
+            "en": "Al-Shaheed Monument"
+          },
+          "type": "memorial_monument",
+          "latitude": 33.34344,
+          "longitude": 44.44613,
+          "location": {
+            "ar": "الرصافة، قرب قناة الجيش وشارع فلسطين",
+            "en": "Al-Rusafa, near Army Canal and Palestine Street"
+          },
+          "source_ids": {
+            "osm_way": 1089391780
+          },
+          "source_urls": [
+            "https://mapcarta.com/W1089391780",
+            "https://www.archnet.org/sites/433"
+          ],
+          "geometry_status": "coordinate_reference_verified; island_lake_and_site_geometry_pending",
+          "visual_requirements": [
+            "two separated turquoise dome shells",
+            "artificial lake and island",
+            "circular platform",
+            "surrounding gardens, bridges and walkways",
+            "underground museum volume"
+          ]
+        },
+        "baghdad_sindbad_palace_candidate": {
+          "name": {
+            "ar": "قصر السندباد ذو القبة الذهبية (موقع مرشح)",
+            "en": "Golden-Domed Sindbad Palace (candidate)"
+          },
+          "type": "palace_candidate",
+          "location": {
+            "ar": "حسب وصف المستخدم: الكرخ، المنطقة الخضراء؛ الموقع الدقيق غير مؤكد",
+            "en": "User-described as Al-Karkh, Green Zone; exact site unconfirmed"
+          },
+          "source_urls": [
+            "https://iraq.worldplaces.me/view-place/35713013.html",
+            "https://www.rudawarabia.net/arabic/categories/iraq/929587"
+          ],
+          "identity_note": "Do not merge with the separately listed Sindbad/Babylon Palace in Jadriya until the golden-domed Karkh site is positively identified.",
+          "geometry_status": "candidate_record_only; coordinates_intentionally_omitted_pending_identity_and_location_verification",
+          "visual_requirements": [
+            "golden dome as described by user",
+            "palace exterior and grounds pending photo or authoritative site identification"
+          ],
+          "runtime_projection_allowed": false
+        },
+        "baghdad_republic_bridge": {
+          "name": {
+            "ar": "جسر الجمهورية",
+            "en": "Republic Bridge"
+          },
+          "type": "road_bridge",
+          "latitude": 33.32463,
+          "longitude": 44.40434,
+          "location": {
+            "ar": "الرصافة والكرخ، يعبر نهر دجلة",
+            "en": "Al-Rusafa and Al-Karkh, crossing the Tigris River"
+          },
+          "source_ids": {
+            "osm_way": 1077808833
+          },
+          "source_urls": [
+            "https://mapcarta.com/W1077808833",
+            "https://www.wikidata.org/wiki/Q35587674"
+          ],
+          "geometry_status": "coordinate_reference_verified; bridge_deck_piers_collision_and_approach_geometry_pending",
+          "visual_requirements": [
+            "full bridge deck spanning the Tigris",
+            "accurate piers and river clearance",
+            "road approaches aligned to both riverbanks",
+            "pedestrian edges and collision geometry"
+          ]
+        },
+        "baghdad_14_tamuz_bridge": {
+          "name": {
+            "ar": "جسر 14 تموز (الجسر المعلق)",
+            "en": "14th of July Suspension Bridge"
+          },
+          "type": "suspension_road_bridge",
+          "latitude": 33.29632,
+          "longitude": 44.39987,
+          "location": {
+            "ar": "الكرخ والرصافة، يعبر نهر دجلة",
+            "en": "Al-Karkh and Al-Rusafa, crossing the Tigris River"
+          },
+          "source_ids": {
+            "osm_way": 863346634
+          },
+          "source_urls": [
+            "https://mapcarta.com/W863346634",
+            "https://bridgemeister.com/bridge.php?bid=519"
+          ],
+          "geometry_status": "coordinate_reference_verified; cable_tower_deck_and_collision_geometry_pending",
+          "visual_requirements": [
+            "suspension bridge towers and main cables",
+            "suspended road deck with side walkways",
+            "river clearance and both bank approaches",
+            "collision geometry for deck and pedestrian edges"
+          ]
+        },
+        "baghdad_al_mutanabbi_street": {
+          "name": {
+            "ar": "شارع المتنبي",
+            "en": "Al-Mutanabbi Street"
+          },
+          "type": "historic_literary_street",
+          "latitude": 33.342,
+          "longitude": 44.388,
+          "location": {
+            "ar": "الرصافة، قرب دجلة والقشلة",
+            "en": "Al-Rusafa, near the Tigris and Al-Qishla"
+          },
+          "source_urls": [
+            "https://rafidainiraq.com/en/mutanabbi/",
+            "https://ich.unesco.org/doc/src/47647.pdf"
+          ],
+          "geometry_status": "reference_coordinate_verified; full street centerline_shopfronts_and_pedestrian_geometry_pending",
+          "visual_requirements": [
+            "continuous historic book-market street",
+            "Baghdadi shopfronts and book stalls",
+            "pedestrian paving and shaded edges",
+            "Shabandar Cafe and poet statue as separately verified subfeatures"
+          ]
+        },
+        "baghdad_al_qishla": {
+          "name": {
+            "ar": "القشلة وبرج الساعة",
+            "en": "Al-Qishla and Clock Tower"
+          },
+          "type": "ottoman_heritage_complex",
+          "latitude": 33.3402,
+          "longitude": 44.3878,
+          "location": {
+            "ar": "الرصافة، ضفة دجلة الشرقية",
+            "en": "Al-Rusafa, east bank of the Tigris"
+          },
+          "source_urls": [
+            "https://visit-iraq.com/ar/places/al-qishla-and-clock-tower-in-baghdad",
+            "https://rafidainiraq.com/en/qishla/"
+          ],
+          "geometry_status": "reference_coordinate_verified; compound_footprint_clock_tower_and_courtyard_geometry_pending",
+          "visual_requirements": [
+            "Ottoman civic compound",
+            "four-faced historic clock tower",
+            "courtyard gardens and river-facing edge",
+            "brick and stone facade restoration detail"
+          ]
+        },
+        "baghdad_mustansiriya_madrasa": {
+          "name": {
+            "ar": "المدرسة المستنصرية",
+            "en": "Al-Mustansiriya Madrasa"
+          },
+          "type": "abbasid_madrasa",
+          "latitude": 33.33854,
+          "longitude": 44.38968,
+          "location": {
+            "ar": "الرصافة، على ضفة دجلة",
+            "en": "Al-Rusafa, beside the Tigris"
+          },
+          "source_urls": [
+            "https://www.islamicarchitecturalheritage.com/listings/madrasa-al-mustansiriyya",
+            "https://rafidainiraq.com/en/mustansiriya/"
+          ],
+          "geometry_status": "reference_coordinate_verified; four_iwan_courtyard_and_architectural_meshes_pending",
+          "visual_requirements": [
+            "four-iwan courtyard plan",
+            "burnt-brick geometric relief",
+            "arched galleries and water-clock detail",
+            "conservation-accurate roofline and openings"
+          ]
+        },
+        "baghdad_abbasid_palace": {
+          "name": {
+            "ar": "القصر العباسي",
+            "en": "Abbasid Palace"
+          },
+          "type": "abbasid_heritage_building",
+          "latitude": 33.3444,
+          "longitude": 44.3853,
+          "location": {
+            "ar": "الرصافة، حي الميدان قرب دجلة",
+            "en": "Al-Rusafa, Al-Maidan quarter near the Tigris"
+          },
+          "source_urls": [
+            "https://visit-iraq.com/ar/places/al-abbasid-palace-in-baghdad",
+            "https://www.rafidainiraq.com/en/abbasidpalace/"
+          ],
+          "geometry_status": "reference_coordinate_verified; footprint_and_brick_iwan_meshes_pending",
+          "visual_requirements": [
+            "late-Abbasid brick facade",
+            "monumental iwan and muqarnas",
+            "inner courtyard and passage",
+            "preserve scholarly uncertainty of original building function"
+          ]
+        },
+        "baghdad_iraq_museum": {
+          "name": {
+            "ar": "المتحف العراقي",
+            "en": "Iraq Museum"
+          },
+          "type": "national_archaeological_museum",
+          "latitude": 33.3283,
+          "longitude": 44.3852,
+          "location": {
+            "ar": "الرصافة، منطقة الصالحية",
+            "en": "Al-Rusafa, Salihiyah area"
+          },
+          "source_urls": [
+            "https://sbah.gov.iq/museums/",
+            "https://cdli.earth/collections/1100",
+            "https://www.unesco.org/en/museums/iraq?hub=417"
+          ],
+          "source_ids": {
+            "osm_node": 7973082344
+          },
+          "geometry_status": "reference_coordinate_verified; museum_building_campus_and_entry_geometry_pending",
+          "visual_requirements": [
+            "recognizable museum campus massing",
+            "separate historic and newer gallery volumes",
+            "public forecourt and landscaped approach",
+            "interior galleries represented only with licensed reference assets"
+          ]
+        },
+        "baghdad_kadhimiya_shrine": {
+          "name": {
+            "ar": "مرقد الإمامين الكاظمين",
+            "en": "Al-Kadhimiya Shrine"
+          },
+          "type": "religious_heritage_complex",
+          "latitude": 33.38023,
+          "longitude": 44.33819,
+          "location": {
+            "ar": "الكاظمية، شمال بغداد",
+            "en": "Al-Kadhimiya, northern Baghdad"
+          },
+          "source_urls": [
+            "https://rafidainiraq.com/en/kadhimiya/",
+            "https://mapcarta.com/W1245988816"
+          ],
+          "source_ids": {
+            "osm_way": 1245988816
+          },
+          "geometry_status": "reference_coordinate_verified; shrine_compound_footprint_and_dome_minaret_geometry_pending",
+          "visual_requirements": [
+            "two golden domes and four minarets",
+            "courtyard arcades and surrounding market streets",
+            "respectful pedestrian access and crowd circulation",
+            "accurate scale without invented sacred inscriptions"
+          ]
+        },
+        "baghdad_abu_hanifa_mosque": {
+          "name": {
+            "ar": "جامع الإمام أبي حنيفة",
+            "en": "Abu Hanifa Mosque"
+          },
+          "type": "religious_heritage_complex",
+          "latitude": 33.372,
+          "longitude": 44.359,
+          "location": {
+            "ar": "الأعظمية، الرصافة",
+            "en": "Adhamiya, Al-Rusafa"
+          },
+          "source_urls": [
+            "https://rafidainiraq.com/en/abuhanifa/"
+          ],
+          "geometry_status": "reference_coordinate_verified; mosque_clock_tower_courtyard_geometry_pending",
+          "visual_requirements": [
+            "historic mosque massing and minarets",
+            "recognizable clock tower",
+            "courtyard and surrounding Adhamiya urban fabric",
+            "respectful pedestrian access"
+          ]
+        },
+        "baghdad_zawraa_park": {
+          "name": {
+            "ar": "حدائق الزوراء",
+            "en": "Al-Zawraa Park"
+          },
+          "type": "urban_park",
+          "latitude": 33.305,
+          "longitude": 44.375,
+          "location": {
+            "ar": "الكرخ، غرب مركز بغداد",
+            "en": "Al-Karkh, west of central Baghdad"
+          },
+          "source_urls": [
+            "https://rafidainiraq.com/en/zawraa/",
+            "https://mapcarta.com/W83673023"
+          ],
+          "source_ids": {
+            "osm_way": 83673023
+          },
+          "geometry_status": "reference_coordinate_verified; park_boundary_lakes_paths_and_tree_inventory_pending",
+          "visual_requirements": [
+            "large connected parkland and shaded walking paths",
+            "lake edges and family recreation areas",
+            "botanical beds and mature tree canopy",
+            "zoo and amusement zones separated into dedicated subareas"
+          ]
+        },
+        "baghdad_tahrir_square": {
+          "name": {
+            "ar": "ساحة التحرير ونصب الحرية",
+            "en": "Tahrir Square and Freedom Monument"
+          },
+          "type": "civic_square_and_public_art",
+          "latitude": 33.3275,
+          "longitude": 44.4089,
+          "location": {
+            "ar": "باب الشرقي، الرصافة، قرب مدخل جسر الجمهورية",
+            "en": "Bab Al-Sharqi, Al-Rusafa, near the Republic Bridge approach"
+          },
+          "source_urls": [
+            "https://visit-iraq.com/en/places/tahrir-square-and-freedom-monument-in-baghdad",
+            "https://www.rafidainiraq.com/en/nasb/"
+          ],
+          "geometry_status": "reference_coordinate_verified; plaza_edges_monument_relief_and_traffic_geometry_pending",
+          "visual_requirements": [
+            "Tahrir civic plaza and pedestrian forecourt",
+            "Freedom Monument bronze bas-relief on long travertine wall",
+            "surrounding traffic lanes and safe crossings",
+            "modern public realm lighting and seating"
+          ]
+        },
+        "baghdad_sarafiya_bridge": {
+          "name": {
+            "ar": "جسر الصرافية",
+            "en": "Al-Sarafiya Bridge"
+          },
+          "type": "iron_truss_road_bridge",
+          "latitude": 33.3536,
+          "longitude": 44.3728,
+          "location": {
+            "ar": "يربط الوزيرية والعطيفية فوق دجلة",
+            "en": "Connects Waziriyah and Utafiyah across the Tigris"
+          },
+          "source_urls": [
+            "https://rafidainiraq.com/en/sarafiya/",
+            "https://thebridgeeng.com/bridge/wd-q310579"
+          ],
+          "geometry_status": "reference_coordinate_verified; truss_spans_deck_piers_and_collision_geometry_pending",
+          "visual_requirements": [
+            "recognizable iron truss structure",
+            "accurate river span and piers",
+            "both bank approaches",
+            "subtle architectural night lighting and collision-ready deck"
+          ]
+        },
+        "baghdad_khulafa_mosque": {
+          "name": {
+            "ar": "جامع الخلفاء",
+            "en": "Al-Khulafa Mosque"
+          },
+          "type": "abbasid_historic_mosque",
+          "latitude": 33.33889,
+          "longitude": 44.39791,
+          "location": {
+            "ar": "الرصافة، شارع الجمهورية قرب سوق الغزل",
+            "en": "الرصافة، شارع الجمهورية قرب سوق الغزل"
+          },
+          "source_urls": [
+            "https://mapcarta.com/W949437742"
+          ],
+          "geometry_status": "coordinate_reference_verified; exact_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "historic Abbasid minaret silhouette",
+            "accurate OSM footprint and courtyard",
+            "Suq al-Ghazl street context"
+          ]
+        },
+        "baghdad_khilani_mosque": {
+          "name": {
+            "ar": "جامع الخلاني",
+            "en": "Al-Khilani Mosque"
+          },
+          "type": "historic_shia_mosque",
+          "latitude": 33.3335,
+          "longitude": 44.4052,
+          "location": {
+            "ar": "الرصافة، بغداد",
+            "en": "الرصافة، بغداد"
+          },
+          "source_urls": [
+            "https://en.wikipedia.org/wiki/Al-Khilani_Mosque"
+          ],
+          "geometry_status": "coordinate_reference_verified; exact_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "main dome and minaret",
+            "historic Iraqi Islamic facade",
+            "accurate parcel and street access"
+          ]
+        },
+        "baghdad_haydar_khana_mosque": {
+          "name": {
+            "ar": "جامع الحيدرخانة",
+            "en": "Haydar-Khana Mosque"
+          },
+          "type": "ottoman_historic_mosque",
+          "latitude": 33.325,
+          "longitude": 44.42194,
+          "location": {
+            "ar": "الرصافة، محلة الحيدرخانة، شارع الرشيد",
+            "en": "الرصافة، محلة الحيدرخانة، شارع الرشيد"
+          },
+          "source_urls": [
+            "https://en.wikipedia.org/wiki/Haydar-Khana_Mosque"
+          ],
+          "geometry_status": "coordinate_reference_verified; exact_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "Ottoman mosque and blue glazed tile domes",
+            "minaret and Al-Rashid Street frontage",
+            "accurate courtyard and entrance"
+          ]
+        },
+        "baghdad_aquli_mosque": {
+          "name": {
+            "ar": "جامع العاقولي",
+            "en": "Al-Aquli Mosque"
+          },
+          "type": "il_khanid_historic_mosque",
+          "latitude": 33.3425,
+          "longitude": 44.39118,
+          "location": {
+            "ar": "الرصافة، محلة الحيدرخانة",
+            "en": "الرصافة، محلة الحيدرخانة"
+          },
+          "source_urls": [
+            "https://prayertime.live/mosques/al-aquli-mosque"
+          ],
+          "geometry_status": "coordinate_reference_verified; exact_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "Ilkhanid-era mosque massing",
+            "single minaret",
+            "historic street fabric"
+          ]
+        },
+        "baghdad_umm_al_qura_mosque": {
+          "name": {
+            "ar": "جامع أم القرى",
+            "en": "Umm al-Qura Mosque"
+          },
+          "type": "modern_grand_mosque",
+          "latitude": 33.337711,
+          "longitude": 44.296058,
+          "location": {
+            "ar": "العدل، الكرخ",
+            "en": "العدل، الكرخ"
+          },
+          "source_urls": [
+            "https://en.wikipedia.org/wiki/Umm_al-Qura_Mosque"
+          ],
+          "geometry_status": "coordinate_reference_verified; exact_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "large modern Iraqi mosque complex",
+            "central dome and minaret group from real references",
+            "forecourt and perimeter access"
+          ]
+        },
+        "baghdad_our_lady_of_sorrows_church": {
+          "name": {
+            "ar": "كنيسة أم الأحزان",
+            "en": "Church of Mary Mother of Sorrows"
+          },
+          "type": "chaldean_catholic_historic_church",
+          "latitude": 33.338139,
+          "longitude": 44.395528,
+          "location": {
+            "ar": "الرصافة، الشورجة، عقد النصارى",
+            "en": "الرصافة، الشورجة، عقد النصارى"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/leglise-om-al-ahzane-mere-des-douleurs-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "historic church rebuilt and raised in 1889",
+            "Shorja lane and churchyard context",
+            "accurate footprint and apse"
+          ]
+        },
+        "baghdad_mar_gorgis_chaldean_church": {
+          "name": {
+            "ar": "كنيسة مار كوركيس الكلدانية",
+            "en": "Mar Gorgis Chaldean Church"
+          },
+          "type": "chaldean_catholic_church",
+          "latitude": 33.31285,
+          "longitude": 44.472664,
+          "location": {
+            "ar": "بغداد الجديدة، حي سومر",
+            "en": "بغداد الجديدة، حي سومر"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/leglise-chaldeenne-mar-guorguis-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "reverse-arch architecture",
+            "earthenware brick and reinforced concrete",
+            "apse chapel and stained glass"
+          ]
+        },
+        "baghdad_mar_gorgis_greek_orthodox_cathedral": {
+          "name": {
+            "ar": "كاتدرائية مار كوركيس للروم الأرثوذكس",
+            "en": "Mar Gorgis Greek Orthodox Cathedral"
+          },
+          "type": "greek_orthodox_cathedral",
+          "latitude": 33.300583,
+          "longitude": 44.446444,
+          "location": {
+            "ar": "حي الرياض، شارع طارق بن زياد",
+            "en": "حي الرياض، شارع طارق بن زياد"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/the-mar-gorgis-church-in-baqofa/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "Byzantine decorative exterior",
+            "semicircular vault and apse",
+            "ornamental facade and church compound"
+          ]
+        },
+        "baghdad_saint_john_chaldean_church": {
+          "name": {
+            "ar": "كنيسة مار يوحنا الكلدانية",
+            "en": "Saint John Chaldean Church"
+          },
+          "type": "chaldean_catholic_church",
+          "latitude": 33.25256,
+          "longitude": 44.38381,
+          "location": {
+            "ar": "الكرخ، بغداد",
+            "en": "الكرخ، بغداد"
+          },
+          "source_urls": [
+            "https://mapcarta.com/W829067309"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "use exact OSM building polygon",
+            "entrance and street relationship",
+            "real-photo architectural details"
+          ],
+          "source_ids": {
+            "osm_way": 829067309
+          }
+        },
+        "baghdad_saint_joseph_latin_cathedral": {
+          "name": {
+            "ar": "كاتدرائية مار يوسف والقديسة تريزا اللاتينية",
+            "en": "Saint Joseph and Saint Teresa Latin Cathedral"
+          },
+          "type": "latin_catholic_cathedral",
+          "latitude": 33.309444,
+          "longitude": 44.434722,
+          "location": {
+            "ar": "الرصافة، حي الوحدة، طريق 42",
+            "en": "الرصافة، حي الوحدة، طريق 42"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/la-cathedrale-latine-saint-joseph-et-sainte-therese-de-lenfant-jesus-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "1984 cathedral building",
+            "large garden and Marian grotto",
+            "Saint Joseph Centre and campus boundary"
+          ]
+        },
+        "baghdad_sayidat_al_najat_cathedral": {
+          "name": {
+            "ar": "كاتدرائية سيدة النجاة",
+            "en": "Sayidat al-Najat Cathedral"
+          },
+          "type": "syriac_catholic_cathedral",
+          "latitude": 33.307081,
+          "longitude": 44.426189,
+          "location": {
+            "ar": "الكرادة الشرقية، الرصافة",
+            "en": "الكرادة الشرقية، الرصافة"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/la-cathedrale-sayidat-al-najatte-notre-dame-du-salut-ou-notre-dame-du-perpetuel-secours-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "1968 cathedral volume",
+            "front facade and dome from reference",
+            "forecourt and Karrada streets"
+          ]
+        },
+        "baghdad_mar_yousef_chaldean_cathedral": {
+          "name": {
+            "ar": "كاتدرائية مار يوسف الكلدانية",
+            "en": "Mar Yousef Chaldean Cathedral"
+          },
+          "type": "chaldean_catholic_cathedral",
+          "latitude": 33.301469,
+          "longitude": 44.428247,
+          "location": {
+            "ar": "الكرادة الشرقية، الرصافة",
+            "en": "الكرادة الشرقية، الرصافة"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/la-cathedrale-mar-youssef-kharbanda-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "1956 cathedral and restored facade",
+            "accurate street frontage",
+            "dome and interior only from real references"
+          ]
+        },
+        "baghdad_virgin_mary_patriarchal_cathedral": {
+          "name": {
+            "ar": "كاتدرائية مريم العذراء البطريركية",
+            "en": "Patriarchal Cathedral of the Virgin Mary"
+          },
+          "type": "church_of_the_east_cathedral",
+          "latitude": 33.305042,
+          "longitude": 44.453003,
+          "location": {
+            "ar": "كرادة، معسكر سارة، حي الرياض",
+            "en": "كرادة، معسكر سارة، حي الرياض"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/la-cathedrale-patriarcale-assyrienne-de-la-vierge-marie-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "cathedral occupies first floor of larger building",
+            "patriarchal seat compound context",
+            "do not use generic church template"
+          ]
+        },
+        "baghdad_mar_petros_mar_paulos_cathedral": {
+          "name": {
+            "ar": "كاتدرائية مار بطرس ومار بولس",
+            "en": "St Peter and St Paul Syriac Orthodox Cathedral"
+          },
+          "type": "syriac_orthodox_cathedral",
+          "latitude": 33.31305,
+          "longitude": 44.440561,
+          "location": {
+            "ar": "الرصافة، شارع الصناعة، حي الوحدة",
+            "en": "الرصافة، شارع الصناعة، حي الوحدة"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/la-cathedrale-mar-petros-et-mar-paulos-de-bagdad-saints-pierre-et-paul/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "large hall over 1800 square metres",
+            "high two-part sloping roof",
+            "northeast orientation and front esplanade"
+          ]
+        },
+        "baghdad_our_lady_queen_of_rosary_church": {
+          "name": {
+            "ar": "كنيسة سيدة الوردية",
+            "en": "Our Lady Queen of the Rosary Church"
+          },
+          "type": "chaldean_catholic_church",
+          "latitude": 33.293594,
+          "longitude": 44.419442,
+          "location": {
+            "ar": "الكرادة، شارع خارجة",
+            "en": "الكرادة، شارع خارجة"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/leglise-chaldeenne-vierge-marie-reine-du-rosaire-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "triangular facade pediment",
+            "pointed arch windows",
+            "central cupola with lantern and Saint Rita oratory"
+          ]
+        },
+        "baghdad_saint_joseph_latin_church_old": {
+          "name": {
+            "ar": "كنيسة مار يوسف اللاتينية القديمة",
+            "en": "Old Saint Joseph Latin Church"
+          },
+          "type": "historic_latin_church",
+          "latitude": 33.338861,
+          "longitude": 44.396528,
+          "location": {
+            "ar": "الرصافة، عقد النصارى قرب الشورجة",
+            "en": "الرصافة، عقد النصارى قرب الشورجة"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/leglise-latine-mar-youssef-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "cross-shaped historic plan",
+            "hemispherical dome and circular drum",
+            "current building status must be verified before rendering"
+          ]
+        },
+        "baghdad_syriac_catholic_immaculate_conception_former": {
+          "name": {
+            "ar": "موقع كنيسة الحبل بلا دنس السريانية الكاثوليكية السابقة",
+            "en": "Former Syriac Catholic Church of the Immaculate Conception Site"
+          },
+          "type": "demolished_historic_church_site",
+          "latitude": 33.338425,
+          "longitude": 44.395672,
+          "location": {
+            "ar": "الرصافة، الشورجة، عقد النصارى",
+            "en": "الرصافة، الشورجة، عقد النصارى"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/leglise-syriaque-catholique-vierge-marie-immaculee-conception-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; demolished_in_2018; do_not_render_as_existing_church",
+          "visual_requirements": [
+            "historic site only; demolished in 2018",
+            "do not render as existing church",
+            "retain heritage record and current verified land use"
+          ]
+        }
+      }
     }
   },
   "data_sources": [

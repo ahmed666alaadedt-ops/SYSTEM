@@ -10,6 +10,7 @@ on:
     branches:
       - main
       - feature/baghdad-five-plus-power-tower-20261122
+      - 'fix/**'
     paths:
       - "SYSTEM-WORLD/**"
       - "SYSTEM-WORLD/tools/**"
@@ -108,6 +109,72 @@ jobs:
           assert 1077808833 in bridge_ids and 4080878 in bridge_ids and 754157537 in bridge_ids
           assert 24709603 in river_ids
           print("Installed Baghdad core + Republic Bridge OSM cell pack:", len(cells), "metric cells; bridge and Tigris verified.")
+          PY
+
+      - name: Install citywide Baghdad OSM road overview when available
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-citywide-roads-1km.zip"
+          DESTINATION="$PROJECT/data/geography/baghdad/regional_roads"
+          if [ ! -s "$SOURCE_PACK" ]; then
+            echo "::error::Citywide Baghdad road overview artifact is required for this repair build."
+            exit 1
+          fi
+          mkdir -p "$DESTINATION"
+          unzip -q "$SOURCE_PACK" -d "$DESTINATION"
+          test -s "$DESTINATION/manifest.json"
+          python3 - <<'PY'
+          import json
+          import pathlib
+          root = pathlib.Path("SYSTEM-WORLD/data/geography/baghdad/regional_roads")
+          manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+          cells = list((root / "cells").glob("*.json"))
+          assert manifest["region_id"] == "iraq_baghdad_region"
+          assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
+          assert manifest["cell_size_m"] == 1000.0
+          assert manifest["layers_included"] == ["roads"]
+          assert len(cells) == manifest["cell_count"] and len(cells) >= 100
+          print("Installed citywide Baghdad OSM road overview:", len(cells), "occupied metric cells.")
+          PY
+
+      - name: Install citywide Baghdad urban detail overview
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-citywide-urban-1km.zip"
+          DESTINATION="$PROJECT/data/geography/baghdad/regional_urban"
+          if [ ! -s "$SOURCE_PACK" ]; then
+            echo "::error::Citywide Baghdad urban detail artifact is required for this repair build."
+            exit 1
+          fi
+          mkdir -p "$DESTINATION"
+          unzip -q "$SOURCE_PACK" -d "$DESTINATION"
+          test -s "$DESTINATION/manifest.json"
+          test -s "$DESTINATION/cells/0_0.json"
+          python3 - <<'PY'
+          import json
+          import pathlib
+          root = pathlib.Path("SYSTEM-WORLD/data/geography/baghdad/regional_urban")
+          manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+          expected = ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "wetlands", "entrances"]
+          cells = list((root / "cells").glob("*.json"))
+          assert manifest["region_id"] == "iraq_baghdad_region"
+          assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
+          assert manifest["cell_size_m"] == 1000.0
+          assert manifest["layers_included"] == expected
+          assert len(cells) == manifest["cell_count"] and len(cells) >= 100
+          total_buildings = 0
+          total_amenities = 0
+          for path in cells:
+              data = json.loads(path.read_text(encoding="utf-8"))
+              total_buildings += len(data.get("layers", {}).get("buildings", []))
+              total_amenities += len(data.get("layers", {}).get("amenities", []))
+          assert total_buildings >= 1000
+          assert total_amenities >= 10
+          print("Installed Baghdad citywide urban detail:", len(cells), "cells;", total_buildings, "building footprints;", total_amenities, "POIs.")
           PY
 
       - name: Set up Java 17
@@ -276,6 +343,17 @@ jobs:
           set -o pipefail
           "$GODOT" --headless --path "$PROJECT" --quit-after 8 \
             2>&1 | tee "$RUNNER_TEMP/system-world-runtime.log"
+
+      - name: Diagnose canonical scene meshes across all world switches
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          timeout 240s "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/diagnose_null_meshes.gd \
+            2>&1 | tee "$RUNNER_TEMP/system-world-mesh-diagnostic.log"
+          grep -q "SYSTEM MESH DIAGNOSTIC TOTALS:" "$RUNNER_TEMP/system-world-mesh-diagnostic.log"
 
       - name: Verify Miyar and Adam GLB runtime companions
         shell: bash

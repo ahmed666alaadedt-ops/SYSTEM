@@ -18,6 +18,7 @@ const ModernWorldRegionManagerScript = preload("res://scripts/modern_world_regio
 const UndergroundHeritageManagerScript = preload("res://scripts/underground_heritage_manager.gd")
 const ModernWorldMonsterGateManagerScript = preload("res://scripts/modern_world_monster_gate_manager.gd")
 const BaghdadOSMCellStreamerScript = preload("res://scripts/baghdad_osm_cell_streamer.gd")
+const ModernWorldAirTransportManagerScript = preload("res://scripts/modern_world_air_transport_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -252,10 +253,36 @@ func _create_modern_city() -> void:
 	region_manager.name = "ModernWorldRegionManager"
 	root.add_child(region_manager)
 
+	# City terminals use the region manager's existing game-world city anchors.
+	# Non-Baghdad anchors are prototype-layout positions, not real-world coordinates.
+	var air_transport := ModernWorldAirTransportManagerScript.new()
+	air_transport.name = "ModernWorldAirTransportManager"
+	root.add_child(air_transport)
+
 	if FileAccess.file_exists("res://data/geography/baghdad/cell_pack/manifest.json"):
 		var baghdad_osm := BaghdadOSMCellStreamerScript.new()
 		baghdad_osm.name = "BaghdadOSMCellStreamer"
 		root.add_child(baghdad_osm)
+
+	# Preserve the 200 m detailed core and stream the full municipal road network
+	# through a separate, lightweight 1 km overview pack.
+	if FileAccess.file_exists("res://data/geography/baghdad/regional_roads/manifest.json"):
+		var baghdad_regional_roads := BaghdadOSMCellStreamerScript.new()
+		baghdad_regional_roads.name = "BaghdadRegionalRoadsStreamer"
+		baghdad_regional_roads.data_root = "res://data/geography/baghdad/regional_roads"
+		baghdad_regional_roads.load_radius = 1
+		root.add_child(baghdad_regional_roads)
+
+	# A separate 1 km low-detail city layer supplies buildings, shops, worship
+	# places, public facilities, parks, waterways and rail without duplicating
+	# the 200 m detailed core or the dedicated road overview.
+	if FileAccess.file_exists("res://data/geography/baghdad/regional_urban/manifest.json"):
+		var baghdad_regional_urban := BaghdadOSMCellStreamerScript.new()
+		baghdad_regional_urban.name = "BaghdadRegionalUrbanStreamer"
+		baghdad_regional_urban.data_root = "res://data/geography/baghdad/regional_urban"
+		baghdad_regional_urban.load_radius = 0
+		baghdad_regional_urban.overview_mode = true
+		root.add_child(baghdad_regional_urban)
 
 	var monster_gate_manager := ModernWorldMonsterGateManagerScript.new()
 	monster_gate_manager.name = "ModernWorldMonsterGateManager"

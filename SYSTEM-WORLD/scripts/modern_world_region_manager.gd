@@ -525,6 +525,7 @@ func _add_road_strip(node_name: String, start: Vector2, offset: Vector2, width: 
 	var road := MeshInstance3D.new()
 	road.name = node_name
 	road.mesh = mesh
+	road.material_override = road_material
 	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(road)
 

@@ -27,6 +27,7 @@ LAYERS = (
     "amenities",
     "railway",
     "natural-water",
+    "wetlands",
     "entrances",
 )
 

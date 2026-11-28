@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.3",
+  "region": "Baghdad Municipality, Iraq",
+  "boundary_relation": 5638803,
+  "source": "OpenStreetMap contributors; BBBike.org Iraq PBF extract",
+  "source_snapshot_utc": "2026-11-26T23:59:51Z",
+  "source_file_sha256": "a397a38259bddfb3e916074b49cd450f41b8c00635f7825a1cf132dc3f7442c9",
+  "license": "ODbL-1.0",
+  "status": "reproducible_osm_snapshot_audit_not_ground_truth",
+  "deduplication": "Unique OSM objects keyed by @type + @id across clipped amenities and buildings; when an object has several geometries, polygon is preferred over point and line for the geometry count.",
+  "source_layer_feature_counts": {
+    "amenities": 17054,
+    "buildings": 41694
+  },
+  "totals": {
+    "unique_worship_objects": 578,
+    "mosques": 240,
+    "churches": 71,
+    "shrines": 2,
+    "monasteries": 6,
+    "other_or_unspecified": 257,
+    "conflicting_tags": 2,
+    "raw_amenity_place_of_worship_objects": 561,
+    "raw_amenity_monastery_objects": 6
+  },
+  "raw_place_of_worship_by_religion": {
+    "(missing)": 246,
+    "christian": 67,
+    "jewish": 11,
+    "mandaean": 2,
+    "multifaith": 1,
+    "muslim": 234
+  },
+  "preferred_geometry_counts": {
+    "mosque": {
+      "Point": 166,
+      "Polygon": 74
+    },
+    "church": {
+      "Point": 13,
+      "Polygon": 58
+    },
+    "shrine": {
+      "Polygon": 2
+    },
+    "monastery": {
+      "Point": 4,
+      "Polygon": 2
+    },
+    "other_or_unspecified": {
+      "Point": 233,
+      "Polygon": 24
+    },
+    "conflict": {
+      "Polygon": 2
+    }
+  },
+  "tag_conflicts": [
+    {
+      "osm_type": "way",
+      "osm_id": 235576428,
+      "name": "جامع الوهاب",
+      "amenity": "place_of_worship",
+      "religion": "muslim",
+      "building": "church",
+      "geometry": "Polygon",
+      "layers": [
+        "amenities",
+        "buildings"
+      ],
+      "review_required": true
+    },
+    {
+      "osm_type": "way",
+      "osm_id": 237172430,
+      "name": null,
+      "amenity": null,
+      "religion": "muslim",
+      "building": "church",
+      "geometry": "Polygon",
+      "layers": [
+        "buildings"
+      ],
+      "review_required": true
+    }
+  ],
+  "limitations": [
+    "Counts describe this downloaded OSM snapshot only, not a complete census of real-world Baghdad places of worship.",
+    "OSM tags can be missing or contradictory; unspecified objects remain neutral and conflicts are not assigned a religious architectural silhouette.",
+    "Shrine and monastery footprints are separate building classes, not reclassified as mosques or churches.",
+    "A mapped polygon proves only an imported exterior footprint, not a verified interior, collision, signage, or visual fidelity.",
+    "The 1 km regional overview and 200 m detailed cell pack require separate validation."
+  ]
+}
