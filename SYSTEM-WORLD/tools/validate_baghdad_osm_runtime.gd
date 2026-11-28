@@ -80,8 +80,8 @@ func _run_validation() -> void:
 	]
 	var entrance_cases := [
 		{"id": "verified_nearby", "point": [10.5, 4.0], "expected": "associated", "building": "entrance_building_public"},
-		{"id": "private_access", "point": [25.0, 4.0], "expected": "restricted", "building": "entrance_building_private"},
-		{"id": "private_entrance_on_public_building", "point": [5.0, 4.0], "tags": {"entrance": "main", "access": "private", "wheelchair": "no", "level": "1", "emergency": "yes"}, "expected": "restricted", "building": "entrance_building_public"},
+		{"id": "private_access", "point": [25.0, 4.0], "expected": "suppressed", "building": "entrance_building_private"},
+		{"id": "private_entrance_on_public_building", "point": [5.0, 4.0], "tags": {"entrance": "main", "access": "private", "wheelchair": "no", "level": "1", "emergency": "yes"}, "expected": "suppressed", "building": "entrance_building_public"},
 		{"id": "ambiguous_match", "point": [50.25, 4.0], "expected": "review_ambiguous", "building": "entrance_building_ambiguous_a"}
 	]
 	for entrance_case in entrance_cases:
@@ -90,17 +90,16 @@ func _run_validation() -> void:
 			"geometry": {"type": "Point", "coordinates": entrance_case.point},
 			"tags": entrance_case.get("tags", {"entrance": "main"})
 		}
-		if int(streamer._build_entrance_feature(entrance_test_root, entrance_feature, entrance_buildings)) != 1:
-			_fail("Mapped OSM entrance point did not build: " + str(entrance_case.id))
-			return
+		var built_entrance := int(streamer._build_entrance_feature(entrance_test_root, entrance_feature, entrance_buildings))
 		var entrance_node := entrance_test_root.get_node_or_null("OSMEntrance_runtime_entrance_%s" % str(entrance_case.id)) as Node3D
-		if entrance_node == null or str(entrance_node.get_meta("system_building_association_status", "")) != str(entrance_case.expected):
+		if str(entrance_case.expected) == "suppressed":
+			if built_entrance != 0 or entrance_node != null:
+				_fail("Private or sensitive OSM entrance was exposed as a player-facing marker: " + str(entrance_case.id))
+				return
+			continue
+		if built_entrance != 1 or entrance_node == null or str(entrance_node.get_meta("system_building_association_status", "")) != str(entrance_case.expected):
 			_fail("OSM entrance association status is incorrect: " + str(entrance_case.id))
 			return
-		if str(entrance_case.id) == "private_entrance_on_public_building":
-			if bool(entrance_node.get_meta("system_can_enter", true)) or str(entrance_node.get_meta("system_access_tag", "")) != "private" or str(entrance_node.get_meta("system_wheelchair_tag", "")) != "no" or str(entrance_node.get_meta("system_level_tag", "")) != "1" or str(entrance_node.get_meta("system_emergency_tag", "")) != "yes":
-				_fail("Entrance-level access/accessibility/service metadata was not preserved or private entrance was left enterable.")
-				return
 		if str(entrance_node.get_meta("system_associated_building_id", "")) != str(entrance_case.building):
 			_fail("OSM entrance association did not retain the nearest mapped building ID: " + str(entrance_case.id))
 			return
