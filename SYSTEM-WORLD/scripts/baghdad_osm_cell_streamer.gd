@@ -458,7 +458,8 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 		var runway_width := 42.0 if aeroway_kind == "runway" else 18.0
 		return _build_line_feature(parent, feature, runway_width, bridge_material, 0.12, "OSMCivilAirport_" + aeroway_kind)
 	if geometry_type in ["Polygon", "MultiPolygon"] and aeroway_kind == "apron":
-		return _build_area_feature(parent, feature, land_material, 0.06, "OSMCivilAirportApron")
+		_build_area_feature(parent, feature, land_material, 0.06, "OSMCivilAirportApron")
+		return 1
 	# Never derive a centroid marker from a mapped worship footprint. Build the
 	# actual OSM polygon/multipolygon extrusion before any point fallback logic.
 	if geometry_type in ["Polygon", "MultiPolygon"] and _is_polygon_worship_feature(feature):
