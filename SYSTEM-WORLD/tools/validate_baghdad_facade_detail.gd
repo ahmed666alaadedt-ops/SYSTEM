@@ -360,8 +360,24 @@ func _run() -> void:
 	var pole_transforms: Array = streamer.get_meta("system_streetlight_pole_transforms", [])
 	var arm_transforms: Array = streamer.get_meta("system_streetlight_arm_transforms", [])
 	var head_transforms: Array = streamer.get_meta("system_streetlight_head_transforms", [])
-	if sidewalk_transforms.size() != 2:
-		_fail("OSM sidewalk=both must generate exactly two side-specific sidewalk segments.")
+	if sidewalk_transforms.size() != 16:
+		_fail("A 96 m OSM sidewalk=both road must generate eight terrain-following slabs on each side.")
+		return
+	var left_sidewalk_count := 0
+	var right_sidewalk_count := 0
+	for sidewalk_transform in sidewalk_transforms:
+		if not sidewalk_transform is Transform3D:
+			_fail("Sidewalk generator emitted a non-Transform3D slab.")
+			return
+		if sidewalk_transform.origin.z > 0.0:
+			left_sidewalk_count += 1
+		else:
+			right_sidewalk_count += 1
+		if sidewalk_transform.basis.x.length() > 12.01:
+			_fail("Sidewalk slab exceeds the 12 m terrain-following segment budget.")
+			return
+	if left_sidewalk_count != 8 or right_sidewalk_count != 8:
+		_fail("OSM sidewalk=both must preserve eight independent slabs on each road side.")
 		return
 	if pole_transforms.is_empty() or pole_transforms.size() != arm_transforms.size() or pole_transforms.size() != head_transforms.size() or pole_transforms.size() > 36:
 		_fail("OSM lit=yes road must generate paired, mobile-budgeted streetlight poles, arms and heads.")
@@ -392,12 +408,16 @@ func _run() -> void:
 	streamer.set_meta("system_sidewalk_transforms", [])
 	streamer.call("_collect_sidewalk_transforms", streamer, PackedVector2Array([Vector2(0.0, 100.0), Vector2(24.0, 100.0)]), 6.0, one_side_feature["tags"], 0.16)
 	var left_only_transforms: Array = streamer.get_meta("system_sidewalk_transforms", [])
-	if left_only_transforms.size() != 1:
-		_fail("OSM sidewalk=left must not invent a sidewalk on the right side.")
+	if left_only_transforms.size() != 2:
+		_fail("A 24 m OSM sidewalk=left must generate two slabs and no right-side sidewalk.")
 		return
+	for left_transform in left_only_transforms:
+		if left_transform.origin.z <= 100.0:
+			_fail("OSM sidewalk=left generated a slab on the wrong side of the road.")
+			return
 
 	print("Baghdad facade detail validation passed: ", window_count,
-		" instanced windows across five vertical facade bands; regional 1 km OSM footprints preserve mosque/church silhouettes, neutral worship polygons, isolated tag conflicts, shrine and monastery classes; close-range villa and palace include road-facing columned entry canopies; per-building window budget <= 32.")
+		" instanced windows across five vertical facade bands; regional worship classes preserved; villa/palace entries detailed; mapped sidewalks split into <=12 m terrain-following slabs with explicit left/right parity; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
 	quit(0)
 
