@@ -817,6 +817,10 @@ func _run_validation() -> void:
 if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or air_transport.get_node_or_null("BaghdadAirshipPassengerStation/AirshipPlatformCollision") == null or air_transport.get_node_or_null("BaghdadAirshipCircularRoute/HunterInspiredPassengerAirshipRouteFollower/HunterInspiredBaghdadPassengerAirship") == null:
 		_fail("Baghdad passenger airship station or moving route scene was not created.")
 		return
+	var airship_loop_route: Dictionary = air_transport.routes.get("baghdad_airship_loop", {})
+	if int(airship_loop_route.get("duration_minutes", 0)) != 24 or int(airship_loop_route.get("capacity", 0)) != 60:
+		_fail("Baghdad airship loop schedule duration or passenger capacity failed.")
+		return
 	var airship_path := air_transport.get_node("BaghdadAirshipCircularRoute") as Path3D
 	if float(airship_path.get_meta("system_route_radius_m", 0.0)) != 3000.0 or float(airship_path.get_meta("system_cruise_altitude_m", 0.0)) != 190.0 or not is_equal_approx(float(airship_path.get_meta("system_cruise_speed_mps", 0.0)), 17.5):
 		_fail("Baghdad airship scenic route radius, altitude or cruise speed metadata failed.")
