@@ -2091,6 +2091,15 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] Exact-head Godot validation must confirm the shader material, TIME-driven code and bank-foam mesh are present; real-device visual review remains required for reflections, transparency, current direction and mobile GPU cost.
 
 
+## Baghdad OSM entrance access and accessibility metadata — 28 November 2026
+
+- [x] Preserve entrance/door type, entrance-level access, wheelchair, foot, indoor, level, service and emergency tags on mapped entrance nodes and interaction bodies.
+- [x] Treat an entrance explicitly tagged `access=no/private` as restricted even when its associated building footprint is public.
+- [x] Keep every mapped entrance non-enterable until a verified door/interior scene and transition flow exist; map discovery must not imply interior access.
+- [x] Add runtime validator cases for a private entrance on a public building and preservation of wheelchair/level/emergency metadata.
+- [ ] Run the exact-head Godot OSM runtime validator and Android build; source/test changes are not considered passed until CI reports success.
+- [ ] Verify real OSM entrances, doors and accessible paths against surveyed frontage and sidewalk geometry; tags may be missing or stale.
+
 ## Baghdad citywide night illumination and in-world advertising expansion — 28 November 2026
 
 ### Advertising identity and content rules
