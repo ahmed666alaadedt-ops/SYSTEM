@@ -411,6 +411,33 @@ func _run_validation() -> void:
 		synthetic_root.free()
 		synthetic_index += 1
 	print("Baghdad synthetic worship tagging QA passed: three OSM tagging variants generated polygon footprint meshes without POI duplication.")
+	# Exercise the close-range 200 m playable builder, including collision
+	# bodies and source metadata, for shrine and monastery footprints.
+	for core_case in [
+		{"type": "shrine", "name": "مزار خلية بغداد", "tags": {"building": "shrine", "name:ar": "مزار خلية بغداد"}},
+		{"type": "monastery", "name": "دير خلية بغداد", "tags": {"building": "monastery", "name:ar": "دير خلية بغداد"}}
+	]:
+		var core_root := Node3D.new()
+		var core_feature := {
+			"id": "runtime_core_" + str(core_case.type),
+			"osm_type": "way",
+			"geometry": {"type": "Polygon", "coordinates": [[[0.0, 0.0], [12.0, 0.0], [12.0, 10.0], [0.0, 10.0], [0.0, 0.0]]]},
+			"tags": core_case.tags
+		}
+		var core_built := regional_urban._build_building_feature(core_root, core_feature, [])
+		var core_meshes := core_root.find_children("OSMBuilding_*", "MeshInstance3D", true, false)
+		var core_bodies := core_root.find_children("OSMBuildingCollision_*", "StaticBody3D", true, false)
+		var core_details := core_root.find_children("OSMWorshipDetail_%s_*" % str(core_case.type), "Node3D", true, false)
+		if core_built != 1 or core_meshes.size() != 1 or core_bodies.size() != 1 or core_details.size() != 1:
+			_fail("Detailed Baghdad 200 m worship footprint/collision/detail build failed: " + str(core_case))
+			core_root.free()
+			return
+		if str(core_bodies[0].get_meta("system_source_name_ar", "")) != str(core_case.name) or str(core_bodies[0].get_meta("system_worship_classification", "")) != str(core_case.type):
+			_fail("Detailed Baghdad 200 m worship collision lost Arabic source name or worship classification: " + str(core_case))
+			core_root.free()
+			return
+		core_root.free()
+	print("Baghdad detailed 200 m worship QA passed: shrine and monastery polygons retain collision, distinct roof detail and Arabic source metadata.")
 	# Conflicting religion/building tags must remain neutral in the detailed
 	# 200 m amenity layer instead of receiving a false mosque/church silhouette.
 	var conflict_root := Node3D.new()
