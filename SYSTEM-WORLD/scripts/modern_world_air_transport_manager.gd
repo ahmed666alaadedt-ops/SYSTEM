@@ -413,6 +413,8 @@ func _build_baghdad_airship_station() -> void:
 	_add_box(_airship_station, "AirshipMooringTower", Vector3(-38, 95, 0), Vector3(8, 190, 8), platform_material)
 	_add_box(_airship_station, "AirshipPassengerElevator", Vector3(-38, 92, 0), Vector3(5, 12, 5), glow)
 	_add_box(_airship_station, "AirshipPassengerBridge", Vector3(-12, 180, 0), Vector3(48, 1.8, 8), glow)
+	_add_box_collision(_airship_station, "AirshipMooringTowerCollision", Vector3(-38, 95, 0), Vector3(8, 190, 8))
+	_add_box_collision(_airship_station, "AirshipPassengerBridgeCollision", Vector3(-12, 180, 0), Vector3(48, 1.8, 8))
 	_add_box(_airship_station, "AirshipStationSign", Vector3(0, 18, 28), Vector3(34, 3, 0.8), glow)
 	for index in range(10):
 		_add_box(_airship_station, "AirshipWaitingBench_%02d" % index, Vector3(-32.0 + float(index % 5) * 16.0, 2.2, -16.0 + float(int(index / 5)) * 28.0), Vector3(7, 1.0, 2.0), platform_material)
