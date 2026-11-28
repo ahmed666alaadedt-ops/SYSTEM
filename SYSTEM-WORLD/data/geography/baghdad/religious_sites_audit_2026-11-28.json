@@ -1,55 +1,83 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "region": "Baghdad Municipality, Iraq",
   "boundary_relation": 5638803,
   "source": "OpenStreetMap contributors; BBBike.org Iraq PBF extract",
   "source_snapshot_utc": "2026-11-26T23:59:51Z",
+  "source_file_sha256": "a397a38259bddfb3e916074b49cd450f41b8c00635f7825a1cf132dc3f7442c9",
   "license": "ODbL-1.0",
-  "status": "candidate_data_audit_not_ground_truth",
-  "deduplication": "Unique OSM objects keyed by @type + @id across clipped amenities and buildings layers; repeated LineString/Polygon representations of the same closed way counted once.",
+  "status": "reproducible_osm_snapshot_audit_not_ground_truth",
+  "deduplication": "Unique OSM objects keyed by @type + @id across clipped amenities and buildings; when an object has several geometries, polygon is preferred over point and line for the geometry count.",
+  "source_layer_feature_counts": {
+    "amenities": 17054,
+    "buildings": 41694
+  },
   "totals": {
-    "unique_religious_or_religion_tagged_objects": 585,
+    "unique_worship_objects": 570,
     "mosques": 240,
     "churches": 71,
-    "other_or_unspecified_place_of_worship": 257,
-    "monasteries": 4,
-    "religion_tagged_non_worship_features": 11,
-    "conflicting_religion_vs_building_tags": 2
+    "other_or_unspecified": 257,
+    "conflicting_tags": 2,
+    "raw_amenity_place_of_worship_objects": 561
   },
-  "geometry_notes": {
-    "source_layers": [
-      "amenities.geojson",
-      "buildings.geojson"
-    ],
-    "source_feature_counts": {
-      "amenities": 17054,
-      "buildings": 41694
+  "raw_place_of_worship_by_religion": {
+    "(missing)": 246,
+    "christian": 67,
+    "jewish": 11,
+    "mandaean": 2,
+    "multifaith": 1,
+    "muslim": 234
+  },
+  "preferred_geometry_counts": {
+    "mosque": {
+      "Point": 166,
+      "Polygon": 74
     },
-    "duplicate_geometry_note": "Closed OSM ways can appear as both LineString and Polygon in the amenities export; the audit deduplicates by OSM object identity.",
-    "point_and_polygon_import_required": true,
-    "visual_completion_verified": false
+    "church": {
+      "Point": 13,
+      "Polygon": 58
+    },
+    "other_or_unspecified": {
+      "Point": 233,
+      "Polygon": 24
+    },
+    "conflict": {
+      "Polygon": 2
+    }
   },
   "tag_conflicts": [
     {
       "osm_type": "way",
       "osm_id": 235576428,
       "name": "جامع الوهاب",
+      "amenity": "place_of_worship",
       "religion": "muslim",
       "building": "church",
+      "geometry": "Polygon",
+      "layers": [
+        "amenities",
+        "buildings"
+      ],
       "review_required": true
     },
     {
       "osm_type": "way",
       "osm_id": 237172430,
+      "name": null,
+      "amenity": null,
       "religion": "muslim",
       "building": "church",
+      "geometry": "Polygon",
+      "layers": [
+        "buildings"
+      ],
       "review_required": true
     }
   ],
   "limitations": [
-    "Counts describe the downloaded OSM snapshot only, not a complete census of all real-world Baghdad places of worship.",
-    "Some place_of_worship objects have no religion tag and are intentionally kept in an unspecified category.",
-    "Regional 1 km geometry is exterior-only; it does not prove interiors, collision, signage, or architectural fidelity.",
-    "The 200 m detailed pack and regional overview must be validated independently."
+    "Counts describe this downloaded OSM snapshot only, not a complete census of real-world Baghdad places of worship.",
+    "OSM tags can be missing or contradictory; unspecified objects remain neutral and conflicts are not assigned a religious architectural silhouette.",
+    "A mapped polygon proves only an imported exterior footprint, not a verified interior, collision, signage, or visual fidelity.",
+    "The 1 km regional overview and 200 m detailed cell pack require separate validation."
   ]
 }
