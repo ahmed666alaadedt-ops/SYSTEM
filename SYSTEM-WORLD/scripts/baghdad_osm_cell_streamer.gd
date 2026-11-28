@@ -1623,7 +1623,7 @@ func _build_mapped_amenity_marker(parent: Node3D, feature: Dictionary, coordinat
 	mapped_root.set_meta("system_access_state", "mapped_amenity_point_no_interior_scene")
 	parent.add_child(mapped_root)
 	var marker := MeshInstance3D.new()
-	marker.name = "MappedAmenityMarker"
+	marker.name = "OSMAmenity_%s" % feature_id
 	var mesh := SphereMesh.new()
 	mesh.radius = 0.48
 	mesh.height = 0.96
