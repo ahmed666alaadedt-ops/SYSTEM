@@ -24,22 +24,18 @@ def classify(tags: dict[str, object]) -> str | None:
     amenity = str(tags.get("amenity", "")).lower()
     religion = str(tags.get("religion", "")).lower()
     building = str(tags.get("building", "")).lower()
-
     explicit_worship = amenity in {"place_of_worship", "monastery"} or building in {
-        "mosque", "church", "synagogue", "temple", "monastery", "shrine"
+        "mosque", "church", "chapel", "cathedral", "synagogue", "temple", "monastery", "shrine"
     }
-    # Match the runtime polygon classifier: some real mapped sites use
-    # building=public/religious (or another non-empty building value) plus
-    # religion=*, rather than the narrower building=mosque/church tags.
+    # Match the runtime classifier for generic public/religious building tags.
     religious_building = religion in {
         "muslim", "islam", "christian", "christianity"
-    } and (building != "" or amenity != "")
+    } and building in {"public", "religious"}
     if not explicit_worship and not religious_building:
         return None
-
     if amenity == "monastery" or building == "monastery":
         return "monastery"
-    if (religion in {"muslim", "islam"} and building == "church") or (
+    if (religion in {"muslim", "islam"} and building in {"church", "chapel", "cathedral"}) or (
         religion in {"christian", "christianity"} and building == "mosque"
     ):
         return "conflict"
@@ -49,7 +45,7 @@ def classify(tags: dict[str, object]) -> str | None:
         return "church"
     if building == "mosque":
         return "mosque"
-    if building == "church":
+    if building in {"church", "chapel", "cathedral"}:
         return "church"
     if building == "shrine":
         return "shrine"
