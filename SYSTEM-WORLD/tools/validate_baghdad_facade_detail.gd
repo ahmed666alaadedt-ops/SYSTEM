@@ -55,21 +55,43 @@ func _run() -> void:
 	if int(windows.get_meta("system_facade_window_draw_calls_per_cell", 0)) != 1:
 		_fail("Facade windows are not aggregated into one MultiMesh draw call per cell.")
 		return
+	if not windows.multimesh.use_colors:
+		_fail("Facade MultiMesh must retain per-window cool/warm color variation.")
+		return
+
+	# The synthetic 16 m apartment represents five 3.15 m facade bands.
+	# Check the actual instance transforms so a non-empty MultiMesh alone
+	# cannot accidentally pass when windows occupy only one or two floors.
+	var floor_instance_counts := {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+	for instance_index in range(window_count):
+		var instance_transform: Transform3D = windows.multimesh.get_instance_transform(instance_index)
+		var floor_index := int(round((instance_transform.origin.y - 1.55) / 3.15))
+		if floor_index < 0 or floor_index > 4:
+			_fail("Facade window instance lies outside the five expected apartment floors.")
+			return
+		floor_instance_counts[floor_index] = int(floor_instance_counts[floor_index]) + 1
+	for floor_index in range(5):
+		if int(floor_instance_counts[floor_index]) < 3:
+			_fail("Five-floor apartment facade coverage is incomplete on floor %d." % (floor_index + 1))
+			return
 
 	var overview_parent := Node3D.new()
 	overview_parent.name = "BaghdadRegionalOverviewValidation"
 	root.add_child(overview_parent)
-	streamer.call("_build_building_overview_feature", overview_parent, feature)
-	if overview_parent.get_child_count() != 1 or overview_parent.get_child(0) is MultiMeshInstance3D:
+	var overview_built := int(streamer.call("_build_building_overview_feature", overview_parent, feature))
+	if overview_built != 1 or overview_parent.get_child_count() != 1 or overview_parent.get_child(0) is MultiMeshInstance3D:
 		_fail("The 1 km regional overview must remain a low-cost extrusion LOD without facade windows.")
 		return
 	var overview_building := overview_parent.get_child(0) as MeshInstance3D
 	if overview_building == null or str(overview_building.get_meta("system_facade_detail_level", "")) != "regional_extrusion_lod":
 		_fail("Regional overview building is missing its explicit low-detail facade classification.")
 		return
+	if str(overview_building.get_meta("system_footprint_geometry", "")) != "osm_polygon_extrusion":
+		_fail("Regional overview must preserve the mapped OSM building footprint extrusion.")
+		return
 
-	print("Baghdad facade detail validation passed: high-detail 200 m cell apartment generated ", window_count,
-		" instanced windows in one cell-level MultiMesh; regional 1 km overview remains extrusion-only; per-building window budget <= 32.")
+	print("Baghdad facade detail validation passed: five-floor apartment generated ", window_count,
+		" instanced windows across all five floors in one cell-level MultiMesh; regional 1 km overview remains extrusion-only; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
 	quit(0)
 
