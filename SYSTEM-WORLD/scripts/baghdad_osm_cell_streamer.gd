@@ -338,14 +338,34 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 		var amenity_kind := str(tags.get("amenity", "")).to_lower()
 		var facility_type := _worship_facility_type(tags)
 		if facility_type == "":
-			if amenity_kind == "hospital" or str(tags.get("healthcare", "")).to_lower() in ["hospital", "clinic"]:
+			var healthcare_kind := str(tags.get("healthcare", "")).to_lower()
+			var shop_kind := str(tags.get("shop", "")).to_lower()
+			var office_kind := str(tags.get("office", "")).to_lower()
+			var craft_kind := str(tags.get("craft", "")).to_lower()
+			var tourism_kind := str(tags.get("tourism", "")).to_lower()
+			var historic_kind := str(tags.get("historic", "")).to_lower()
+			var leisure_kind := str(tags.get("leisure", "")).to_lower()
+			var aeroway_kind := str(tags.get("aeroway", "")).to_lower()
+			if amenity_kind in ["hospital", "clinic", "doctors", "pharmacy"] or healthcare_kind != "":
 				facility_type = "healthcare"
+			elif amenity_kind in ["school", "university", "college", "kindergarten"] or str(tags.get("education", "")).to_lower() != "":
+				facility_type = "education"
 			elif amenity_kind in ["police", "police_station"]:
 				facility_type = "police"
-			elif str(tags.get("shop", "")) != "":
+			elif amenity_kind in ["fire_station", "post_office", "bank", "townhall", "library"] or office_kind != "" or craft_kind != "":
+				facility_type = "civic"
+			elif shop_kind != "":
 				facility_type = "shop"
 			elif amenity_kind in ["restaurant", "cafe", "fast_food", "food_court"]:
 				facility_type = "food"
+			elif tourism_kind != "":
+				facility_type = "tourism"
+			elif historic_kind != "":
+				facility_type = "heritage"
+			elif leisure_kind != "":
+				facility_type = "leisure"
+			elif aeroway_kind != "":
+				facility_type = "transport"
 		if facility_type != "":
 			instance.set_meta("system_facility_type", facility_type)
 		instance.set_meta("system_display_name", _building_display_name(kind, tags))
