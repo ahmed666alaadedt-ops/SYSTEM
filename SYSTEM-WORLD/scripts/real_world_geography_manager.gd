@@ -123,9 +123,15 @@ func get_landmark_world_position(city_id: String, landmark_id: String) -> Vector
 	if not landmarks.has(landmark_id):
 		return Vector3.ZERO
 	var landmark: Dictionary = landmarks[landmark_id]
+	# Candidate records must never be projected into gameplay until their identity,
+	# coordinates and source geometry are verified.
+	if not bool(landmark.get("runtime_projection_allowed", true)):
+		return Vector3.ZERO
+	if not landmark.has("latitude") or not landmark.has("longitude"):
+		return Vector3.ZERO
 	return to_local_world_position(
 		str(get_city(city_id).get("region_id", "")),
-		float(landmark.get("latitude", 0.0)),
-		float(landmark.get("longitude", 0.0)),
+		float(landmark["latitude"]),
+		float(landmark["longitude"]),
 		float(landmark.get("elevation_m", 0.0))
 	)
