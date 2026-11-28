@@ -23,6 +23,10 @@ on:
       - "SYSTEM-WORLD/tools/validate_baghdad_towers.gd"
   workflow_dispatch:
 
+concurrency:
+  group: verify-baghdad-osm-source-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
