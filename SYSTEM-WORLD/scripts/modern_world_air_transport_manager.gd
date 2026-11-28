@@ -116,7 +116,7 @@ func _register_route_pair(origin_id: String, destination_id: String, transport_t
 	var route_id := origin_id + "__" + destination_id + "__" + transport_type
 	var reverse_id := destination_id + "__" + origin_id + "__" + transport_type
 	routes[route_id] = {"route_id": route_id, "origin_city_id": origin_id, "destination_city_id": destination_id, "transport_type": transport_type, "duration_minutes": duration_minutes, "capacity": route_capacity, "enabled": true}
-	routes[reverse_id] = {"route_id": reverse_id, "origin_city_id": destination_id, "destination_city_id": origin_id, "transport_type": transport_type, "duration_minutes": duration_minutes, "capacity": CITY_AIRCRAFT_CAPACITY, "enabled": true}
+	routes[reverse_id] = {"route_id": reverse_id, "origin_city_id": destination_id, "destination_city_id": origin_id, "transport_type": transport_type, "duration_minutes": duration_minutes, "capacity": route_capacity, "enabled": true}
 
 
 func register_external_city_airport(city_id: String, city_name: String, world_position: Vector3) -> bool:
