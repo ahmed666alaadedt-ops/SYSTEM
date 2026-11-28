@@ -856,7 +856,10 @@ func _run_validation() -> void:
 	if not air_transport.confirm_ticket_payment(qa_ticket_id, "synthetic-payment-receipt") or not air_transport.board_ticket(qa_ticket_id, "qa_player"):
 		_fail("Passenger payment confirmation or boarding transition failed.")
 		return
-	var arrival: Dictionary = air_transport.complete_ticket_travel(qa_ticket_id, "qa_player")
+	if str(air_transport.get_ticket(qa_ticket_id).get("status", "")) != "in_transit" or not air_transport.complete_ticket_travel(qa_ticket_id, "qa_player").is_empty():
+		_fail("Passenger route did not enforce its scheduled in-transit duration.")
+		return
+	var arrival: Dictionary = air_transport.complete_ticket_travel(qa_ticket_id, "qa_player", int(Time.get_unix_time_from_system()) + 86400)
 	if arrival.is_empty() or str(arrival.get("destination_city_name", "")) != "Paris QA" or str(air_transport.get_ticket(qa_ticket_id).get("status", "")) != "arrived":
 		_fail("Passenger city-to-city arrival resolution failed.")
 		return
