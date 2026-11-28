@@ -104,6 +104,7 @@ def main() -> None:
         "unique_worship_objects": sum(categories.values()),
         "mosques": categories["mosque"],
         "churches": categories["church"],
+        "shrines": categories["shrine"],
         "other_or_unspecified": categories["other_or_unspecified"],
         "conflicting_tags": categories["conflict"],
         "raw_amenity_place_of_worship_objects": raw_place_of_worship,
