@@ -240,6 +240,24 @@ jobs:
                   "feature_count": len(geojson.get("features", [])),
                   "geometry_types": geometry_counts,
               }
+          amenities = json.loads(Path("amenities.geojson").read_text(encoding="utf-8")).get("features", [])
+          civil_aeroway_counts = {}
+          civil_aeroway_geometry_counts = {}
+          for feature in amenities:
+              properties = feature.get("properties") or {}
+              aeroway = str(properties.get("aeroway", "")).lower()
+              if not aeroway:
+                  continue
+              if properties.get("military") or properties.get("security"):
+                  continue
+              if str(properties.get("access", "")).lower() in {"private", "no", "restricted"}:
+                  continue
+              civil_aeroway_counts[aeroway] = civil_aeroway_counts.get(aeroway, 0) + 1
+              geometry_type = (feature.get("geometry") or {}).get("type", "null")
+              civil_aeroway_geometry_counts[geometry_type] = civil_aeroway_geometry_counts.get(geometry_type, 0) + 1
+          report["public_civil_aeroway_feature_counts"] = civil_aeroway_counts
+          report["public_civil_aeroway_geometry_counts"] = civil_aeroway_geometry_counts
+          report["public_civil_aeroway_feature_total"] = sum(civil_aeroway_counts.values())
           report["contributor_metadata_cleaning_applied"] = [
               "version", "timestamp", "changeset", "uid", "user"
           ]
