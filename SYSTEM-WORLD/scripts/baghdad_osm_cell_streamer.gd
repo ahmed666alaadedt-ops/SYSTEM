@@ -217,7 +217,12 @@ func _load_cell(cell: Vector2i) -> void:
 	for feature in road_features:
 		road_count += _build_line_feature(cell_root, feature, _road_width(feature.get("tags", {})), road_material, 0.16, "OSMRoad")
 	var building_count := 0
-	for feature in layers.get("buildings", []):
+	var building_features: Array = layers.get("buildings", [])
+	var building_feature_ids: Dictionary = {}
+	for feature in building_features:
+		var building_id := str(feature.get("id", ""))
+		if building_id != "":
+			building_feature_ids[building_id] = true
 		if overview_mode:
 			building_count += _build_building_overview_feature(cell_root, feature)
 		else:
@@ -243,6 +248,11 @@ func _load_cell(cell: Vector2i) -> void:
 	var amenity_count := 0
 	for feature in layers.get("amenities", []):
 		if overview_mode:
+			# A worship polygon can be present in both OSM layers. The building
+			# layer already rendered its exact footprint, so avoid a duplicate.
+			var feature_id := str(feature.get("id", ""))
+			if _is_polygon_worship_feature(feature) and building_feature_ids.has(feature_id):
+				continue
 			amenity_count += _build_regional_poi_feature(cell_root, feature)
 		else:
 			amenity_count += _build_amenity_feature(cell_root, feature)
@@ -350,6 +360,18 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 	return built
 
 
+func _is_polygon_worship_feature(feature: Dictionary) -> bool:
+	var geometry: Dictionary = feature.get("geometry", {})
+	var geometry_type := str(geometry.get("type", ""))
+	if geometry_type not in ["Polygon", "MultiPolygon"]:
+		return false
+	var tags: Dictionary = feature.get("tags", {})
+	if str(tags.get("amenity", "")).to_lower() != "place_of_worship":
+		return false
+	var religion := str(tags.get("religion", "")).to_lower()
+	return religion in ["muslim", "islam", "christian", "christianity"]
+
+
 func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
 	var geometry_type := str(geometry.get("type", ""))
@@ -371,6 +393,8 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 		return 0
 	var tags: Dictionary = feature.get("tags", {})
 	var amenity := str(tags.get("amenity", "")).to_lower()
+	if _is_polygon_worship_feature(feature):
+		return _build_building_overview_feature(parent, feature)
 	var shop := str(tags.get("shop", "")).to_lower()
 	var healthcare := str(tags.get("healthcare", "")).to_lower()
 	var facility_type := "public_service"
@@ -1414,9 +1438,10 @@ func _building_kind(tags: Dictionary) -> String:
 		return "apartment_block"
 	if kind in ["commercial", "office", "retail", "industrial"]:
 		return "commercial_building"
-	if kind == "mosque" or (str(tags.get("amenity", "")) == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim"):
+	var religion := str(tags.get("religion", "")).to_lower()
+	if kind == "mosque" or (str(tags.get("amenity", "")) == "place_of_worship" and religion in ["muslim", "islam"]):
 		return "mosque"
-	if kind == "church" or (str(tags.get("amenity", "")) == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "christian"):
+	if kind == "church" or (str(tags.get("amenity", "")) == "place_of_worship" and religion in ["christian", "christianity"]):
 		return "church"
 	return "general_building"
 
