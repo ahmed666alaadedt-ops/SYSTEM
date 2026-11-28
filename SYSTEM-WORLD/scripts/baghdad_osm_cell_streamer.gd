@@ -587,7 +587,7 @@ func _add_luxury_residential_entry_details(
 	lintel_mesh.size = Vector3(entry_width + 0.65, 0.34, 0.48)
 	lintel.mesh = lintel_mesh
 	lintel.position = Vector3(entry_center.x, base_height + portal_height, entry_center.y) + Vector3(inward_offset.x, 0.0, inward_offset.y)
-	lintel.rotation.y = atan2(tangent.x, tangent.y)
+	lintel.rotation.y = atan2(-tangent.y, tangent.x)
 	lintel.material_override = trim_material
 	lintel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parent.add_child(lintel)
@@ -597,7 +597,7 @@ func _add_luxury_residential_entry_details(
 	canopy_mesh.size = Vector3(entry_width + 1.0, 0.22, 1.65)
 	canopy.mesh = canopy_mesh
 	canopy.position = Vector3(entry_center.x, base_height + portal_height - 0.12, entry_center.y) + Vector3(inward_offset.x, 0.0, inward_offset.y) - Vector3(outward.x, 0.0, outward.y) * 0.72
-	canopy.rotation.y = atan2(tangent.x, tangent.y)
+	canopy.rotation.y = atan2(-tangent.y, tangent.x)
 	canopy.material_override = trim_material
 	canopy.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parent.add_child(canopy)
