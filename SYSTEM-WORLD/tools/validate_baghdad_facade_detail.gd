@@ -305,6 +305,24 @@ func _run() -> void:
 		_fail("Shrine polygon received an unsupported mosque or church silhouette.")
 		return
 
+	# Monastery polygons are preserved separately from churches and shrines.
+	var monastery_polygon := {
+		"id": "worship_validation_monastery_polygon_001",
+		"geometry": {"type": "Polygon", "coordinates": [[[300.0, 0.0], [316.0, 0.0], [316.0, 12.0], [300.0, 12.0], [300.0, 0.0]]]},
+		"tags": {"amenity": "monastery", "religion": "christian", "name:ar": "دير اختبار"}
+	}
+	var monastery_built := int(streamer.call("_build_regional_poi_feature", worship_parent, monastery_polygon))
+	var monastery_mesh := worship_parent.get_node_or_null("OSMOverviewBuilding_worship_validation_monastery_polygon_001") as MeshInstance3D
+	if monastery_built != 1 or monastery_mesh == null or str(monastery_mesh.get_meta("system_facility_type", "")) != "monastery":
+		_fail("A mapped monastery polygon was not preserved as a distinct monastery feature.")
+		return
+	if str(monastery_mesh.get_meta("system_footprint_geometry", "")) != "osm_polygon_extrusion" or str(monastery_mesh.get_meta("baghdad_building_type", "")) != "monastery":
+		_fail("Monastery footprint was not kept as its own mapped building class.")
+		return
+	if worship_parent.get_node_or_null("OSMWorshipDetail_mosque_worship_validation_monastery_polygon_001") != null or worship_parent.get_node_or_null("OSMWorshipDetail_church_worship_validation_monastery_polygon_001") != null:
+		_fail("Monastery polygon received an unsupported mosque or church silhouette.")
+		return
+
 	print("Baghdad facade detail validation passed: five-floor apartment generated five-floor apartment generated ", window_count,
 		" instanced windows across five vertical facade bands; regional 1 km worship polygons preserve OSM footprints with distinct mosque/church silhouettes; close-range villa and palace include road-facing columned entry canopies; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
