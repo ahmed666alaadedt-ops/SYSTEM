@@ -444,7 +444,8 @@ jobs:
           audit = json.loads(Path("baghdad-religious-sites-audit.json").read_text(encoding="utf-8"))
           expected_worship = audit["totals"]
           worship_objects = {}
-          facility_types = {"hospital": 0, "police": 0, "shop": 0, "food": 0, "education": 0}
+          facility_types = {"hospital": 0, "police": 0, "shop": 0, "food": 0, "education": 0, "market": 0, "transport": 0}
+          transit_feature_count = 0
           with zipfile.ZipFile(path) as archive:
               manifest = json.loads(archive.read("manifest.json"))
               names = [name for name in archive.namelist() if name.startswith("cells/") and name.endswith(".json")]
@@ -464,6 +465,9 @@ jobs:
                           amenity = str(tags.get("amenity", "")).lower()
                           religion = str(tags.get("religion", "")).lower()
                           building = str(tags.get("building", "")).lower()
+                          public_transport = str(tags.get("public_transport", "")).lower()
+                          railway = str(tags.get("railway", "")).lower()
+                          highway = str(tags.get("highway", "")).lower()
                           osm_key = (str(item.get("osm_type", "")), str(item.get("id", "")))
                           if amenity in ("place_of_worship", "monastery") or building in ("mosque", "church", "synagogue", "temple", "monastery", "shrine"):
                               record = worship_objects.setdefault(osm_key, {"tags": {}, "geometries": set()})
@@ -480,7 +484,19 @@ jobs:
                               facility_types["food"] += 1
                           if amenity in ("school", "university", "college", "kindergarten"):
                               facility_types["education"] += 1
+                          if amenity == "marketplace" or shop in ("mall", "department_store"):
+                              facility_types["market"] += 1
+                          is_transit = (
+                              amenity in ("bus_station", "bus_stop", "ferry_terminal", "parking", "taxi")
+                              or public_transport in ("station", "platform", "stop_position")
+                              or railway in ("station", "halt", "tram_stop", "subway_entrance")
+                              or highway in ("bus_stop", "platform")
+                          )
+                          if is_transit:
+                              transit_feature_count += 1
+                              facility_types["transport"] += 1
           assert totals["buildings"] >= 1000, f"Too few mapped Baghdad building footprints: {totals['buildings']}"
+          assert transit_feature_count > 0, "No mapped Baghdad public-transport stops/stations survived source extraction"
           assert totals["amenities"] >= 10, f"Too few mapped public/commercial POIs: {totals['amenities']}"
           actual_worship = {"mosque": 0, "church": 0, "shrine": 0, "monastery": 0, "other_or_unspecified": 0, "conflict": 0}
           actual_geometry = {key: {} for key in actual_worship}
@@ -518,6 +534,7 @@ jobs:
           print("Deduplicated religious features in streamed pack:", json.dumps(actual_worship, ensure_ascii=False, sort_keys=True))
           print("Religious geometry coverage:", json.dumps(actual_geometry, ensure_ascii=False, sort_keys=True))
           print("Classified facilities:", json.dumps(facility_types, ensure_ascii=False, sort_keys=True))
+          print("Mapped Baghdad transit POI features:", transit_feature_count)
           PY
 
       - name: Add attribution and source notes
