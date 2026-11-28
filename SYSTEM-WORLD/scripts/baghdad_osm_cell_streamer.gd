@@ -380,8 +380,8 @@ func _is_polygon_worship_feature(feature: Dictionary) -> bool:
 	# Keep polygon geometry authoritative. Some mapped worship buildings carry
 	# building=public/religious plus religion=* instead of building=mosque/church.
 	var explicit_worship := amenity_kind in ["place_of_worship", "monastery"]
-	explicit_worship = explicit_worship or building_kind in ["mosque", "church", "shrine", "monastery"]
-	var religious_building := religion in ["muslim", "islam", "christian", "christianity"] and (building_kind != "" or amenity_kind != "")
+	explicit_worship = explicit_worship or building_kind in ["mosque", "church", "chapel", "cathedral", "shrine", "monastery"]
+	var religious_building := religion in ["muslim", "islam", "christian", "christianity"] and building_kind in ["public", "religious"]
 	return explicit_worship or religious_building
 
 
@@ -1472,13 +1472,15 @@ func _worship_facility_type(tags: Dictionary) -> String:
 	var amenity_kind := str(tags.get("amenity", "")).to_lower()
 	var religion := str(tags.get("religion", "")).to_lower()
 	var building_kind := str(tags.get("building", "")).to_lower()
-	if (religion in ["muslim", "islam"] and building_kind == "church") or (religion in ["christian", "christianity"] and building_kind == "mosque"):
+	if (religion in ["muslim", "islam"] and building_kind in ["church", "chapel", "cathedral"]) or (religion in ["christian", "christianity"] and building_kind == "mosque"):
 		return "religious_tag_conflict"
 	if amenity_kind == "monastery" or building_kind == "monastery":
 		return "monastery"
 	if amenity_kind == "place_of_worship" and religion in ["muslim", "islam"]:
 		return "mosque"
 	if amenity_kind == "place_of_worship" and religion in ["christian", "christianity"]:
+		return "church"
+	if building_kind in ["church", "chapel", "cathedral"]:
 		return "church"
 	# OSM sometimes records religion on a generic mapped building footprint.
 	if religion in ["muslim", "islam"] and building_kind in ["religious", "public"]:
