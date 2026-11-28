@@ -181,8 +181,43 @@ func _run() -> void:
 		_fail("Palace entrance is missing its architectural columns or covered entry canopy.")
 		return
 
+	# Polygon worship features in the 1 km regional layer must keep their
+	# mapped footprints and get the correct religious building class.
+	var worship_parent := Node3D.new()
+	worship_parent.name = "WorshipPolygonValidation"
+	streamer.add_child(worship_parent)
+	var mosque_polygon := {
+		"id": "worship_validation_mosque_001",
+		"geometry": {"type": "Polygon", "coordinates": [[[140.0, 0.0], [160.0, 0.0], [160.0, 16.0], [140.0, 16.0], [140.0, 0.0]]]},
+		"tags": {"amenity": "place_of_worship", "religion": "muslim", "name:ar": "جامع اختبار"}
+	}
+	var mosque_polygon_built := int(streamer.call("_build_regional_poi_feature", worship_parent, mosque_polygon))
+	var mosque_mesh := worship_parent.get_node_or_null("OSMOverviewBuilding_worship_validation_mosque_001") as MeshInstance3D
+	var mosque_detail := worship_parent.get_node_or_null("OSMWorshipDetail_mosque_worship_validation_mosque_001") as Node3D
+	if mosque_polygon_built != 1 or mosque_mesh == null or str(mosque_mesh.get_meta("system_facility_type", "")) != "mosque":
+		_fail("Regional mosque polygon was not built as a mapped-footprint mosque.")
+		return
+	if mosque_detail == null or mosque_detail.get_node_or_null("RoofDome") == null or mosque_detail.get_node_or_null("MinaretMarker") == null:
+		_fail("Regional mosque polygon is missing its dome/minaret silhouette details.")
+		return
+
+	var church_polygon := {
+		"id": "worship_validation_church_001",
+		"geometry": {"type": "Polygon", "coordinates": [[[180.0, 0.0], [198.0, 0.0], [198.0, 14.0], [180.0, 14.0], [180.0, 0.0]]]},
+		"tags": {"amenity": "place_of_worship", "religion": "christianity", "name:ar": "كنيسة اختبار"}
+	}
+	var church_polygon_built := int(streamer.call("_build_regional_poi_feature", worship_parent, church_polygon))
+	var church_mesh := worship_parent.get_node_or_null("OSMOverviewBuilding_worship_validation_church_001") as MeshInstance3D
+	var church_detail := worship_parent.get_node_or_null("OSMWorshipDetail_church_worship_validation_church_001") as Node3D
+	if church_polygon_built != 1 or church_mesh == null or str(church_mesh.get_meta("system_facility_type", "")) != "church":
+		_fail("Regional Christian worship polygon was not built as a mapped-footprint church.")
+		return
+	if church_detail == null or church_detail.get_node_or_null("ChurchBellTower") == null or church_detail.get_node_or_null("ChurchCross") == null:
+		_fail("Regional church polygon is missing its bell-tower/cross silhouette details.")
+		return
+
 	print("Baghdad facade detail validation passed: five-floor apartment generated ", window_count,
-		" instanced windows across five vertical facade bands; regional 1 km overview remains extrusion-only; close-range villa and palace include road-facing columned entry canopies; per-building window budget <= 32.")
+		" instanced windows across five vertical facade bands; regional 1 km worship polygons preserve OSM footprints with distinct mosque/church silhouettes; close-range villa and palace include road-facing columned entry canopies; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
 	quit(0)
 
