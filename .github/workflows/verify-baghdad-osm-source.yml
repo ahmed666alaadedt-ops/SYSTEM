@@ -13,6 +13,7 @@ on:
       - "SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py"
       - "SYSTEM-WORLD/tools/geospatial/audit_baghdad_religious_sites.py"
       - "SYSTEM-WORLD/scripts/baghdad_osm_cell_streamer.gd"
+      - "SYSTEM-WORLD/scripts/modern_world_air_transport_manager.gd"
       - "SYSTEM-WORLD/scripts/world_manager.gd"
       - "SYSTEM-WORLD/scripts/modern_world_region_manager.gd"
       - "SYSTEM-WORLD/scripts/modern_continent_manager.gd"
