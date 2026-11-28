@@ -341,6 +341,57 @@ func _run() -> void:
 		_fail("Monastery polygon received an unsupported mosque or church silhouette.")
 		return
 
+	# Road details must honor explicit OSM sidewalk sides and lit-road tags,
+	# while keeping inferred lamp positions clearly distinct from surveyed POIs.
+	var road_detail_feature := {
+		"id": "road_detail_validation_001",
+		"geometry": {"type": "LineString", "coordinates": [[0.0, 80.0], [96.0, 80.0]]},
+		"tags": {"highway": "primary", "sidewalk": "both", "lit": "yes"}
+	}
+	var road_detail_built := int(streamer.call("_build_line_feature", streamer, road_detail_feature, 8.5, streamer.get("road_material"), 0.16, "OSMRoad"))
+	if road_detail_built != 1:
+		_fail("Synthetic mapped Baghdad road did not build for sidewalk/lighting validation.")
+		return
+	var sidewalk_transforms: Array = streamer.get_meta("system_sidewalk_transforms", [])
+	var pole_transforms: Array = streamer.get_meta("system_streetlight_pole_transforms", [])
+	var arm_transforms: Array = streamer.get_meta("system_streetlight_arm_transforms", [])
+	var head_transforms: Array = streamer.get_meta("system_streetlight_head_transforms", [])
+	if sidewalk_transforms.size() != 2:
+		_fail("OSM sidewalk=both must generate exactly two side-specific sidewalk segments.")
+		return
+	if pole_transforms.is_empty() or pole_transforms.size() != arm_transforms.size() or pole_transforms.size() != head_transforms.size() or pole_transforms.size() > 36:
+		_fail("OSM lit=yes road must generate paired, mobile-budgeted streetlight poles, arms and heads.")
+		return
+	streamer.call("_flush_sidewalk_multimesh", streamer)
+	streamer.call("_flush_streetlight_multimeshes", streamer)
+	var sidewalks := streamer.get_node_or_null("BaghdadCellMappedSidewalks") as MultiMeshInstance3D
+	var lamp_poles := streamer.get_node_or_null("BaghdadCellStreetlightPoles") as MultiMeshInstance3D
+	var lamp_arms := streamer.get_node_or_null("BaghdadCellStreetlightArms") as MultiMeshInstance3D
+	var lamp_heads := streamer.get_node_or_null("BaghdadCellStreetlightHeads") as MultiMeshInstance3D
+	if sidewalks == null or sidewalks.multimesh == null or sidewalks.multimesh.instance_count != sidewalk_transforms.size():
+		_fail("Mapped Baghdad sidewalks were not packed into the expected single MultiMesh.")
+		return
+	if lamp_poles == null or lamp_arms == null or lamp_heads == null:
+		_fail("Inferred streetlight fixture meshes are incomplete.")
+		return
+	if lamp_poles.multimesh.instance_count != pole_transforms.size() or lamp_arms.multimesh.instance_count != arm_transforms.size() or lamp_heads.multimesh.instance_count != head_transforms.size():
+		_fail("Streetlight MultiMesh instance counts do not match their source transforms.")
+		return
+	if str(lamp_poles.get_meta("system_streetlight_source", "")) != "inferred_spacing_from_osm_lit_yes_not_surveyed_fixture":
+		_fail("Streetlights must disclose that their spacing is inferred from lit=yes, not mapped fixture coordinates.")
+		return
+	var one_side_feature := {
+		"id": "road_detail_validation_left_only",
+		"geometry": {"type": "LineString", "coordinates": [[0.0, 100.0], [24.0, 100.0]]},
+		"tags": {"highway": "tertiary", "sidewalk": "left"}
+	}
+	streamer.set_meta("system_sidewalk_transforms", [])
+	streamer.call("_collect_sidewalk_transforms", streamer, PackedVector2Array([Vector2(0.0, 100.0), Vector2(24.0, 100.0)]), 6.0, one_side_feature["tags"], 0.16)
+	var left_only_transforms: Array = streamer.get_meta("system_sidewalk_transforms", [])
+	if left_only_transforms.size() != 1:
+		_fail("OSM sidewalk=left must not invent a sidewalk on the right side.")
+		return
+
 	print("Baghdad facade detail validation passed: ", window_count,
 		" instanced windows across five vertical facade bands; regional 1 km OSM footprints preserve mosque/church silhouettes, neutral worship polygons, isolated tag conflicts, shrine and monastery classes; close-range villa and palace include road-facing columned entry canopies; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
