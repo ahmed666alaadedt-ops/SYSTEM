@@ -323,8 +323,8 @@ func _run() -> void:
 		_fail("Monastery polygon received an unsupported mosque or church silhouette.")
 		return
 
-	print("Baghdad facade detail validation passed: five-floor apartment generated five-floor apartment generated ", window_count,
-		" instanced windows across five vertical facade bands; regional 1 km worship polygons preserve OSM footprints with distinct mosque/church silhouettes; close-range villa and palace include road-facing columned entry canopies; per-building window budget <= 32.")
+	print("Baghdad facade detail validation passed: ", window_count,
+		" instanced windows across five vertical facade bands; regional 1 km OSM footprints preserve mosque/church silhouettes, neutral worship polygons, isolated tag conflicts, shrine and monastery classes; close-range villa and palace include road-facing columned entry canopies; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
 	quit(0)
 
