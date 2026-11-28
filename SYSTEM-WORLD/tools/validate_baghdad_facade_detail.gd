@@ -216,7 +216,42 @@ func _run() -> void:
 		_fail("Regional church polygon is missing its bell-tower/cross silhouette details.")
 		return
 
-	print("Baghdad facade detail validation passed: five-floor apartment generated ", window_count,
+	# OSM also contains buildings tagged directly as mosque/church without
+	# amenity=place_of_worship, and point nodes using religion=islam.
+	var mosque_building_only := {
+		"id": "worship_validation_mosque_building_only_001",
+		"geometry": {"type": "Polygon", "coordinates": [[[210.0, 0.0], [226.0, 0.0], [226.0, 14.0], [210.0, 14.0], [210.0, 0.0]]]},
+		"tags": {"building": "mosque", "name:ar": "مسجد بوسم المبنى فقط"}
+	}
+	var mosque_building_built := int(streamer.call("_build_regional_poi_feature", worship_parent, mosque_building_only))
+	var mosque_building_mesh := worship_parent.get_node_or_null("OSMOverviewBuilding_worship_validation_mosque_building_only_001") as MeshInstance3D
+	if mosque_building_built != 1 or mosque_building_mesh == null or str(mosque_building_mesh.get_meta("system_facility_type", "")) != "mosque":
+		_fail("A building=mosque polygon without amenity tags was not classified as a mosque.")
+		return
+
+	var mosque_point := {
+		"id": "worship_validation_mosque_islam_point_001",
+		"geometry": {"type": "Point", "coordinates": [230.0, 12.0]},
+		"tags": {"amenity": "place_of_worship", "religion": "islam", "name:ar": "نقطة مسجد اختبار"}
+	}
+	var mosque_point_built := int(streamer.call("_build_regional_poi_feature", worship_parent, mosque_point))
+	var mosque_point_marker := worship_parent.get_node_or_null("OSMRegionalPOI_mosque_worship_validation_mosque_islam_point_001") as Node3D
+	if mosque_point_built != 1 or mosque_point_marker == null or str(mosque_point_marker.get_meta("system_facility_type", "")) != "mosque":
+		_fail("A point place_of_worship with religion=islam was not classified as a mosque.")
+		return
+
+	var unclassified_worship_point := {
+		"id": "worship_validation_unspecified_point_001",
+		"geometry": {"type": "Point", "coordinates": [234.0, 12.0]},
+		"tags": {"amenity": "place_of_worship", "name:ar": "دار عبادة غير محددة"}
+	}
+	var unspecified_built := int(streamer.call("_build_regional_poi_feature", worship_parent, unclassified_worship_point))
+	var unspecified_marker := worship_parent.get_node_or_null("OSMRegionalPOI_place_of_worship_worship_validation_unspecified_point_001") as Node3D
+	if unspecified_built != 1 or unspecified_marker == null or str(unspecified_marker.get_meta("system_facility_type", "")) != "place_of_worship":
+		_fail("Unspecified place_of_worship points must remain neutral instead of being mislabeled as a mosque or church.")
+		return
+
+	print("Baghdad facade detail validation passed: five-floor apartment generated five-floor apartment generated ", window_count,
 		" instanced windows across five vertical facade bands; regional 1 km worship polygons preserve OSM footprints with distinct mosque/church silhouettes; close-range villa and palace include road-facing columned entry canopies; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
 	quit(0)
