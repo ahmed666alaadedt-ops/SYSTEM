@@ -83,6 +83,18 @@ jobs:
           if grep -E "SCRIPT ERROR|Parse Error" "$RUNNER_TEMP/baghdad-facade-detail.log"; then exit 1; fi
           exit "$godot_status"
 
+      - name: Validate Baghdad Republic Bridge deck, road furniture and Tigris water
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_bridge_detail.gd > "$RUNNER_TEMP/baghdad-bridge-detail.log" 2>&1
+          godot_status=$?
+          grep -E "Baghdad bridge detail validation|SCRIPT ERROR|Parse Error|ERROR:|WARNING:" "$RUNNER_TEMP/baghdad-bridge-detail.log" | tail -n 80 || true
+          if grep -E "SCRIPT ERROR|Parse Error|Baghdad bridge detail validation failed" "$RUNNER_TEMP/baghdad-bridge-detail.log"; then exit 1; fi
+          exit "$godot_status"
+
       - name: Verify child character civilian and combat restrictions
         shell: bash
         run: |
