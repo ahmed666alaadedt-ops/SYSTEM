@@ -825,6 +825,10 @@ if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or a
 	if float(airship_path.get_meta("system_route_radius_m", 0.0)) != 3000.0 or float(airship_path.get_meta("system_cruise_altitude_m", 0.0)) != 190.0 or not is_equal_approx(float(airship_path.get_meta("system_cruise_speed_mps", 0.0)), 17.5):
 		_fail("Baghdad airship scenic route radius, altitude or cruise speed metadata failed.")
 		return
+	var airship_follow := air_transport.get_node("BaghdadAirshipCircularRoute/HunterInspiredPassengerAirshipRouteFollower") as PathFollow3D
+	if airship_follow.loop or not is_equal_approx(float(airship_path.get_meta("system_station_dwell_seconds", 0.0)), 20.0):
+		_fail("Airship boarding station dwell/loop mode failed.")
+		return
 	var airship_curve := airship_path.curve
 	if airship_curve == null or not airship_curve.get_point_position(0).is_equal_approx(airship_curve.get_point_position(airship_curve.get_point_count() - 1)) or not airship_curve.get_point_position(0).is_equal_approx(Vector3(0.0, 190.0, 0.0)):
 		_fail("Baghdad airship route does not pass through and return to its boarding station waypoint.")
