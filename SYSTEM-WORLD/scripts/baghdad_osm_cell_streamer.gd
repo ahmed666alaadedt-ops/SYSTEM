@@ -453,6 +453,12 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 		return 0
 	var geometry: Dictionary = feature.get("geometry", {})
 	var geometry_type := str(geometry.get("type", ""))
+	var aeroway_kind := str(tags.get("aeroway", "")).to_lower()
+	if geometry_type == "LineString" and aeroway_kind in ["runway", "taxiway"]:
+		var runway_width := 42.0 if aeroway_kind == "runway" else 18.0
+		return _build_line_feature(parent, feature, runway_width, bridge_material, 0.12, "OSMCivilAirport_" + aeroway_kind)
+	if geometry_type in ["Polygon", "MultiPolygon"] and aeroway_kind == "apron":
+		return _build_area_feature(parent, feature, land_material, 0.06, "OSMCivilAirportApron")
 	# Never derive a centroid marker from a mapped worship footprint. Build the
 	# actual OSM polygon/multipolygon extrusion before any point fallback logic.
 	if geometry_type in ["Polygon", "MultiPolygon"] and _is_polygon_worship_feature(feature):
@@ -540,7 +546,14 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 		display_name = "مرفق نقل عام"
 	elif aeroway != "":
 		facility_type = "transport"
-		display_name = "مرفق طيران"
+		if aeroway == "aerodrome":
+			display_name = "مطار مدني"
+		elif aeroway == "terminal":
+			display_name = "صالة ركاب جوية"
+		elif aeroway == "helipad":
+			display_name = "مهبط مدني"
+		else:
+			display_name = "مرفق طيران مدني"
 	var custom_name := str(tags.get("name:ar", tags.get("name", ""))).strip_edges()
 	if custom_name != "":
 		display_name = custom_name
@@ -1679,12 +1692,14 @@ func _find_entrance_building_association(point: Vector2, building_features: Arra
 
 func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
-	if str(geometry.get("type", "")) != "Point":
-		return 0
 	var tags: Dictionary = feature.get("tags", {})
-	var coordinates: Array = geometry.get("coordinates", [])
 	if _is_sensitive_state_site(tags):
 		return 0
+	if str(geometry.get("type", "")) != "Point":
+		if str(tags.get("aeroway", "")).to_lower() != "":
+			return _build_regional_poi_feature(parent, feature)
+		return 0
+	var coordinates: Array = geometry.get("coordinates", [])
 	var worship_type := _game_worship_presentation_type(tags)
 	if worship_type == "mosque":
 		_build_mosque_landmark(parent, feature, coordinates)
