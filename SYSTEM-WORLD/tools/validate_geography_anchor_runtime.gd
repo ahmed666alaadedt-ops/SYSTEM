@@ -31,7 +31,9 @@ func _run_validation() -> void:
 		"baghdad_grand_festivities_square",
 		"baghdad_unknown_soldier_monument",
 		"baghdad_victory_arch",
-		"baghdad_al_shaheed_monument"
+		"baghdad_al_shaheed_monument",
+		"baghdad_republic_bridge",
+		"baghdad_14_tamuz_bridge"
 	]
 	for landmark_id in required_landmarks:
 		if not landmarks.has(landmark_id):
@@ -101,7 +103,7 @@ func _run_validation() -> void:
 		return
 
 	print("SYSTEM GEOGRAPHY QA PASS: Baghdad city anchor is connected to WGS84 registry.")
-	print("SYSTEM GEOGRAPHY QA PASS: %d verified Baghdad memorial/ceremonial landmarks are registered and projected." % required_landmarks.size())
+	print("SYSTEM GEOGRAPHY QA PASS: %d verified Baghdad landmarks (memorials, ceremonial sites and bridges) are registered and projected." % required_landmarks.size())
 	print("SYSTEM GEOGRAPHY QA PASS: unverified golden-domed Sindbad Palace candidate is registered but safely excluded from runtime projection.")
 	print("SYSTEM GEOGRAPHY QA LIMIT: only the Baghdad anchor is real-data-backed; other city layouts remain prototypes.")
 	quit(0)
