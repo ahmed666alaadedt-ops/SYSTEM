@@ -372,7 +372,7 @@ func _run_validation() -> void:
 			return
 		synthetic_root.free()
 		synthetic_index += 1
-	print("Baghdad religious polygon runtime QA passed: ", worship_source_type, "/", worship_feature_id, " imported as polygon extrusion without POI duplication; three OSM tagging variants also generated footprint meshes.")
+	print("Baghdad synthetic worship tagging QA passed: three OSM tagging variants generated polygon footprint meshes without POI duplication.")
 	print("Baghdad citywide urban overview passed: buildings=", overview_buildings.size(), " POI markers=", poi_markers.size(), " resolution=1 km.")
 	regional_urban.queue_free()
 	regional_roads.queue_free()
