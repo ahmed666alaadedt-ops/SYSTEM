@@ -502,7 +502,12 @@ func _run_validation() -> void:
 		{"tags": {"leisure": "park"}, "expected": "leisure"},
 		{"tags": {"aeroway": "terminal"}, "expected": "transport"},
 		{"tags": {"healthcare": "hospital"}, "expected": "healthcare"},
-		{"tags": {"office": "government"}, "expected": "civic"}
+		{"tags": {"office": "government"}, "expected": "civic"},
+		{"tags": {"amenity": "marketplace"}, "expected": "market"},
+		{"tags": {"shop": "mall"}, "expected": "market"},
+		{"tags": {"amenity": "bus_station"}, "expected": "transport"},
+		{"tags": {"railway": "station"}, "expected": "transport"},
+		{"tags": {"public_transport": "platform"}, "expected": "transport"}
 	]
 	for poi_case in poi_cases:
 		var poi_root := Node3D.new()
@@ -519,7 +524,7 @@ func _run_validation() -> void:
 			poi_root.free()
 			return
 		poi_root.free()
-	print("Baghdad expanded OSM POI category QA passed: shops, tourism, heritage, leisure, aeroway, healthcare and civic offices.")
+	print("Baghdad expanded OSM POI category QA passed: shops, markets, public transport, tourism, heritage, leisure, aeroway, healthcare and civic offices.")
 
 	# Regional building footprints must carry the same typed public-service
 	# categories as point POIs, rather than being anonymous generic blocks.
@@ -527,7 +532,9 @@ func _run_validation() -> void:
 	var service_building_cases := [
 		{"id": "runtime_school_polygon", "tags": {"building": "school", "amenity": "school", "name:ar": "مدرسة اختبار بغداد"}, "expected": "education", "name": "مدرسة اختبار بغداد"},
 		{"id": "runtime_hospital_polygon", "tags": {"building": "hospital", "amenity": "hospital", "name:ar": "مستشفى اختبار بغداد"}, "expected": "healthcare", "name": "مستشفى اختبار بغداد"},
-		{"id": "runtime_fire_station_polygon", "tags": {"building": "fire_station", "amenity": "fire_station", "name:ar": "مركز إطفاء اختبار"}, "expected": "civic", "name": "مركز إطفاء اختبار"}
+		{"id": "runtime_fire_station_polygon", "tags": {"building": "fire_station", "amenity": "fire_station", "name:ar": "مركز إطفاء اختبار"}, "expected": "civic", "name": "مركز إطفاء اختبار"},
+		{"id": "runtime_market_polygon", "tags": {"building": "retail", "amenity": "marketplace", "name:ar": "سوق اختبار بغداد"}, "expected": "market", "name": "سوق اختبار بغداد"},
+		{"id": "runtime_transit_polygon", "tags": {"building": "train_station", "railway": "station", "name:ar": "محطة نقل اختبار"}, "expected": "transport", "name": "محطة نقل اختبار"}
 	]
 	var service_polygon_index := 0
 	for service_case in service_building_cases:
@@ -550,7 +557,7 @@ func _run_validation() -> void:
 			return
 		service_polygon_index += 1
 	service_building_root.free()
-	print("Baghdad public-service building footprint QA passed: schools, hospitals, fire stations and Arabic names.")
+	print("Baghdad public-service building footprint QA passed: schools, hospitals, fire stations, markets, transit stations and Arabic names.")
 	print("Baghdad citywide urban overview passed: buildings=", overview_buildings.size(), " POI markers=", poi_markers.size(), " resolution=1 km.")
 	regional_urban.queue_free()
 	regional_roads.queue_free()
