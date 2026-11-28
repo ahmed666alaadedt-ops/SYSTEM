@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "2026-11-28.3",
+  "version": "2026-11-28.4",
   "coordinate_reference_system": "EPSG:4326",
   "coordinate_order": "latitude_longitude",
   "world_model": "real_earth",
@@ -237,6 +237,255 @@
             "suspended road deck with side walkways",
             "river clearance and both bank approaches",
             "collision geometry for deck and pedestrian edges"
+          ]
+        },
+        "baghdad_al_mutanabbi_street": {
+          "name": {
+            "ar": "شارع المتنبي",
+            "en": "Al-Mutanabbi Street"
+          },
+          "type": "historic_literary_street",
+          "latitude": 33.342,
+          "longitude": 44.388,
+          "location": {
+            "ar": "الرصافة، قرب دجلة والقشلة",
+            "en": "Al-Rusafa, near the Tigris and Al-Qishla"
+          },
+          "source_urls": [
+            "https://rafidainiraq.com/en/mutanabbi/",
+            "https://ich.unesco.org/doc/src/47647.pdf"
+          ],
+          "geometry_status": "reference_coordinate_verified; full street centerline_shopfronts_and_pedestrian_geometry_pending",
+          "visual_requirements": [
+            "continuous historic book-market street",
+            "Baghdadi shopfronts and book stalls",
+            "pedestrian paving and shaded edges",
+            "Shabandar Cafe and poet statue as separately verified subfeatures"
+          ]
+        },
+        "baghdad_al_qishla": {
+          "name": {
+            "ar": "القشلة وبرج الساعة",
+            "en": "Al-Qishla and Clock Tower"
+          },
+          "type": "ottoman_heritage_complex",
+          "latitude": 33.3402,
+          "longitude": 44.3878,
+          "location": {
+            "ar": "الرصافة، ضفة دجلة الشرقية",
+            "en": "Al-Rusafa, east bank of the Tigris"
+          },
+          "source_urls": [
+            "https://visit-iraq.com/ar/places/al-qishla-and-clock-tower-in-baghdad",
+            "https://rafidainiraq.com/en/qishla/"
+          ],
+          "geometry_status": "reference_coordinate_verified; compound_footprint_clock_tower_and_courtyard_geometry_pending",
+          "visual_requirements": [
+            "Ottoman civic compound",
+            "four-faced historic clock tower",
+            "courtyard gardens and river-facing edge",
+            "brick and stone facade restoration detail"
+          ]
+        },
+        "baghdad_mustansiriya_madrasa": {
+          "name": {
+            "ar": "المدرسة المستنصرية",
+            "en": "Al-Mustansiriya Madrasa"
+          },
+          "type": "abbasid_madrasa",
+          "latitude": 33.33854,
+          "longitude": 44.38968,
+          "location": {
+            "ar": "الرصافة، على ضفة دجلة",
+            "en": "Al-Rusafa, beside the Tigris"
+          },
+          "source_urls": [
+            "https://www.islamicarchitecturalheritage.com/listings/madrasa-al-mustansiriyya",
+            "https://rafidainiraq.com/en/mustansiriya/"
+          ],
+          "geometry_status": "reference_coordinate_verified; four_iwan_courtyard_and_architectural_meshes_pending",
+          "visual_requirements": [
+            "four-iwan courtyard plan",
+            "burnt-brick geometric relief",
+            "arched galleries and water-clock detail",
+            "conservation-accurate roofline and openings"
+          ]
+        },
+        "baghdad_abbasid_palace": {
+          "name": {
+            "ar": "القصر العباسي",
+            "en": "Abbasid Palace"
+          },
+          "type": "abbasid_heritage_building",
+          "latitude": 33.3444,
+          "longitude": 44.3853,
+          "location": {
+            "ar": "الرصافة، حي الميدان قرب دجلة",
+            "en": "Al-Rusafa, Al-Maidan quarter near the Tigris"
+          },
+          "source_urls": [
+            "https://visit-iraq.com/ar/places/al-abbasid-palace-in-baghdad",
+            "https://www.rafidainiraq.com/en/abbasidpalace/"
+          ],
+          "geometry_status": "reference_coordinate_verified; footprint_and_brick_iwan_meshes_pending",
+          "visual_requirements": [
+            "late-Abbasid brick facade",
+            "monumental iwan and muqarnas",
+            "inner courtyard and passage",
+            "preserve scholarly uncertainty of original building function"
+          ]
+        },
+        "baghdad_iraq_museum": {
+          "name": {
+            "ar": "المتحف العراقي",
+            "en": "Iraq Museum"
+          },
+          "type": "national_archaeological_museum",
+          "latitude": 33.3283,
+          "longitude": 44.3852,
+          "location": {
+            "ar": "الرصافة، منطقة الصالحية",
+            "en": "Al-Rusafa, Salihiyah area"
+          },
+          "source_urls": [
+            "https://sbah.gov.iq/museums/",
+            "https://cdli.earth/collections/1100",
+            "https://www.unesco.org/en/museums/iraq?hub=417"
+          ],
+          "source_ids": {
+            "osm_node": 7973082344
+          },
+          "geometry_status": "reference_coordinate_verified; museum_building_campus_and_entry_geometry_pending",
+          "visual_requirements": [
+            "recognizable museum campus massing",
+            "separate historic and newer gallery volumes",
+            "public forecourt and landscaped approach",
+            "interior galleries represented only with licensed reference assets"
+          ]
+        },
+        "baghdad_kadhimiya_shrine": {
+          "name": {
+            "ar": "مرقد الإمامين الكاظمين",
+            "en": "Al-Kadhimiya Shrine"
+          },
+          "type": "religious_heritage_complex",
+          "latitude": 33.38023,
+          "longitude": 44.33819,
+          "location": {
+            "ar": "الكاظمية، شمال بغداد",
+            "en": "Al-Kadhimiya, northern Baghdad"
+          },
+          "source_urls": [
+            "https://rafidainiraq.com/en/kadhimiya/",
+            "https://mapcarta.com/W1245988816"
+          ],
+          "source_ids": {
+            "osm_way": 1245988816
+          },
+          "geometry_status": "reference_coordinate_verified; shrine_compound_footprint_and_dome_minaret_geometry_pending",
+          "visual_requirements": [
+            "two golden domes and four minarets",
+            "courtyard arcades and surrounding market streets",
+            "respectful pedestrian access and crowd circulation",
+            "accurate scale without invented sacred inscriptions"
+          ]
+        },
+        "baghdad_abu_hanifa_mosque": {
+          "name": {
+            "ar": "جامع الإمام أبي حنيفة",
+            "en": "Abu Hanifa Mosque"
+          },
+          "type": "religious_heritage_complex",
+          "latitude": 33.372,
+          "longitude": 44.359,
+          "location": {
+            "ar": "الأعظمية، الرصافة",
+            "en": "Adhamiya, Al-Rusafa"
+          },
+          "source_urls": [
+            "https://rafidainiraq.com/en/abuhanifa/"
+          ],
+          "geometry_status": "reference_coordinate_verified; mosque_clock_tower_courtyard_geometry_pending",
+          "visual_requirements": [
+            "historic mosque massing and minarets",
+            "recognizable clock tower",
+            "courtyard and surrounding Adhamiya urban fabric",
+            "respectful pedestrian access"
+          ]
+        },
+        "baghdad_zawraa_park": {
+          "name": {
+            "ar": "حدائق الزوراء",
+            "en": "Al-Zawraa Park"
+          },
+          "type": "urban_park",
+          "latitude": 33.305,
+          "longitude": 44.375,
+          "location": {
+            "ar": "الكرخ، غرب مركز بغداد",
+            "en": "Al-Karkh, west of central Baghdad"
+          },
+          "source_urls": [
+            "https://rafidainiraq.com/en/zawraa/",
+            "https://mapcarta.com/W83673023"
+          ],
+          "source_ids": {
+            "osm_way": 83673023
+          },
+          "geometry_status": "reference_coordinate_verified; park_boundary_lakes_paths_and_tree_inventory_pending",
+          "visual_requirements": [
+            "large connected parkland and shaded walking paths",
+            "lake edges and family recreation areas",
+            "botanical beds and mature tree canopy",
+            "zoo and amusement zones separated into dedicated subareas"
+          ]
+        },
+        "baghdad_tahrir_square": {
+          "name": {
+            "ar": "ساحة التحرير ونصب الحرية",
+            "en": "Tahrir Square and Freedom Monument"
+          },
+          "type": "civic_square_and_public_art",
+          "latitude": 33.3275,
+          "longitude": 44.4089,
+          "location": {
+            "ar": "باب الشرقي، الرصافة، قرب مدخل جسر الجمهورية",
+            "en": "Bab Al-Sharqi, Al-Rusafa, near the Republic Bridge approach"
+          },
+          "source_urls": [
+            "https://visit-iraq.com/en/places/tahrir-square-and-freedom-monument-in-baghdad",
+            "https://www.rafidainiraq.com/en/nasb/"
+          ],
+          "geometry_status": "reference_coordinate_verified; plaza_edges_monument_relief_and_traffic_geometry_pending",
+          "visual_requirements": [
+            "Tahrir civic plaza and pedestrian forecourt",
+            "Freedom Monument bronze bas-relief on long travertine wall",
+            "surrounding traffic lanes and safe crossings",
+            "modern public realm lighting and seating"
+          ]
+        },
+        "baghdad_sarafiya_bridge": {
+          "name": {
+            "ar": "جسر الصرافية",
+            "en": "Al-Sarafiya Bridge"
+          },
+          "type": "iron_truss_road_bridge",
+          "latitude": 33.3536,
+          "longitude": 44.3728,
+          "location": {
+            "ar": "يربط الوزيرية والعطيفية فوق دجلة",
+            "en": "Connects Waziriyah and Utafiyah across the Tigris"
+          },
+          "source_urls": [
+            "https://rafidainiraq.com/en/sarafiya/",
+            "https://thebridgeeng.com/bridge/wd-q310579"
+          ],
+          "geometry_status": "reference_coordinate_verified; truss_spans_deck_piers_and_collision_geometry_pending",
+          "visual_requirements": [
+            "recognizable iron truss structure",
+            "accurate river span and piers",
+            "both bank approaches",
+            "subtle architectural night lighting and collision-ready deck"
           ]
         }
       }
