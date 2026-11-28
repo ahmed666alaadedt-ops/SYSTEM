@@ -890,8 +890,16 @@ if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or a
 	if qa_ticket_id.is_empty() or str(qa_ticket.get("status", "")) != "pending_payment" or air_transport.board_ticket(qa_ticket_id, "qa_player"):
 		_fail("Passenger ticket did not enforce payment before boarding.")
 		return
-	if not air_transport.confirm_ticket_payment(qa_ticket_id, "synthetic-payment-receipt") or not air_transport.board_ticket(qa_ticket_id, "qa_player"):
-		_fail("Passenger payment confirmation or boarding transition failed.")
+	if not air_transport.confirm_ticket_payment(qa_ticket_id, "synthetic-payment-receipt"):
+		_fail("Passenger payment confirmation failed.")
+		return
+	qa_player.global_position = Vector3(12000.0, 0.0, 0.0)
+	if air_transport.board_ticket(qa_ticket_id, "qa_player"):
+		_fail("Passenger was allowed to board after leaving the origin airport.")
+		return
+	qa_player.global_position = Vector3.ZERO
+	if not air_transport.board_ticket(qa_ticket_id, "qa_player"):
+		_fail("Passenger could not board after returning to the origin airport.")
 		return
 	if str(air_transport.get_ticket(qa_ticket_id).get("status", "")) != "in_transit" or not air_transport.complete_ticket_travel(qa_ticket_id, "qa_player").is_empty():
 		_fail("Passenger route did not enforce its scheduled in-transit duration.")
