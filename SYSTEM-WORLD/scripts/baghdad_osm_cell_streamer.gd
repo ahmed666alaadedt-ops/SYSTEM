@@ -1453,11 +1453,21 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary, building_featu
 	root.name = "OSMEntrance_%s" % feature_id
 	root.position = position
 	root.set_meta("osm_feature_id", feature_id)
-	var association := _find_entrance_building_association(point, building_features)
+	var association := _find_entrance_building_association(point, building_features, tags)
 	root.set_meta("system_associated_building_id", str(association.get("building_id", "")))
 	root.set_meta("system_building_association_status", str(association.get("status", "unmatched")))
 	root.set_meta("system_building_association_distance_m", float(association.get("distance_m", -1.0)))
 	root.set_meta("system_access_state", "mapped_entrance_point_no_interior_scene")
+	root.set_meta("system_entrance_type", entrance_kind if entrance_kind != "" else door_kind)
+	root.set_meta("system_door_type", door_kind)
+	root.set_meta("system_access_tag", str(tags.get("access", "unknown")))
+	root.set_meta("system_wheelchair_tag", str(tags.get("wheelchair", "unknown")))
+	root.set_meta("system_foot_access_tag", str(tags.get("foot", "unknown")))
+	root.set_meta("system_level_tag", str(tags.get("level", "unknown")))
+	root.set_meta("system_indoor_tag", str(tags.get("indoor", "unknown")))
+	root.set_meta("system_service_tag", str(tags.get("service", "unknown")))
+	root.set_meta("system_emergency_tag", str(tags.get("emergency", "unknown")))
+	root.set_meta("system_can_enter", false)
 	parent.add_child(root)
 	var marker := MeshInstance3D.new()
 	marker.name = "MappedEntranceMarker"
@@ -1493,11 +1503,18 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary, building_featu
 	body.set_meta("system_access_tag", str(tags.get("access", "unknown")))
 	body.set_meta("system_wheelchair_tag", str(tags.get("wheelchair", "unknown")))
 	body.set_meta("system_access_state", "mapped_entrance_point_no_interior_scene")
+	body.set_meta("system_door_type", door_kind)
+	body.set_meta("system_foot_access_tag", str(tags.get("foot", "unknown")))
+	body.set_meta("system_level_tag", str(tags.get("level", "unknown")))
+	body.set_meta("system_indoor_tag", str(tags.get("indoor", "unknown")))
+	body.set_meta("system_service_tag", str(tags.get("service", "unknown")))
+	body.set_meta("system_emergency_tag", str(tags.get("emergency", "unknown")))
+	body.set_meta("system_can_enter", false)
 	root.add_child(body)
 	return 1
 
 
-func _find_entrance_building_association(point: Vector2, building_features: Array) -> Dictionary:
+func _find_entrance_building_association(point: Vector2, building_features: Array, entrance_tags: Dictionary = {}) -> Dictionary:
 	# Associate only against actual OSM building footprints in this metric cell.
 	# Ambiguous or distant matches remain review-only; no entrance is invented.
 	var best_id := ""
@@ -1536,7 +1553,8 @@ func _find_entrance_building_association(point: Vector2, building_features: Arra
 	if second_distance < INF and second_distance - best_distance < 0.75:
 		return {"status": "review_ambiguous", "building_id": best_id, "distance_m": best_distance}
 	var access := str(best_tags.get("access", "")).to_lower()
-	if access in ["no", "private"]:
+	var entrance_access := str(entrance_tags.get("access", "")).to_lower()
+	if entrance_access in ["no", "private"] or access in ["no", "private"]:
 		return {"status": "restricted", "building_id": best_id, "distance_m": best_distance}
 	if best_distance <= 2.0:
 		return {"status": "associated", "building_id": best_id, "distance_m": best_distance}
