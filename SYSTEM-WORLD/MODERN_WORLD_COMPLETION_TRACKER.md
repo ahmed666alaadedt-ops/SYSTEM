@@ -2091,6 +2091,15 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] Exact-head Godot validation must confirm the shader material, TIME-driven code and bank-foam mesh are present; real-device visual review remains required for reflections, transparency, current direction and mobile GPU cost.
 
 
+## Baghdad mapped public-service and shop POI interaction — 28 November 2026
+
+- [x] Replace generic non-worship amenity spheres with source-backed mapped POI roots and interaction bodies.
+- [x] Preserve Arabic/source names, amenity/shop/tourism/leisure/office category, operator, opening hours, cuisine, access and wheelchair tags.
+- [x] Keep POIs discoverable for information only; no marker grants access to an interior, business inventory, opening state or service that has not been implemented.
+- [x] Add runtime QA for a mapped clothing-shop POI, Arabic label, interaction body and wheelchair metadata.
+- [ ] Validate category-specific Arabic UI and actual Baghdad source coverage after Godot exact-head runtime tests.
+- [ ] Replace the generic marker mesh with category-specific, original 3D signage/models only after confirming source tags and mobile performance budgets.
+
 ## Baghdad OSM street furniture, pedestrian safety and transit tag retention — 28 November 2026
 
 - [x] Extend the existing metric-cell pack tag allowlist to retain mapped street lighting (`lit`, `street_lamp`), crossings and traffic calming, bus stops/shelters, benches, drinking water, waste bins, toilets, fountains, playgrounds, parking and bicycle parking.
