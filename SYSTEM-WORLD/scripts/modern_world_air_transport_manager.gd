@@ -4,6 +4,7 @@ class_name ModernWorldAirTransportManager
 signal ticket_created(ticket: Dictionary)
 signal ticket_status_changed(ticket: Dictionary)
 signal passenger_arrived(ticket: Dictionary)
+signal route_selection_requested(player_id: String, routes: Array)
 
 const REGION_MANAGER_PATH := NodePath("../ModernWorldRegionManager")
 const CITY_AIRPORT_OFFSET := Vector2(185.0, 145.0)
@@ -33,6 +34,7 @@ func _ready() -> void:
 	_build_baghdad_airship()
 	_build_bidirectional_city_routes()
 	_register_airship_loop_route()
+	_refresh_terminal_route_boards()
 	print("SYSTEM WORLD: air transport initialized. City terminals: ", city_airports.size(), " routes: ", routes.size(), " airship capacity: ", AIRSHIP_MIN_CAPACITY, "-", AIRSHIP_MAX_CAPACITY)
 
 
@@ -202,6 +204,39 @@ func complete_ticket_travel(ticket_id: String, player_id: String, now_unix: int 
 	return {"ticket": ticket.duplicate(true), "destination_position": airport.position, "destination_city_name": airport.city_name}
 
 
+func _refresh_terminal_route_boards() -> void:
+	for city_id in city_airports:
+		var airport: Dictionary = city_airports[city_id]
+		var terminal: Node3D = airport.get("terminal")
+		if terminal == null:
+			continue
+		var board := terminal.get_node_or_null("CityDestinationsBoard") as Label3D
+		if board == null:
+			continue
+		var destinations: Array[String] = []
+		for route in get_available_routes(str(city_id)):
+			if str(route.get("origin_city_id", "")) != str(city_id):
+				continue
+			var destination_id := str(route.get("destination_city_id", ""))
+			if destination_id == str(city_id) or not city_airports.has(destination_id):
+				continue
+			var destination: Dictionary = city_airports[destination_id]
+			var symbol := "✈" if str(route.get("transport_type", "")) == "aircraft" else "◉"
+			var destination_line := symbol + " " + str(destination.get("city_name", destination_id))
+			if not destinations.has(destination_line):
+				destinations.append(destination_line)
+		board.text = "وجهات الرحلات | CITY DESTINATIONS\n" + "\n".join(destinations.slice(0, 6))
+		terminal.set_meta("system_route_board_destination_count", destinations.size())
+
+
+func request_route_selection(player_id: String, origin_city_id: String) -> Array:
+	if player_id.strip_edges().is_empty() or not city_airports.has(origin_city_id):
+		return []
+	var available := get_available_routes(origin_city_id)
+	route_selection_requested.emit(player_id, available.duplicate(true))
+	return available
+
+
 func get_available_routes(origin_city_id: String = "") -> Array:
 	var result: Array = []
 	for route_id in routes:
@@ -277,6 +312,7 @@ func _build_civil_terminal(parent: Node3D, city_name: String) -> void:
 	ticket_area.add_child(ticket_shape)
 	ticket_area.set_meta("system_interaction_prompt", "شراء تذكرة أو الصعود إلى الرحلة")
 	ticket_area.set_meta("system_transport_hub_type", "civil_airport")
+	ticket_area.set_meta("system_transport_city_id", str(parent.get_meta("system_airport_city_id", "")))
 	parent.add_child(ticket_area)
 	for passenger_index in range(16):
 		var spawn := Marker3D.new()
@@ -284,7 +320,8 @@ func _build_civil_terminal(parent: Node3D, city_name: String) -> void:
 		spawn.position = Vector3(-32.0 + float(passenger_index % 8) * 9.0, 0.2, 18.0 + float(int(passenger_index / 8)) * 8.0)
 		spawn.set_meta("system_npc_spawn_role", "airport_passenger")
 		parent.add_child(spawn)
-	parent.set_meta("system_terminal_features", ["check_in", "departure_boards", "boarding_gates", "waiting_lounge", "baggage_arrivals", "npc_passenger_spawn_points"])
+	_add_label(parent, "CityDestinationsBoard", "وجهات الرحلات | CITY DESTINATIONS", Vector3(0, 9.5, 15), Color(0.25, 0.88, 1.0))
+	parent.set_meta("system_terminal_features", ["check_in", "departure_boards", "city_destination_board", "boarding_gates", "waiting_lounge", "baggage_arrivals", "npc_passenger_spawn_points"])
 	parent.set_meta("system_passenger_spawn_point_count", 16)
 	parent.set_meta("system_terminal_interior_state", "authored_terminal_layout; passenger_ui_and_live_npc_binding_pending")
 	parent.set_meta("system_terminal_city_name", city_name)
