@@ -25,6 +25,7 @@ var enabled := false
 var _last_center_cell := Vector2i(2147483647, 2147483647)
 
 var road_material: StandardMaterial3D
+var road_marking_material: StandardMaterial3D
 var bridge_material: StandardMaterial3D
 var water_material: StandardMaterial3D
 var land_material: StandardMaterial3D
@@ -126,6 +127,11 @@ func _create_materials() -> void:
 	road_material.roughness = 0.96
 	road_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 
+	road_marking_material = StandardMaterial3D.new()
+	road_marking_material.albedo_color = Color(0.92, 0.84, 0.58)
+	road_marking_material.roughness = 0.86
+	road_marking_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
 	bridge_material = StandardMaterial3D.new()
 	bridge_material.albedo_color = Color(0.34, 0.35, 0.36)
 	bridge_material.roughness = 0.82
@@ -216,6 +222,8 @@ func _load_cell(cell: Vector2i) -> void:
 	var road_count := 0
 	for feature in road_features:
 		road_count += _build_line_feature(cell_root, feature, _road_width(feature.get("tags", {})), road_material, 0.16, "OSMRoad")
+	if not overview_mode:
+		_flush_road_marking_multimesh(cell_root)
 	var building_count := 0
 	var building_features: Array = layers.get("buildings", [])
 	var building_feature_ids: Dictionary = {}
@@ -322,6 +330,8 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 				Vector3(p1.x, _terrain_height(p1) + height, p1.y),
 				Vector3(p2.x, _terrain_height(p2) + height, p2.y))
 		surface.generate_normals()
+		if not overview_mode and prefix == "OSMRoad" and not is_bridge:
+			_collect_road_center_markings(parent, line, width, feature_tags)
 		var mesh := _commit_surface_tool_if_valid(surface)
 		if mesh == null:
 			continue
@@ -1696,6 +1706,65 @@ func _terrain_height(point: Vector2) -> float:
 	if is_instance_valid(terrain_manager) and terrain_manager.has_method("get_terrain_height"):
 		return float(terrain_manager.call("get_terrain_height", point.x, point.y))
 	return 0.0
+
+
+func _collect_road_center_markings(parent: Node3D, line: PackedVector2Array, road_width: float, tags: Dictionary) -> void:
+	# Dashed center guidance is generated only for close-range, two-way urban
+	# roads. Residential lanes and the 1 km overview remain uncluttered.
+	var highway := str(tags.get("highway", ""))
+	if road_width < 5.8 or highway in ["service", "residential", "living_street", "footway", "path", "cycleway", "pedestrian"]:
+		return
+	var transforms: Array = parent.get_meta("system_road_marking_transforms", [])
+	var remaining := maxi(0, 800 - transforms.size())
+	if remaining <= 0:
+		return
+	for segment_index in range(line.size() - 1):
+		if transforms.size() >= 800:
+			break
+		var start: Vector2 = line[segment_index]
+		var finish: Vector2 = line[segment_index + 1]
+		var segment := finish - start
+		var length := segment.length()
+		if length < 5.0:
+			continue
+		var direction := segment / length
+		var dash_length := 2.8
+		var dash_gap := 5.2
+		var cursor := 1.0
+		while cursor + dash_length < length - 0.5 and transforms.size() < 800:
+			var midpoint := start + direction * (cursor + dash_length * 0.5)
+			var basis := Basis(
+				Vector3(direction.x, 0.0, direction.y),
+				Vector3.UP,
+				Vector3(-direction.y, 0.0, direction.x)
+			).scaled(Vector3(dash_length, 0.025, 0.12))
+			var position := Vector3(midpoint.x, _terrain_height(midpoint) + 0.205, midpoint.y)
+			transforms.append(Transform3D(basis, position))
+			cursor += dash_length + dash_gap
+	parent.set_meta("system_road_marking_transforms", transforms)
+
+
+func _flush_road_marking_multimesh(parent: Node3D) -> void:
+	var transforms: Array = parent.get_meta("system_road_marking_transforms", [])
+	if transforms.is_empty():
+		return
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.mesh = BoxMesh.new()
+	multimesh.instance_count = transforms.size()
+	for index in range(transforms.size()):
+		multimesh.set_instance_transform(index, transforms[index])
+	var markings := MultiMeshInstance3D.new()
+	markings.name = "BaghdadCellRoadCenterMarkings"
+	markings.multimesh = multimesh
+	markings.material_override = road_marking_material
+	markings.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	markings.set_meta("system_road_detail_type", "dashed_center_lane_guidance")
+	markings.set_meta("system_road_marking_count", transforms.size())
+	markings.set_meta("system_road_marking_draw_calls_per_cell", 1)
+	parent.add_child(markings)
+	parent.set_meta("system_road_marking_instance_count", transforms.size())
+	parent.set_meta("system_road_marking_transforms", [])
 
 
 func _road_width(tags: Dictionary) -> float:
