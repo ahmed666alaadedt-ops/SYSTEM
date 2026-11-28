@@ -282,9 +282,11 @@ func _build_civil_terminal(parent: Node3D, city_name: String) -> void:
 	_add_box(parent, "TerminalRearWall", Vector3(0, 7, -25.5), Vector3(90, 14, 1), shell_material)
 	_add_box(parent, "TerminalLeftWall", Vector3(-44.5, 7, 0), Vector3(1, 14, 52), shell_material)
 	_add_box(parent, "TerminalRightWall", Vector3(44.5, 7, 0), Vector3(1, 14, 52), shell_material)
-	_add_box(parent, "TerminalGlassFacade", Vector3(0, 6.5, 26.4), Vector3(76, 9, 0.8), glass_material)
-	_add_box(parent, "TerminalAutomaticDoorLeft", Vector3(-2.2, 4.5, 26.9), Vector3(2.0, 8, 0.35), glass_material)
-	_add_box(parent, "TerminalAutomaticDoorRight", Vector3(2.2, 4.5, 26.9), Vector3(2.0, 8, 0.35), glass_material)
+	_add_box(parent, "TerminalGlassFacadeLeft", Vector3(-21, 6.5, 26.4), Vector3(34, 9, 0.8), glass_material)
+	_add_box(parent, "TerminalGlassFacadeRight", Vector3(21, 6.5, 26.4), Vector3(34, 9, 0.8), glass_material)
+	_add_box(parent, "TerminalGlassHeader", Vector3(0, 12.5, 26.4), Vector3(8, 1, 0.8), glass_material)
+	_add_box(parent, "TerminalAutomaticDoorLeft", Vector3(-1.65, 4.5, 26.9), Vector3(2.2, 8, 0.35), glass_material)
+	_add_box(parent, "TerminalAutomaticDoorRight", Vector3(1.65, 4.5, 26.9), Vector3(2.2, 8, 0.35), glass_material)
 	_add_box(parent, "TerminalRoofCanopy", Vector3(0, 14.5, 0), Vector3(98, 1.2, 58), shell_material)
 	_add_box(parent, "CheckInHallFloor", Vector3(-18, 1.1, 2), Vector3(28, 0.35, 26), glass_material)
 	_add_box(parent, "DepartureHallFloor", Vector3(18, 1.1, 2), Vector3(28, 0.35, 26), glass_material)
@@ -293,6 +295,13 @@ func _build_civil_terminal(parent: Node3D, city_name: String) -> void:
 		var column_x := -38.0 + float(column_index) * 10.8
 		_add_box(parent, "TerminalInteriorColumn_%02d" % column_index, Vector3(column_x, 6.8, 0), Vector3(0.8, 12.6, 0.8), shell_material)
 	_add_box(parent, "AirportCitySign", Vector3(0, 17, 27), Vector3(32, 2.4, 0.7), sign_material)
+	_add_box_collision(parent, "AirportTerminalCollision", Vector3(0, 0.5, 0), Vector3(90, 1, 52))
+	_add_box_collision(parent, "TerminalRearWallCollision", Vector3(0, 7, -25.5), Vector3(90, 14, 1))
+	_add_box_collision(parent, "TerminalLeftWallCollision", Vector3(-44.5, 7, 0), Vector3(1, 14, 52))
+	_add_box_collision(parent, "TerminalRightWallCollision", Vector3(44.5, 7, 0), Vector3(1, 14, 52))
+	_add_box_collision(parent, "TerminalGlassLeftCollision", Vector3(-21, 6.5, 26.4), Vector3(34, 9, 0.8))
+	_add_box_collision(parent, "TerminalGlassRightCollision", Vector3(21, 6.5, 26.4), Vector3(34, 9, 0.8))
+	parent.set_meta("system_terminal_walkable_shell", true)
 	for gate_index in range(4):
 		var gate_x := -30.0 + float(gate_index) * 20.0
 		_add_box(parent, "BoardingGate_%02d" % gate_index, Vector3(gate_x, 2.0, -28), Vector3(10, 4, 8), glass_material)
@@ -391,6 +400,7 @@ func _build_baghdad_airship_station() -> void:
 	var platform_material := _material(Color(0.30, 0.34, 0.39), 0.55, 0.32)
 	var glow := _emissive_material(Color(0.18, 0.72, 1.0))
 	_add_box(_airship_station, "AirshipBoardingPlatform", Vector3(0, 1, 0), Vector3(86, 2, 54), platform_material)
+	_add_box_collision(_airship_station, "AirshipPlatformCollision", Vector3(0, 1, 0), Vector3(86, 2, 54))
 	_add_box(_airship_station, "AirshipMooringTower", Vector3(-38, 24, 0), Vector3(8, 48, 8), platform_material)
 	_add_box(_airship_station, "AirshipPassengerBridge", Vector3(-12, 10, 0), Vector3(48, 1.8, 8), glow)
 	_add_box(_airship_station, "AirshipStationSign", Vector3(0, 15, 28), Vector3(34, 3, 0.8), glow)
@@ -468,6 +478,20 @@ func _build_baghdad_airship() -> void:
 	airship.set_meta("system_led_advertising", true)
 	airship.set_meta("system_route_id", "baghdad_airship_loop")
 	airship.set_meta("system_viewing_cabin", true)
+
+
+func _add_box_collision(parent: Node3D, node_name: String, position: Vector3, size: Vector3) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.name = node_name
+	body.add_to_group("system_world_static_geometry")
+	var shape := BoxShape3D.new()
+	shape.size = size
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	collision.position = position
+	body.add_child(collision)
+	parent.add_child(body)
+	return body
 
 
 func _add_box(parent: Node3D, node_name: String, position: Vector3, size: Vector3, material: Material) -> MeshInstance3D:
