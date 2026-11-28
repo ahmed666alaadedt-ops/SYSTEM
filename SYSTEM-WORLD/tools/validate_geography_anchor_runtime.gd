@@ -85,6 +85,7 @@ func _run_validation() -> void:
 		return
 
 	print("SYSTEM GEOGRAPHY QA PASS: Baghdad city anchor is connected to WGS84 registry.")
+	print("SYSTEM GEOGRAPHY QA PASS: %d named Baghdad memorial/ceremonial landmarks are registered and projected." % required_landmarks.size())
 	print("SYSTEM GEOGRAPHY QA LIMIT: only the Baghdad anchor is real-data-backed; other city layouts remain prototypes.")
 	quit(0)
 
