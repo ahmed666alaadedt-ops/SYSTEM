@@ -831,6 +831,11 @@ func _run_validation() -> void:
 		_fail("Civil airport terminal, parked aircraft or passenger spawn anchors were not authored.")
 		return
 	air_transport._register_route_pair("qa_baghdad", "qa_paris", "aircraft")
+	air_transport._register_route_pair("qa_baghdad", "qa_paris", "fictional_airship")
+	var qa_airship_route: Dictionary = air_transport.routes.get("qa_baghdad__qa_paris__fictional_airship", {})
+	if int(qa_airship_route.get("capacity", 0)) != 60 or str(qa_airship_route.get("transport_type", "")) != "fictional_airship":
+		_fail("Inter-city passenger airship route did not retain its 60-seat service type.")
+		return
 	var airship_over_capacity := air_transport.create_ticket("qa_player", "baghdad_airship_loop", 61)
 	var airship_full_ticket: Dictionary = air_transport.create_ticket("qa_player", "baghdad_airship_loop", 60)
 	if not airship_over_capacity.is_empty() or airship_full_ticket.is_empty() or int(airship_full_ticket.get("passenger_count", 0)) != 60:
