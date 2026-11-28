@@ -2091,6 +2091,12 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] Exact-head Godot validation must confirm the shader material, TIME-driven code and bank-foam mesh are present; real-device visual review remains required for reflections, transparency, current direction and mobile GPU cost.
 
 
+## Baghdad concave building footprint anchors — 28 November 2026
+
+- [x] Replace arithmetic vertex averages with a triangulation-derived interior anchor for building discovery positions, road-frontage approach calculations and polygon worship landmark placement.
+- [x] Add a concave L-shaped regression fixture whose arithmetic vertex mean is outside the footprint; require the selected anchor to remain inside.
+- [ ] Confirm the exact-head Godot runtime validator passes and inspect irregular real OSM footprints in Baghdad; triangulation fallback remains on a boundary vertex if source geometry cannot triangulate.
+
 ## Baghdad mapped public-service and shop POI interaction — 28 November 2026
 
 - [x] Replace generic non-worship amenity spheres with source-backed mapped POI roots and interaction bodies.
