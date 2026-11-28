@@ -645,10 +645,7 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		body.set_meta("system_denomination", str(tags.get("denomination", "")))
 		body.set_meta("system_worship_classification", _worship_facility_type(tags))
 		body.set_meta("system_geometry_type", str(geometry.get("type", "")))
-		var footprint_center := Vector2.ZERO
-		for footprint_point in ring:
-			footprint_center += footprint_point
-		footprint_center /= float(ring.size())
+		var footprint_center := _polygon_anchor_point(ring)
 		var footprint_position := Vector3(
 			footprint_center.x,
 			_terrain_height(footprint_center),
@@ -1068,11 +1065,29 @@ func _flush_facade_window_multimesh(parent: Node3D) -> void:
 	parent.set_meta("system_facade_window_colors", [])
 
 
+func _polygon_anchor_point(ring: PackedVector2Array) -> Vector2:
+	# The arithmetic mean of vertices can fall outside concave Baghdad footprints.
+	# Use the centroid of the largest valid triangulated face as an interior anchor.
+	if ring.size() < 3:
+		return ring[0] if not ring.is_empty() else Vector2.ZERO
+	var triangles := Geometry2D.triangulate_polygon(ring)
+	var best_area := -1.0
+	var best_anchor := ring[0]
+	for index in range(0, triangles.size(), 3):
+		if index + 2 >= triangles.size():
+			break
+		var a := ring[triangles[index]]
+		var b := ring[triangles[index + 1]]
+		var c := ring[triangles[index + 2]]
+		var area := absf((b - a).cross(c - a)) * 0.5
+		if area > best_area:
+			best_area = area
+			best_anchor = (a + b + c) / 3.0
+	return best_anchor
+
+
 func _find_building_approach_point(ring: PackedVector2Array, road_features: Array) -> Dictionary:
-	var center := Vector2.ZERO
-	for point in ring:
-		center += point
-	center /= float(ring.size())
+	var center := _polygon_anchor_point(ring)
 	var best_distance := INF
 	var best_road := Vector2.ZERO
 	for road_feature in road_features:
@@ -1191,18 +1206,16 @@ func _building_display_name(kind: String, tags: Dictionary) -> String:
 func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, height: float, kind: String, feature_id: String, tags: Dictionary) -> void:
 	# Use the real footprint bounds to scale roof landmarks; never place a
 	# fixed-size landmark that overwhelms a small mapped building.
-	var center := Vector2.ZERO
+	var center := _polygon_anchor_point(ring)
 	var min_x := INF
 	var max_x := -INF
 	var min_y := INF
 	var max_y := -INF
 	for point in ring:
-		center += point
 		min_x = minf(min_x, point.x)
 		max_x = maxf(max_x, point.x)
 		min_y = minf(min_y, point.y)
 		max_y = maxf(max_y, point.y)
-	center /= float(ring.size())
 	var footprint_width := maxf(1.0, max_x - min_x)
 	var footprint_depth := maxf(1.0, max_y - min_y)
 	var footprint_scale := minf(footprint_width, footprint_depth)
