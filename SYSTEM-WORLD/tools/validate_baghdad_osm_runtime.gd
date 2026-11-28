@@ -846,7 +846,8 @@ if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or a
 		return
 	var qa_airport_data: Dictionary = air_transport.city_airports["qa_baghdad"]
 	var qa_airport: Node3D = qa_airport_data.get("terminal")
-	if qa_airport == null or qa_airport.get_node_or_null("TerminalFloorSlab") == null or qa_airport.get_node_or_null("AirportTerminalCollision") == null or qa_airport.get_node_or_null("CivilPassengerAircraftDisplay") == null or qa_airport.find_children("AirportPassengerSpawn_*", "Marker3D", true, false).size() != 16:
+	var qa_airship_gate := qa_airport.get_node_or_null("CityAirshipPassengerGate") if qa_airport != null else null
+	if qa_airport == null or qa_airport.get_node_or_null("TerminalFloorSlab") == null or qa_airport.get_node_or_null("AirportTerminalCollision") == null or qa_airport.get_node_or_null("CivilPassengerAircraftDisplay") == null or qa_airport.find_children("AirportPassengerSpawn_*", "Marker3D", true, false).size() != 16 or qa_airship_gate == null or qa_airship_gate.get_node_or_null("CityAirshipTicketAndBoardingInteraction") == null or qa_airship_gate.get_node_or_null("CityAirshipPassengerBridgeCollision") == null:
 		_fail("Civil airport terminal, parked aircraft or passenger spawn anchors were not authored.")
 		return
 	air_transport._register_route_pair("qa_baghdad", "qa_paris", "aircraft")
