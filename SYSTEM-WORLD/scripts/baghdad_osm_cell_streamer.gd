@@ -374,13 +374,24 @@ func _is_polygon_worship_feature(feature: Dictionary) -> bool:
 	if geometry_type not in ["Polygon", "MultiPolygon"]:
 		return false
 	var tags: Dictionary = feature.get("tags", {})
+	var amenity_kind := str(tags.get("amenity", "")).to_lower()
 	var building_kind := str(tags.get("building", "")).to_lower()
-	return building_kind in ["mosque", "church", "shrine", "monastery"] or str(tags.get("amenity", "")).to_lower() in ["place_of_worship", "monastery"]
+	var religion := str(tags.get("religion", "")).to_lower()
+	# Keep polygon geometry authoritative. Some mapped worship buildings carry
+	# building=public/religious plus religion=* instead of building=mosque/church.
+	var explicit_worship := amenity_kind in ["place_of_worship", "monastery"]
+	explicit_worship = explicit_worship or building_kind in ["mosque", "church", "shrine", "monastery"]
+	var religious_building := religion in ["muslim", "islam", "christian", "christianity"] and (building_kind != "" or amenity_kind != "")
+	return explicit_worship or religious_building
 
 
 func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
 	var geometry_type := str(geometry.get("type", ""))
+	# Never derive a centroid marker from a mapped worship footprint. Build the
+	# actual OSM polygon/multipolygon extrusion before any point fallback logic.
+	if geometry_type in ["Polygon", "MultiPolygon"] and _is_polygon_worship_feature(feature):
+		return _build_building_overview_feature(parent, feature)
 	var point := Vector2.ZERO
 	if geometry_type == "Point":
 		var coordinates: Array = geometry.get("coordinates", [])
@@ -399,8 +410,6 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 		return 0
 	var tags: Dictionary = feature.get("tags", {})
 	var amenity := str(tags.get("amenity", "")).to_lower()
-	if _is_polygon_worship_feature(feature):
-		return _build_building_overview_feature(parent, feature)
 	var shop := str(tags.get("shop", "")).to_lower()
 	var healthcare := str(tags.get("healthcare", "")).to_lower()
 	var facility_type := "public_service"
@@ -1470,6 +1479,11 @@ func _worship_facility_type(tags: Dictionary) -> String:
 	if amenity_kind == "place_of_worship" and religion in ["muslim", "islam"]:
 		return "mosque"
 	if amenity_kind == "place_of_worship" and religion in ["christian", "christianity"]:
+		return "church"
+	# OSM sometimes records religion on a generic mapped building footprint.
+	if religion in ["muslim", "islam"] and building_kind in ["religious", "public"]:
+		return "mosque"
+	if religion in ["christian", "christianity"] and building_kind in ["religious", "public"]:
 		return "church"
 	if building_kind == "mosque":
 		return "mosque"
