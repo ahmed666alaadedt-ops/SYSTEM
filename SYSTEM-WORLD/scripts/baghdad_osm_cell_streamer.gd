@@ -454,7 +454,7 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
 	var geometry_type := str(geometry.get("type", ""))
 	var aeroway_kind := str(tags.get("aeroway", "")).to_lower()
-	if geometry_type in ["LineString", "MultiLineString"] and aeroway_kind in ["runway", "taxiway"]
+	if geometry_type in ["LineString", "MultiLineString"] and aeroway_kind in ["runway", "taxiway"]:
 		var runway_width := 42.0 if aeroway_kind == "runway" else 18.0
 		return _build_line_feature(parent, feature, runway_width, bridge_material, 0.12, "OSMCivilAirport_" + aeroway_kind)
 	if geometry_type in ["Polygon", "MultiPolygon"] and aeroway_kind == "apron":
