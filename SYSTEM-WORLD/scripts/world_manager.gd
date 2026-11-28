@@ -18,6 +18,7 @@ const ModernWorldRegionManagerScript = preload("res://scripts/modern_world_regio
 const UndergroundHeritageManagerScript = preload("res://scripts/underground_heritage_manager.gd")
 const ModernWorldMonsterGateManagerScript = preload("res://scripts/modern_world_monster_gate_manager.gd")
 const BaghdadOSMCellStreamerScript = preload("res://scripts/baghdad_osm_cell_streamer.gd")
+const ModernWorldAirTransportManagerScript = preload("res://scripts/modern_world_air_transport_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -251,6 +252,12 @@ func _create_modern_city() -> void:
 	var region_manager := ModernWorldRegionManagerScript.new()
 	region_manager.name = "ModernWorldRegionManager"
 	root.add_child(region_manager)
+
+	# City terminals use the region manager's existing game-world city anchors.
+	# Non-Baghdad anchors are prototype-layout positions, not real-world coordinates.
+	var air_transport := ModernWorldAirTransportManagerScript.new()
+	air_transport.name = "ModernWorldAirTransportManager"
+	root.add_child(air_transport)
 
 	if FileAccess.file_exists("res://data/geography/baghdad/cell_pack/manifest.json"):
 		var baghdad_osm := BaghdadOSMCellStreamerScript.new()
