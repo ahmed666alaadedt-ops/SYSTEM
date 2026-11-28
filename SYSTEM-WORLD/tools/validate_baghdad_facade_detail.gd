@@ -33,6 +33,38 @@ func _run() -> void:
 	if built != 1:
 		_fail("Synthetic five-floor Baghdad apartment footprint did not build.")
 		return
+
+	# Inspect the generator's source transforms before they are packed into MultiMesh.
+	# This avoids depending on renderer-side MultiMesh readback in headless CI.
+	var generated_transforms: Array = streamer.get_meta("system_facade_window_transforms", [])
+	if generated_transforms.is_empty() or generated_transforms.size() > 32:
+		_fail("Generated facade transforms are outside the mobile-safe 1..32 per-building budget.")
+		return
+	var floor_levels: Array[float] = []
+	var floor_instance_counts: Array[int] = []
+	for generated_transform in generated_transforms:
+		if not generated_transform is Transform3D:
+			_fail("Facade generator emitted a non-Transform3D window instance.")
+			return
+		var window_y: float = generated_transform.origin.y
+		var matched_floor := -1
+		for floor_index in range(floor_levels.size()):
+			if absf(window_y - floor_levels[floor_index]) <= 0.75:
+				matched_floor = floor_index
+				break
+		if matched_floor < 0:
+			floor_levels.append(window_y)
+			floor_instance_counts.append(1)
+		else:
+			floor_instance_counts[matched_floor] += 1
+	if floor_levels.size() != 5:
+		_fail("Five-floor apartment must generate five distinct facade window bands; found %d." % floor_levels.size())
+		return
+	for floor_index in range(floor_instance_counts.size()):
+		if floor_instance_counts[floor_index] < 3:
+			_fail("Five-floor apartment facade coverage is incomplete on vertical band %d." % (floor_index + 1))
+			return
+
 	streamer.call("_flush_facade_window_multimesh", streamer)
 	var building := streamer.get_node_or_null("OSMBuilding_apartment_block_facade_validation_apartment_001") as MeshInstance3D
 	var windows := streamer.get_node_or_null("BaghdadCellFacadeWindows") as MultiMeshInstance3D
@@ -40,8 +72,8 @@ func _run() -> void:
 		_fail("High-detail apartment is missing its instanced facade-window resource.")
 		return
 	var window_count := windows.multimesh.instance_count
-	if window_count <= 0 or window_count > 32:
-		_fail("Facade window count is outside the mobile-safe 1..32 per-building budget.")
+	if window_count != generated_transforms.size():
+		_fail("Packed MultiMesh instance count does not match the generated facade transforms.")
 		return
 	if int(building.get_meta("system_facade_window_count", 0)) != window_count:
 		_fail("Building facade metadata does not match the MultiMesh instance count.")
@@ -58,32 +90,6 @@ func _run() -> void:
 	if not windows.multimesh.use_colors:
 		_fail("Facade MultiMesh must retain per-window cool/warm color variation.")
 		return
-
-	# Validate five distinct vertical window bands without assuming the
-	# synthetic test building sits at world elevation zero. Real Baghdad
-	# footprints inherit terrain elevation, so absolute Y thresholds are invalid.
-	var floor_levels: Array[float] = []
-	var floor_instance_counts: Array[int] = []
-	for instance_index in range(window_count):
-		var instance_transform: Transform3D = windows.multimesh.get_instance_transform(instance_index)
-		var window_y := instance_transform.origin.y
-		var matched_floor := -1
-		for floor_index in range(floor_levels.size()):
-			if absf(window_y - floor_levels[floor_index]) <= 0.75:
-				matched_floor = floor_index
-				break
-		if matched_floor < 0:
-			floor_levels.append(window_y)
-			floor_instance_counts.append(1)
-		else:
-			floor_instance_counts[matched_floor] += 1
-	if floor_levels.size() != 5:
-		_fail("Five-floor apartment must produce five distinct facade window bands; found %d." % floor_levels.size())
-		return
-	for floor_index in range(floor_instance_counts.size()):
-		if floor_instance_counts[floor_index] < 3:
-			_fail("Five-floor apartment facade coverage is incomplete on vertical band %d." % (floor_index + 1))
-			return
 
 	var overview_parent := Node3D.new()
 	overview_parent.name = "BaghdadRegionalOverviewValidation"
