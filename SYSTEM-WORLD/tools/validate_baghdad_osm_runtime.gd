@@ -15,6 +15,26 @@ func _run_validation() -> void:
 	var streamer = BAGHDAD_STREAMER.new()
 	root.add_child(streamer)
 	print("Baghdad OSM validation: streamer added; checking manifest and origin.")
+	# Verify OSM luxury-residential tags retain distinct building classes and
+	# honor mapped height/level data before any facade detail is generated.
+	var villa_tags := {"building": "villa", "name:ar": "فيلا اختبار بغداد", "building:levels": "2"}
+	var palace_tags := {"building": "palace", "name:ar": "قصر اختبار بغداد", "height": "21"}
+	if streamer._building_kind(villa_tags) != "villa":
+		_fail("Mapped OSM villa was not classified as a villa.")
+		return
+	if streamer._building_kind(palace_tags) != "palace":
+		_fail("Mapped OSM palace was not classified as a palace.")
+		return
+	if absf(streamer._building_height(villa_tags) - 6.4) > 0.01:
+		_fail("Villa height did not honor its mapped OSM building:levels value.")
+		return
+	if absf(streamer._building_height(palace_tags) - 21.0) > 0.01:
+		_fail("Palace height did not honor its mapped OSM height value.")
+		return
+	if streamer._building_display_name("villa", villa_tags) != "فيلا اختبار بغداد" or streamer._building_display_name("palace", palace_tags) != "قصر اختبار بغداد":
+		_fail("Arabic OSM villa/palace names were not preserved.")
+		return
+	print("Baghdad luxury-residential tagging QA passed: villa/palace classes, mapped dimensions and Arabic names.")
 	if not streamer.enabled:
 		_fail("Baghdad OSM cell pack did not enable.")
 		return
