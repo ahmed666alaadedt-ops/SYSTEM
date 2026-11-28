@@ -681,7 +681,7 @@ func _run_validation() -> void:
 	if streamer._worship_facility_type(shrine_tags) != "shrine" or streamer._game_worship_presentation_type(shrine_tags) != "mosque" or streamer._game_building_kind(shrine_tags) != "mosque":
 		_fail("Baghdad shrine-to-mosque game presentation override failed or altered source classification.")
 		return
-	if not streamer._is_sensitive_state_site({"amenity": "police"}) or not streamer._is_sensitive_state_site({"military": "airfield"}) or not streamer._is_sensitive_state_site({"office": "government"}):
+	if not streamer._is_sensitive_state_site({"amenity": "police"}) or not streamer._is_sensitive_state_site({"military": "airfield"}) or not streamer._is_sensitive_state_site({"office": "government"}) or not streamer._is_sensitive_state_site({"landuse": "military"}):
 		_fail("Sensitive state/security feature classifier missed a synthetic test category.")
 		return
 	var shrine_point_root := Node3D.new()
