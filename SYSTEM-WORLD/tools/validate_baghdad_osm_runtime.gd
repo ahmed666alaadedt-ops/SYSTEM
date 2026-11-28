@@ -832,6 +832,11 @@ func _run_validation() -> void:
 		return
 	air_transport._register_route_pair("qa_baghdad", "qa_paris", "aircraft")
 	air_transport._register_route_pair("qa_baghdad", "qa_paris", "fictional_airship")
+	air_transport._refresh_terminal_route_boards()
+	var qa_destination_board := qa_airport.get_node_or_null("CityDestinationsBoard") as Label3D
+	if qa_destination_board == null or not qa_destination_board.text.contains("Paris QA") or air_transport.request_route_selection("qa_player", "qa_baghdad").is_empty():
+		_fail("City destination board or route-selection interface did not expose the registered destination.")
+		return
 	var qa_airship_route: Dictionary = air_transport.routes.get("qa_baghdad__qa_paris__fictional_airship", {})
 	if int(qa_airship_route.get("capacity", 0)) != 60 or str(qa_airship_route.get("transport_type", "")) != "fictional_airship":
 		_fail("Inter-city passenger airship route did not retain its 60-seat service type.")
