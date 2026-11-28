@@ -408,7 +408,14 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 				facility_type = "transport"
 		if facility_type != "" and not sensitive_site:
 			instance.set_meta("system_facility_type", facility_type)
-		instance.set_meta("system_display_name", "مبنى معماري" if sensitive_site else _game_building_display_name(kind, tags))
+		var overview_display_name := _game_building_display_name(kind, tags)
+		if not sensitive_site and str(tags.get("name:ar", tags.get("name", ""))).strip_edges().is_empty():
+			var mapped_aeroway := str(tags.get("aeroway", "")).to_lower()
+			if mapped_aeroway == "terminal":
+				overview_display_name = "صالة ركاب جوية"
+			elif mapped_aeroway == "hangar":
+				overview_display_name = "حظيرة طائرات مدنية"
+		instance.set_meta("system_display_name", "مبنى معماري" if sensitive_site else overview_display_name)
 		instance.set_meta("system_building_height_m", height)
 		instance.set_meta("system_estimated_floors", maxi(1, int(ceil(height / 3.2))))
 		instance.set_meta("system_residential_luxury_class", kind in ["villa", "palace"])
@@ -460,6 +467,8 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	if geometry_type in ["Polygon", "MultiPolygon"] and aeroway_kind == "apron":
 		_build_area_feature(parent, feature, land_material, 0.06, "OSMCivilAirportApron")
 		return 1
+	if geometry_type in ["Polygon", "MultiPolygon"] and aeroway_kind in ["terminal", "hangar"]:
+		return _build_building_overview_feature(parent, feature)
 	# Never derive a centroid marker from a mapped worship footprint. Build the
 	# actual OSM polygon/multipolygon extrusion before any point fallback logic.
 	if geometry_type in ["Polygon", "MultiPolygon"] and _is_polygon_worship_feature(feature):
