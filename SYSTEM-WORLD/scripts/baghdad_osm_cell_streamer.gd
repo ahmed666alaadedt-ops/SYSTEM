@@ -515,10 +515,99 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		var approach := _find_building_approach_point(ring, road_features)
 		if not approach.is_empty():
 			_add_building_approach_marker(parent, approach, feature_id, kind, tags)
+			if kind in ["villa", "palace"]:
+				_add_luxury_residential_entry_details(parent, ring, height, kind, feature_id, approach)
 		built += 1
 		if kind == "church" or kind == "mosque":
 			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
 	return built
+
+
+func _add_luxury_residential_entry_details(
+	parent: Node3D,
+	ring: PackedVector2Array,
+	height: float,
+	kind: String,
+	feature_id: String,
+	approach: Dictionary
+) -> void:
+	# Close-range 200 m cells receive a restrained architectural entrance;
+	# the 1 km overview remains a lightweight footprint extrusion.
+	if ring.size() < 3:
+		return
+	var approach_position: Vector2 = approach.get("position", Vector2.ZERO)
+	var best_edge_index := 0
+	var best_distance := INF
+	for edge_index in range(ring.size()):
+		var edge_start := ring[edge_index]
+		var edge_finish := ring[(edge_index + 1) % ring.size()]
+		var nearest := _closest_point_on_segment(approach_position, edge_start, edge_finish)
+		var distance := nearest.distance_to(approach_position)
+		if distance < best_distance:
+			best_distance = distance
+			best_edge_index = edge_index
+	var edge_start := ring[best_edge_index]
+	var edge_finish := ring[(best_edge_index + 1) % ring.size()]
+	var edge := edge_finish - edge_start
+	var edge_length := edge.length()
+	if edge_length < 5.0:
+		return
+	var tangent := edge.normalized()
+	var outward := approach_position - _closest_point_on_segment(approach_position, edge_start, edge_finish)
+	if outward.length_squared() < 0.0001:
+		outward = Vector2(tangent.y, -tangent.x)
+	else:
+		outward = outward.normalized()
+	var entry_center := (edge_start + edge_finish) * 0.5
+	var entry_width := clampf(edge_length * 0.42, 3.2, 6.0)
+	var half_width := entry_width * 0.5
+	var portal_height := clampf(height * 0.30, 2.8, 4.2)
+	var base_height := _terrain_height(entry_center) + 0.08
+	var inward_offset := -outward * 0.42
+	var trim_material := _building_material_for(kind)
+	trim_material.metallic = 0.18 if kind == "villa" else 0.32
+	trim_material.roughness = 0.62
+	var column_mesh := CylinderMesh.new()
+	column_mesh.top_radius = 0.22 if kind == "villa" else 0.28
+	column_mesh.bottom_radius = column_mesh.top_radius * 1.18
+	column_mesh.height = portal_height
+	column_mesh.radial_segments = 12
+	for side_sign in [-1.0, 1.0]:
+		var column_position_2d := entry_center + tangent * half_width * float(side_sign) + inward_offset
+		var column := MeshInstance3D.new()
+		column.name = "LuxuryEntryColumn_%s_%s" % [feature_id, "L" if side_sign < 0.0 else "R"]
+		column.mesh = column_mesh
+		column.position = Vector3(column_position_2d.x, base_height + portal_height * 0.5, column_position_2d.y)
+		column.material_override = trim_material
+		column.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(column)
+	var lintel := MeshInstance3D.new()
+	lintel.name = "LuxuryEntryLintel_%s" % feature_id
+	var lintel_mesh := BoxMesh.new()
+	lintel_mesh.size = Vector3(entry_width + 0.65, 0.34, 0.48)
+	lintel.mesh = lintel_mesh
+	lintel.position = Vector3(entry_center.x, base_height + portal_height, entry_center.y) + Vector3(inward_offset.x, 0.0, inward_offset.y)
+	lintel.rotation.y = atan2(tangent.x, tangent.y)
+	lintel.material_override = trim_material
+	lintel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(lintel)
+	var canopy := MeshInstance3D.new()
+	canopy.name = "LuxuryEntryCanopy_%s" % feature_id
+	var canopy_mesh := BoxMesh.new()
+	canopy_mesh.size = Vector3(entry_width + 1.0, 0.22, 1.65)
+	canopy.mesh = canopy_mesh
+	canopy.position = Vector3(entry_center.x, base_height + portal_height - 0.12, entry_center.y) + Vector3(inward_offset.x, 0.0, inward_offset.y) - Vector3(outward.x, 0.0, outward.y) * 0.72
+	canopy.rotation.y = atan2(tangent.x, tangent.y)
+	canopy.material_override = trim_material
+	canopy.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(canopy)
+	var detail_root := Node3D.new()
+	detail_root.name = "LuxuryResidentialEntrance_%s" % feature_id
+	detail_root.set_meta("system_luxury_building_kind", kind)
+	detail_root.set_meta("system_architectural_detail", "road_facing_entry_portico")
+	detail_root.set_meta("system_entry_width_m", entry_width)
+	detail_root.set_meta("system_entry_height_m", portal_height)
+	parent.add_child(detail_root)
 
 
 func _add_procedural_facade_windows(
