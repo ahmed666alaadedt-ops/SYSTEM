@@ -39,9 +39,13 @@ def classify(tags: dict[str, object]) -> str | None:
         religion in {"christian", "christianity"} and building == "mosque"
     ):
         return "conflict"
-    if religion in {"muslim", "islam"}:
+    # Match the in-game OSM classifier's precedence exactly: explicit
+    # place_of_worship religion first, then explicit building class, then
+    # generic public/religious buildings. A standalone building=shrine must
+    # remain a shrine even if its religion tag is present.
+    if amenity == "place_of_worship" and religion in {"muslim", "islam"}:
         return "mosque"
-    if religion in {"christian", "christianity"}:
+    if amenity == "place_of_worship" and religion in {"christian", "christianity"}:
         return "church"
     if building == "mosque":
         return "mosque"
@@ -49,6 +53,10 @@ def classify(tags: dict[str, object]) -> str | None:
         return "church"
     if building == "shrine":
         return "shrine"
+    if religion in {"muslim", "islam"} and building in {"public", "religious"}:
+        return "mosque"
+    if religion in {"christian", "christianity"} and building in {"public", "religious"}:
+        return "church"
     return "other_or_unspecified"
 
 def main() -> None:
