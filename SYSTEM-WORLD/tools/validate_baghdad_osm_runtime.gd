@@ -375,6 +375,32 @@ func _run_validation() -> void:
 		synthetic_root.free()
 		synthetic_index += 1
 	print("Baghdad synthetic worship tagging QA passed: three OSM tagging variants generated polygon footprint meshes without POI duplication.")
+	# Verify the expanded OSM amenity source categories render as typed POIs.
+	var poi_cases := [
+		{"tags": {"shop": "supermarket"}, "expected": "shop"},
+		{"tags": {"tourism": "museum"}, "expected": "tourism"},
+		{"tags": {"historic": "monument"}, "expected": "heritage"},
+		{"tags": {"leisure": "park"}, "expected": "leisure"},
+		{"tags": {"aeroway": "terminal"}, "expected": "transport"},
+		{"tags": {"healthcare": "hospital"}, "expected": "healthcare"},
+		{"tags": {"office": "government"}, "expected": "civic"}
+	]
+	for poi_case in poi_cases:
+		var poi_root := Node3D.new()
+		var poi_feature := {
+			"id": "runtime_poi_" + str(poi_case.expected),
+			"osm_type": "node",
+			"geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+			"tags": poi_case.tags
+		}
+		var poi_built := regional_urban._build_regional_poi_feature(poi_root, poi_feature)
+		var typed_poi := poi_root.find_children("OSMRegionalPOI_*", "Node3D", true, false)
+		if poi_built != 1 or typed_poi.size() != 1 or str(typed_poi[0].get_meta("system_facility_type", "")) != str(poi_case.expected):
+			_fail("Expanded Baghdad POI category was not classified/rendered correctly: " + str(poi_case.tags))
+			poi_root.free()
+			return
+		poi_root.free()
+	print("Baghdad expanded OSM POI category QA passed: shops, tourism, heritage, leisure, aeroway, healthcare and civic offices.")
 	print("Baghdad citywide urban overview passed: buildings=", overview_buildings.size(), " POI markers=", poi_markers.size(), " resolution=1 km.")
 	regional_urban.queue_free()
 	regional_roads.queue_free()
