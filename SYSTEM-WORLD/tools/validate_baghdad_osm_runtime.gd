@@ -713,6 +713,23 @@ func _run_validation() -> void:
 		neutral_site_root.free()
 		return
 	neutral_site_root.free()
+	var detailed_neutral_root := Node3D.new()
+	var detailed_sensitive_feature := {
+		"id": "synthetic_sensitive_detailed_qa",
+		"geometry": {"type": "Polygon", "coordinates": [[[30.0, 0.0], [50.0, 0.0], [50.0, 16.0], [30.0, 16.0], [30.0, 0.0]]]},
+		"tags": {"building": "government", "office": "government", "name:ar": "اسم حكومي حساس للاختبار", "roof:shape": "pyramidal", "roof:material": "restricted"}
+	}
+	if streamer._build_building_feature(detailed_neutral_root, detailed_sensitive_feature, []) != 1:
+		_fail("Sensitive detailed building was not retained as a neutral shell.")
+		detailed_neutral_root.free()
+		return
+	var detailed_meshes := detailed_neutral_root.find_children("OSMBuilding_Neutral_*", "MeshInstance3D", true, false)
+	var detailed_bodies := detailed_neutral_root.find_children("OSMBuildingCollision_Neutral_*", "StaticBody3D", true, false)
+	if detailed_meshes.size() != 1 or detailed_bodies.size() != 1 or detailed_meshes[0].has_meta("osm_feature_id") or detailed_bodies[0].has_meta("system_location_position") or detailed_bodies[0].is_in_group("system_interactable"):
+		_fail("Sensitive detailed shell exposed source identity, location metadata or an interaction surface.")
+		detailed_neutral_root.free()
+		return
+	detailed_neutral_root.free()
 	var hidden_poi_root := Node3D.new()
 	var sensitive_poi := {"id": "synthetic_sensitive_poi_qa", "geometry": {"type": "Point", "coordinates": [0.0, 0.0]}, "tags": {"amenity": "police", "name": "Synthetic Sensitive POI"}}
 	if streamer._build_regional_poi_feature(hidden_poi_root, sensitive_poi) != 0 or not hidden_poi_root.get_children().is_empty():
@@ -765,6 +782,11 @@ func _run_validation() -> void:
 		_fail("Synthetic civil city airports could not be registered.")
 		return
 	air_transport._register_route_pair("qa_baghdad", "qa_paris", "aircraft")
+	var airship_over_capacity := air_transport.create_ticket("qa_player", "baghdad_airship_loop", 61)
+	var airship_full_ticket: Dictionary = air_transport.create_ticket("qa_player", "baghdad_airship_loop", 60)
+	if not airship_over_capacity.is_empty() or airship_full_ticket.is_empty() or int(airship_full_ticket.get("passenger_count", 0)) != 60:
+		_fail("Baghdad airship passenger capacity of 60 was not enforced.")
+		return
 	var qa_route_id := "qa_baghdad__qa_paris__aircraft"
 	if not air_transport.get_available_routes("qa_baghdad").any(func(route): return str(route.route_id) == qa_route_id):
 		_fail("City-to-city passenger route was not exposed as an available route.")
