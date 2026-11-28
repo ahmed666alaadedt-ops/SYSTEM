@@ -243,12 +243,18 @@ func _build_civil_terminal(parent: Node3D, city_name: String) -> void:
 		var gate_x := -30.0 + float(gate_index) * 20.0
 		_add_box(parent, "BoardingGate_%02d" % gate_index, Vector3(gate_x, 2.0, -28), Vector3(10, 4, 8), glass_material)
 		_add_box(parent, "GateCanopy_%02d" % gate_index, Vector3(gate_x, 4.2, -28), Vector3(12, 0.6, 10), shell_material)
+		_add_label(parent, "GateLabel_%02d" % gate_index, "GATE %02d" % (gate_index + 1), Vector3(gate_x, 6.0, -28), Color(0.65, 0.88, 1.0))
 	for seat_index in range(12):
 		var row := int(seat_index / 4)
 		var col := seat_index % 4
 		_add_box(parent, "WaitingSeat_%02d" % seat_index, Vector3(-24.0 + float(col) * 16.0, 1.2, 8.0 + float(row) * 5.0), Vector3(6, 1.1, 2.2), shell_material)
 	_add_box(parent, "CheckInCounter", Vector3(-25, 2, 15), Vector3(24, 2, 3), shell_material)
+	_add_label(parent, "CheckInCounterLabel", "التذاكر والتسجيل | TICKETS & CHECK-IN", Vector3(-25, 4.0, 17), Color(0.9, 0.88, 0.72))
 	_add_box(parent, "BaggageCarousel", Vector3(0, 1.5, -31), Vector3(28, 1.0, 5), shell_material)
+	_add_label(parent, "BaggageArrivalLabel", "استلام الأمتعة | BAGGAGE CLAIM", Vector3(0, 5.2, -36), Color(0.8, 0.9, 1.0))
+	_add_label(parent, "DepartureBoardLabel", "المغادرات | CITY DEPARTURES", Vector3(18, 10.0, 15), Color(0.3, 0.9, 1.0))
+	_add_label(parent, "ArrivalBoardLabel", "الوصول | ARRIVALS", Vector3(-18, 10.0, 15), Color(0.3, 0.9, 1.0))
+	_add_label(parent, "TerminalCityLabel", city_name.to_upper() + " CIVIL AIR TERMINAL", Vector3(0, 18.0, 28), Color(0.95, 0.85, 0.55))
 	var ticket_area := Area3D.new()
 	ticket_area.name = "AirportTicketAndBoardingInteraction"
 	ticket_area.add_to_group("system_interactable")
@@ -292,6 +298,7 @@ func _build_baghdad_airship_station() -> void:
 	_airship_station.name = "BaghdadAirshipPassengerStation"
 	_airship_station.position = _baghdad_anchor_position
 	_airship_station.set_meta("system_transport_type", "fictional_airship")
+	_add_label(_airship_station, "AirshipPortSign", "منطاد بغداد | BAGHDAD AIRSHIP PORT", Vector3(0, 18, 29), Color(0.2, 0.85, 1.0))
 	_airship_station.set_meta("system_airship_capacity_min", AIRSHIP_MIN_CAPACITY)
 	_airship_station.set_meta("system_airship_capacity_max", AIRSHIP_MAX_CAPACITY)
 	add_child(_airship_station)
@@ -355,6 +362,7 @@ func _build_baghdad_airship() -> void:
 	_add_box(airship, "AirshipLowerKeel", Vector3(0, -12, 0), Vector3(38, 1.0, 5), cabin_material)
 	_add_box(airship, "AirshipTailFin", Vector3(-42, 12, 0), Vector3(9, 12, 2), cabin_material)
 	_add_box(airship, "AirshipSideLEDAdvertising", Vector3(0, -9.5, 5.35), Vector3(24, 2.0, 0.35), _emissive_material(Color(0.95, 0.58, 0.12)))
+	_add_label(airship, "AirshipLEDAdText", "SYSTEM WORLD • BAGHDAD AIRSHIP", Vector3(0, -9.1, 5.55), Color(1.0, 0.88, 0.55))
 	_add_box(airship, "AirshipSYSTEMWorldLogo", Vector3(0, 17, 0), Vector3(12, 1.0, 2.5), _emissive_material(Color(0.95, 0.78, 0.26)))
 	for seat_index in range(12):
 		var x := -18.0 + float(seat_index % 6) * 7.0
@@ -381,6 +389,19 @@ func _add_box(parent: Node3D, node_name: String, position: Vector3, size: Vector
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	parent.add_child(instance)
 	return instance
+
+
+
+func _add_label(parent: Node3D, node_name: String, label_text: String, position: Vector3, color: Color) -> Label3D:
+	var label := Label3D.new()
+	label.name = node_name
+	label.text = label_text
+	label.position = position
+	label.font_size = 38
+	label.modulate = color
+	label.outline_size = 6
+	parent.add_child(label)
+	return label
 
 
 func _material(color: Color, roughness: float, metallic: float = 0.0) -> StandardMaterial3D:
