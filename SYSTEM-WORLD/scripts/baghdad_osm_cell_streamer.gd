@@ -229,6 +229,7 @@ func _load_cell(cell: Vector2i) -> void:
 			building_count += _build_building_feature(cell_root, feature, road_features)
 	if not overview_mode:
 		_flush_facade_window_multimesh(cell_root)
+		_flush_apartment_balcony_multimeshes(cell_root)
 		_flush_facade_architecture_multimesh(cell_root)
 	counts["buildings"] = building_count
 	var water_count := 0
@@ -595,7 +596,9 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		building.set_meta("system_geometry_type", str(geometry.get("type", "")))
 		parent.add_child(building)
 		var facade_window_count := _add_procedural_facade_windows(parent, ring, height, kind, feature_id)
+		var balcony_detail_count := _collect_apartment_balconies(parent, ring, height, kind, feature_id)
 		var architecture_detail_count := _collect_modern_facade_architecture(parent, ring, height, kind, feature_id)
+		building.set_meta("system_facade_balcony_count", balcony_detail_count)
 		building.set_meta("system_facade_architecture_detail_count", architecture_detail_count)
 		building.set_meta("system_facade_detail_level", "modern_facade_multimesh" if architecture_detail_count > 0 else ("core_multimesh_windows" if facade_window_count > 0 else "core_extrusion_only"))
 		building.set_meta("system_facade_window_count", facade_window_count)
@@ -828,6 +831,88 @@ func _add_procedural_facade_windows(
 	parent.set_meta("system_facade_window_transforms", cell_transforms)
 	parent.set_meta("system_facade_window_colors", cell_colors)
 	return selected_count
+
+
+func _collect_apartment_balconies(
+	parent: Node3D,
+	ring: PackedVector2Array,
+	height: float,
+	kind: String,
+	feature_id: String
+) -> int:
+	# Close-range apartment blocks get shallow balconies on selected floors.
+	# Both slabs and rails are instanced once per cell to keep mobile draw calls low.
+	if overview_mode or kind != "apartment_block" or ring.size() < 3 or height < 9.0:
+		return 0
+	var slabs: Array = parent.get_meta("system_balcony_slab_transforms", [])
+	var rails: Array = parent.get_meta("system_balcony_rail_transforms", [])
+	var remaining_budget := maxi(0, 240 - slabs.size())
+	if remaining_budget <= 0:
+		return 0
+	var floor_count := clampi(int(floor(height / 3.2)), 2, 10)
+	var added := 0
+	for edge_index in range(ring.size()):
+		if added >= mini(16, remaining_budget):
+			break
+		var start := ring[edge_index]
+		var finish := ring[(edge_index + 1) % ring.size()]
+		var edge := finish - start
+		var edge_length := edge.length()
+		if edge_length < 8.0:
+			continue
+		var tangent := edge / edge_length
+		var outward_2d := Vector2(tangent.y, -tangent.x)
+		var outward := Vector3(outward_2d.x, 0.0, outward_2d.y)
+		var facade_right := Vector3.UP.cross(outward).normalized()
+		var balcony_width := minf(edge_length * 0.30, 2.4)
+		var slab_basis := Basis(facade_right, Vector3.UP, outward).scaled(Vector3(balcony_width, 0.16, 0.85))
+		var rail_basis := Basis(facade_right, Vector3.UP, outward).scaled(Vector3(balcony_width, 0.10, 0.10))
+		for floor_index in range(1, floor_count):
+			if added >= mini(16, remaining_budget):
+				break
+			# Alternate floors and sides to avoid a repetitive full-grid facade.
+			if (floor_index + edge_index) % 2 != 0:
+				continue
+			var center := (start + finish) * 0.5
+			var y := _terrain_height(center) + 2.05 + float(floor_index) * 3.15
+			var position := Vector3(center.x, y, center.y) + outward * 0.42
+			slabs.append(Transform3D(slab_basis, position))
+			var rail_position := position + outward * 0.43 + Vector3.UP * 0.48
+			rails.append(Transform3D(rail_basis, rail_position))
+			added += 1
+	parent.set_meta("system_balcony_slab_transforms", slabs)
+	parent.set_meta("system_balcony_rail_transforms", rails)
+	return added
+
+
+func _flush_apartment_balcony_multimeshes(parent: Node3D) -> void:
+	var slabs: Array = parent.get_meta("system_balcony_slab_transforms", [])
+	var rails: Array = parent.get_meta("system_balcony_rail_transforms", [])
+	if slabs.is_empty() or slabs.size() != rails.size():
+		return
+	for detail_data in [
+		{"name": "BaghdadCellApartmentBalconySlabs", "transforms": slabs, "type": "apartment_balcony_slabs"},
+		{"name": "BaghdadCellApartmentBalconyRails", "transforms": rails, "type": "apartment_balcony_rails"}
+	]:
+		var transforms: Array = detail_data["transforms"]
+		var multimesh := MultiMesh.new()
+		multimesh.transform_format = MultiMesh.TRANSFORM_3D
+		multimesh.mesh = BoxMesh.new()
+		multimesh.instance_count = transforms.size()
+		for index in range(transforms.size()):
+			multimesh.set_instance_transform(index, transforms[index])
+		var detail := MultiMeshInstance3D.new()
+		detail.name = str(detail_data["name"])
+		detail.multimesh = multimesh
+		detail.material_override = facade_architecture_material
+		detail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		detail.set_meta("system_facade_detail_type", str(detail_data["type"]))
+		detail.set_meta("system_facade_balcony_count", transforms.size())
+		detail.set_meta("system_facade_balcony_draw_calls_per_cell", 1)
+		parent.add_child(detail)
+	parent.set_meta("system_facade_balcony_instance_count", slabs.size())
+	parent.set_meta("system_balcony_slab_transforms", [])
+	parent.set_meta("system_balcony_rail_transforms", [])
 
 
 func _collect_modern_facade_architecture(
