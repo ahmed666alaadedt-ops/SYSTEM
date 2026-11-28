@@ -225,7 +225,7 @@ func _refresh_terminal_route_boards() -> void:
 			var destination_line := symbol + " " + str(destination.get("city_name", destination_id))
 			if not destinations.has(destination_line):
 				destinations.append(destination_line)
-		board.text = "وجهات الرحلات | CITY DESTINATIONS\n" + "\n".join(destinations.slice(0, 6))
+		board.text = "وجهات الرحلات | CITY DESTINATIONS\n" + "\n".join(PackedStringArray(destinations.slice(0, 6)))
 		terminal.set_meta("system_route_board_destination_count", destinations.size())
 
 
