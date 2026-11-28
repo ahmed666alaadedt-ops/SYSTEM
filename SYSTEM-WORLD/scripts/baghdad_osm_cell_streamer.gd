@@ -331,19 +331,16 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 		instance.set_meta("baghdad_building_type", kind)
 		instance.set_meta("system_architecture_class", kind)
 		var amenity_kind := str(tags.get("amenity", "")).to_lower()
-		var facility_type := ""
-		if amenity_kind == "hospital" or str(tags.get("healthcare", "")).to_lower() in ["hospital", "clinic"]:
-			facility_type = "healthcare"
-		elif (amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["christian", "christianity"]) or str(tags.get("building", "")).to_lower() == "church":
-			facility_type = "church"
-		elif amenity_kind in ["police", "police_station"]:
-			facility_type = "police"
-		elif (amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["muslim", "islam"]) or str(tags.get("building", "")).to_lower() == "mosque":
-			facility_type = "mosque"
-		elif str(tags.get("shop", "")) != "":
-			facility_type = "shop"
-		elif amenity_kind in ["restaurant", "cafe", "fast_food", "food_court"]:
-			facility_type = "food"
+		var facility_type := _worship_facility_type(tags)
+		if facility_type == "":
+			if amenity_kind == "hospital" or str(tags.get("healthcare", "")).to_lower() in ["hospital", "clinic"]:
+				facility_type = "healthcare"
+			elif amenity_kind in ["police", "police_station"]:
+				facility_type = "police"
+			elif str(tags.get("shop", "")) != "":
+				facility_type = "shop"
+			elif amenity_kind in ["restaurant", "cafe", "fast_food", "food_court"]:
+				facility_type = "food"
 		if facility_type != "":
 			instance.set_meta("system_facility_type", facility_type)
 		instance.set_meta("system_display_name", _building_display_name(kind, tags))
@@ -367,12 +364,7 @@ func _is_polygon_worship_feature(feature: Dictionary) -> bool:
 		return false
 	var tags: Dictionary = feature.get("tags", {})
 	var building_kind := str(tags.get("building", "")).to_lower()
-	if building_kind in ["mosque", "church"]:
-		return true
-	if str(tags.get("amenity", "")).to_lower() != "place_of_worship":
-		return false
-	var religion := str(tags.get("religion", "")).to_lower()
-	return religion in ["muslim", "islam", "christian", "christianity"]
+	return building_kind in ["mosque", "church"] or str(tags.get("amenity", "")).to_lower() == "place_of_worship"
 
 
 func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
@@ -402,21 +394,24 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	var healthcare := str(tags.get("healthcare", "")).to_lower()
 	var facility_type := "public_service"
 	var display_name := "مرفق خدمي"
-	if amenity in ["hospital", "clinic", "doctors", "pharmacy"] or healthcare != "":
+	var worship_type := _worship_facility_type(tags)
+	if worship_type != "":
+		facility_type = worship_type
+		match worship_type:
+			"mosque":
+				display_name = "جامع أو مسجد"
+			"church":
+				display_name = "كنيسة"
+			"religious_tag_conflict":
+				display_name = "دار عبادة - تعارض في بيانات OSM"
+			_:
+				display_name = "دار عبادة - النوع غير محدد"
+	elif amenity in ["hospital", "clinic", "doctors", "pharmacy"] or healthcare != "":
 		facility_type = "healthcare"
 		display_name = "مرفق صحي"
 	elif amenity in ["police", "police_station"]:
 		facility_type = "police"
 		display_name = "مركز شرطة"
-	elif (amenity == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["muslim", "islam"]) or str(tags.get("building", "")).to_lower() == "mosque":
-		facility_type = "mosque"
-		display_name = "جامع أو مسجد"
-	elif (amenity == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["christian", "christianity"]) or str(tags.get("building", "")).to_lower() == "church":
-		facility_type = "church"
-		display_name = "كنيسة"
-	elif amenity == "place_of_worship":
-		facility_type = "place_of_worship"
-		display_name = "دار عبادة - النوع غير محدد"
 	elif shop != "":
 		facility_type = "shop"
 		display_name = "محل تجاري"
@@ -1441,12 +1436,29 @@ func _building_kind(tags: Dictionary) -> String:
 		return "apartment_block"
 	if kind in ["commercial", "office", "retail", "industrial"]:
 		return "commercial_building"
-	var religion := str(tags.get("religion", "")).to_lower()
-	if kind == "mosque" or (str(tags.get("amenity", "")) == "place_of_worship" and religion in ["muslim", "islam"]):
-		return "mosque"
-	if kind == "church" or (str(tags.get("amenity", "")) == "place_of_worship" and religion in ["christian", "christianity"]):
-		return "church"
+	var worship_type := _worship_facility_type(tags)
+	if worship_type in ["mosque", "church"]:
+		return worship_type
 	return "general_building"
+
+
+func _worship_facility_type(tags: Dictionary) -> String:
+	var amenity_kind := str(tags.get("amenity", "")).to_lower()
+	var religion := str(tags.get("religion", "")).to_lower()
+	var building_kind := str(tags.get("building", "")).to_lower()
+	if (religion in ["muslim", "islam"] and building_kind == "church") or (religion in ["christian", "christianity"] and building_kind == "mosque"):
+		return "religious_tag_conflict"
+	if amenity_kind == "place_of_worship" and religion in ["muslim", "islam"]:
+		return "mosque"
+	if amenity_kind == "place_of_worship" and religion in ["christian", "christianity"]:
+		return "church"
+	if building_kind == "mosque":
+		return "mosque"
+	if building_kind == "church":
+		return "church"
+	if amenity_kind == "place_of_worship":
+		return "place_of_worship"
+	return ""
 
 
 func _building_material_for(kind: String) -> StandardMaterial3D:
