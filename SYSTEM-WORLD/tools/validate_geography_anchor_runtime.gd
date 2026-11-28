@@ -26,6 +26,28 @@ func _run_validation() -> void:
 		_fail("Baghdad registry coordinate/elevation projection is incorrect; got " + str(projected))
 		return
 
+	var landmarks: Dictionary = geography.call("get_city_landmarks", "city_baghdad")
+	var required_landmarks := [
+		"baghdad_grand_festivities_square",
+		"baghdad_unknown_soldier_monument",
+		"baghdad_victory_arch",
+		"baghdad_al_shaheed_monument"
+	]
+	for landmark_id in required_landmarks:
+		if not landmarks.has(landmark_id):
+			_fail("Baghdad landmark registry is missing: " + landmark_id)
+			return
+		var landmark: Dictionary = landmarks[landmark_id]
+		var latitude := float(landmark.get("latitude", 0.0))
+		var longitude := float(landmark.get("longitude", 0.0))
+		if latitude < 33.0 or latitude > 34.0 or longitude < 44.0 or longitude > 45.0:
+			_fail("Baghdad landmark coordinate is outside the expected city bounds: " + landmark_id)
+			return
+		var landmark_position: Vector3 = geography.call("get_landmark_world_position", "city_baghdad", landmark_id)
+		if Vector2(landmark_position.x, landmark_position.z).length() < 100.0:
+			_fail("Baghdad landmark was not projected from its real coordinate: " + landmark_id)
+			return
+
 	var packed := load("res://MainScene.tscn") as PackedScene
 	if packed == null:
 		_fail("Canonical MainScene could not be loaded")
