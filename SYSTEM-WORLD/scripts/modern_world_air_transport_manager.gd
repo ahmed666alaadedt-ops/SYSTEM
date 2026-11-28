@@ -26,6 +26,8 @@ var ticket_sequence: int = 0
 var _airship_follow: PathFollow3D
 var _airship_station: Node3D
 var _baghdad_anchor_position: Vector3 = Vector3.ZERO
+var _airship_path_length: float = 0.0
+var _airship_dwell_remaining: float = 20.0
 
 
 func _ready() -> void:
@@ -39,8 +41,15 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _airship_follow != null:
-		_airship_follow.progress += AIRSHIP_SPEED_MPS * delta
+	if _airship_follow == null:
+		return
+	if _airship_dwell_remaining > 0.0:
+		_airship_dwell_remaining = maxf(0.0, _airship_dwell_remaining - delta)
+		return
+	_airship_follow.progress += AIRSHIP_SPEED_MPS * delta
+	if _airship_follow.progress >= _airship_path_length:
+		_airship_follow.progress = 0.0
+		_airship_dwell_remaining = 20.0
 
 
 func _register_existing_city_airports() -> void:
@@ -430,6 +439,7 @@ func _build_baghdad_airship() -> void:
 	path.set_meta("system_route_radius_m", AIRSHIP_ROUTE_RADIUS_M)
 	path.set_meta("system_cruise_altitude_m", AIRSHIP_CRUISE_ALTITUDE_M)
 	path.set_meta("system_cruise_speed_mps", AIRSHIP_SPEED_MPS)
+	path.set_meta("system_station_dwell_seconds", 20.0)
 	var curve := Curve3D.new()
 	curve.add_point(Vector3(0.0, AIRSHIP_CRUISE_ALTITUDE_M, 0.0))
 	for index in range(9):
@@ -440,7 +450,10 @@ func _build_baghdad_airship() -> void:
 	add_child(path)
 	_airship_follow = PathFollow3D.new()
 	_airship_follow.name = "HunterInspiredPassengerAirshipRouteFollower"
-	_airship_follow.loop = true
+	_airship_follow.loop = false
+	_airship_path_length = curve.get_baked_length()
+	_airship_follow.progress = 0.0
+	_airship_dwell_remaining = 20.0
 	path.add_child(_airship_follow)
 	var airship := Node3D.new()
 	airship.name = "HunterInspiredBaghdadPassengerAirship"
