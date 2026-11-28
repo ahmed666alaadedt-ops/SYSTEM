@@ -2089,3 +2089,29 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [x] Added narrow soft-foam ribbons along both banks from the same surveyed river route; degenerate zero-length route segments are skipped before surface generation.
 - [x] Explicitly assign materials after guarded ArrayMesh construction so the new commit helper does not discard the shader/foam materials.
 - [ ] Exact-head Godot validation must confirm the shader material, TIME-driven code and bank-foam mesh are present; real-device visual review remains required for reflections, transparency, current direction and mobile GPU cost.
+
+
+## Baghdad citywide night illumination and in-world advertising expansion — 28 November 2026
+
+### Advertising identity and content rules
+- [x] Confirm the user's direction: Baghdad advertising is authored as part of the SYSTEM WORLD simulation, not generic filler panels. Campaign categories include missions/quests and events; products and equipment; antiques/artifacts and player-market offers; clothing/outfits; food/restaurants/hotels; jobs, services, shops, property, openings and city activities.
+- [x] Preserve the existing local tower campaign lifecycle, physical emissive display panels, internal/external placement, NPC advertising-manager attribution, campaign IDs, synchronized rotation, expiry and safe fallback. Extend the existing system rather than creating a duplicate advertising manager.
+- [ ] Replace the six-category sample campaign pool with data-driven campaign records that carry stable ID, category, Arabic title/body, optional image/material key, sponsor/source entity, destination action, valid-from/expiry, target district, display placement, NPC manager attribution and moderation/approval state.
+- [ ] Mission/event campaigns must deep-link to the actual in-game mission/event board; product, clothing and food campaigns must resolve to an existing catalog item or shop; antique campaigns must resolve to a real listed artifact and use the existing escrow/atomic marketplace purchase flow. Never display a purchasable item that is not actually available.
+- [ ] Support player-created shop and artifact listings only from the authoritative marketplace listing state. Seller-set prices and item ownership remain governed by the existing server-side escrow and transaction validation; advertising must never transfer items or currency by itself.
+- [ ] Add contextual rotation by district, nearby shop, time of day, active event and player-visible interest, with frequency caps and a quiet option for non-essential campaign overlays. Keep mission-critical notices distinct from paid/promotional placements.
+- [ ] Real-world advertiser campaigns are an optional, separately configured source. Any future integration must use approved, age-appropriate and region-appropriate creatives, clear "real advertisement" labeling, moderation, frequency caps, consent/privacy controls, and a safe no-network fallback. Do not add an ad SDK, collect advertising identifiers, contact an ad network, deploy monetization, or expose external links until separately approved.
+- [ ] In-world SYSTEM promotions and real-world paid ads must have distinct source/type metadata, visual labels and reporting; never disguise a real ad as an official mission, quest reward, SYSTEM service or player listing.
+
+### Citywide display scale and mobile rendering
+- [x] Confirm that the previously proposed million-scale advertising target means distributed visual placements/signage across the city, not one million independent high-resolution animated LED screens or draw calls.
+- [ ] Budget citywide ad surfaces by district/cell and LOD: nearby panels can animate/update; mid-distance signs use shared atlases/materials and reduced refresh; distant signs use static emissive textures/glow and pooled instances.
+- [ ] Use shared campaign atlases and instanced sign geometry, with a strict per-cell visible/update budget and deterministic fallback when a campaign asset is missing.
+- [ ] Count physical display placements, active campaign records, animated screens and per-frame updated screens separately in diagnostics. Do not equate the visual-placement target with dynamic Light3D nodes or independent network requests.
+- [ ] Add regression coverage for all six existing towers, city storefronts, restaurants, hotels, markets, bridges and public spaces; verify category-to-destination routing, expired/unavailable listing suppression, player-market escrow handoff, NPC manager attribution, real-ad labeling/consent gates and missing-content fallback.
+- [ ] Add mobile profiling gates for draw calls, GPU frame time, memory, texture-atlas residency and screen refresh rate. The million-scale target remains a design budget until representative Android profiling proves the chosen budgets.
+
+### Lighting and acceptance boundaries
+- [ ] Keep the citywide multi-million lighting plan based primarily on emissive/instanced fixtures, baked/static contribution and distance/region LOD; reserve real dynamic lights for nearby gameplay-relevant sources.
+- [ ] Report separately: authored/placed visual fixtures, active emissive instances, dynamic Light3D nodes, and tested Android performance. A target count is not an implementation or a verified frame-rate result.
+- [ ] Physical Android night-scene review, readability, visual density, glare control, performance and memory validation remain outstanding until tested on a device.
