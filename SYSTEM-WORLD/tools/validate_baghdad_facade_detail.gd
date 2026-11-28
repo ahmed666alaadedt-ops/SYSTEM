@@ -369,7 +369,7 @@ func _run() -> void:
 		if not sidewalk_transform is Transform3D:
 			_fail("Sidewalk generator emitted a non-Transform3D slab.")
 			return
-		if sidewalk_transform.origin.z > 0.0:
+		if sidewalk_transform.origin.z > 80.0:
 			left_sidewalk_count += 1
 		else:
 			right_sidewalk_count += 1
