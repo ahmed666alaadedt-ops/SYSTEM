@@ -292,7 +292,7 @@ func _load_cell(cell: Vector2i) -> void:
 	var entrance_count := 0
 	if not overview_mode:
 		for feature in layers.get("entrances", []):
-			entrance_count += _build_entrance_feature(cell_root, feature)
+			entrance_count += _build_entrance_feature(cell_root, feature, building_features)
 	counts["entrances"] = entrance_count
 	counts["roads"] = road_count
 	counts["waterways"] = water_count
@@ -1424,7 +1424,7 @@ func _build_area_feature(parent: Node3D, feature: Dictionary, material: Material
 		parent.add_child(instance)
 
 
-func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
+func _build_entrance_feature(parent: Node3D, feature: Dictionary, building_features: Array = []) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
 	if str(geometry.get("type", "")) != "Point":
 		return 0
@@ -1453,6 +1453,10 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
 	root.name = "OSMEntrance_%s" % feature_id
 	root.position = position
 	root.set_meta("osm_feature_id", feature_id)
+	var association := _find_entrance_building_association(point, building_features)
+	root.set_meta("system_associated_building_id", str(association.get("building_id", "")))
+	root.set_meta("system_building_association_status", str(association.get("status", "unmatched")))
+	root.set_meta("system_building_association_distance_m", float(association.get("distance_m", -1.0)))
 	root.set_meta("system_access_state", "mapped_entrance_point_no_interior_scene")
 	parent.add_child(root)
 	var marker := MeshInstance3D.new()
@@ -1483,11 +1487,62 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
 	body.set_meta("system_display_name", entrance_label)
 	body.set_meta("system_interaction_prompt", "مدخل محدد في بيانات الخريطة")
 	body.set_meta("system_entrance_type", entrance_kind if entrance_kind != "" else door_kind)
+	body.set_meta("system_associated_building_id", str(association.get("building_id", "")))
+	body.set_meta("system_building_association_status", str(association.get("status", "unmatched")))
+	body.set_meta("system_building_association_distance_m", float(association.get("distance_m", -1.0)))
 	body.set_meta("system_access_tag", str(tags.get("access", "unknown")))
 	body.set_meta("system_wheelchair_tag", str(tags.get("wheelchair", "unknown")))
 	body.set_meta("system_access_state", "mapped_entrance_point_no_interior_scene")
 	root.add_child(body)
 	return 1
+
+
+func _find_entrance_building_association(point: Vector2, building_features: Array) -> Dictionary:
+	# Associate only against actual OSM building footprints in this metric cell.
+	# Ambiguous or distant matches remain review-only; no entrance is invented.
+	var best_id := ""
+	var best_tags: Dictionary = {}
+	var best_distance := INF
+	var second_distance := INF
+	for feature in building_features:
+		if not feature is Dictionary:
+			continue
+		var geometry: Dictionary = feature.get("geometry", {})
+		for polygon in _extract_polygons(geometry):
+			if polygon.size() < 4:
+				continue
+			var ring := PackedVector2Array()
+			for coordinate in polygon:
+				if coordinate is Array and coordinate.size() >= 2:
+					ring.append(Vector2(float(coordinate[0]), float(coordinate[1])))
+			if ring.size() > 2 and ring[0].is_equal_approx(ring[ring.size() - 1]):
+				ring.remove_at(ring.size() - 1)
+			if ring.size() < 3:
+				continue
+			var distance := 0.0 if Geometry2D.is_point_in_polygon(point, ring) else INF
+			if distance > 0.0:
+				for edge_index in range(ring.size()):
+					var closest := _closest_point_on_segment(point, ring[edge_index], ring[(edge_index + 1) % ring.size()])
+					distance = minf(distance, point.distance_to(closest))
+			if distance < best_distance:
+				second_distance = best_distance
+				best_distance = distance
+				best_id = str(feature.get("id", ""))
+				best_tags = feature.get("tags", {})
+			elif distance < second_distance:
+				second_distance = distance
+	if best_id == "" or best_distance > 10.0:
+		return {"status": "unmatched", "building_id": "", "distance_m": best_distance if best_distance < INF else -1.0}
+	if second_distance < INF and second_distance - best_distance < 0.75:
+		return {"status": "review_ambiguous", "building_id": best_id, "distance_m": best_distance}
+	var access := str(best_tags.get("access", "")).to_lower()
+	if access in ["no", "private"]:
+		return {"status": "restricted", "building_id": best_id, "distance_m": best_distance}
+	if best_distance <= 2.0:
+		return {"status": "associated", "building_id": best_id, "distance_m": best_distance}
+	if best_distance <= 5.0:
+		return {"status": "review_distance", "building_id": best_id, "distance_m": best_distance}
+	return {"status": "unmatched", "building_id": best_id, "distance_m": best_distance}
 
 
 func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
