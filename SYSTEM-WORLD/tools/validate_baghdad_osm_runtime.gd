@@ -414,8 +414,10 @@ func _run_validation() -> void:
 	# Exercise the close-range 200 m playable builder, including collision
 	# bodies and source metadata, for shrine and monastery footprints.
 	for core_case in [
-		{"type": "shrine", "name": "مزار خلية بغداد", "tags": {"building": "shrine", "name:ar": "مزار خلية بغداد"}},
-		{"type": "monastery", "name": "دير خلية بغداد", "tags": {"building": "monastery", "name:ar": "دير خلية بغداد"}}
+		{"type": "mosque", "name": "جامع اختبار خلية بغداد", "tags": {"building": "mosque", "name:ar": "جامع اختبار خلية بغداد"}, "required_details": ["RoofDome", "Minaret_00"]},
+		{"type": "church", "name": "كنيسة اختبار خلية بغداد", "tags": {"building": "church", "religion": "christian", "name:ar": "كنيسة اختبار خلية بغداد"}, "required_details": ["ChurchBellTower", "ChurchCross", "ChurchCrossArm"]},
+		{"type": "shrine", "name": "مزار خلية بغداد", "tags": {"building": "shrine", "name:ar": "مزار خلية بغداد"}, "required_details": ["ShrineDome"]},
+		{"type": "monastery", "name": "دير خلية بغداد", "tags": {"building": "monastery", "name:ar": "دير خلية بغداد"}, "required_details": ["MonasteryCloister_0"]}
 	]:
 		var core_root := Node3D.new()
 		var core_feature := {
@@ -436,8 +438,13 @@ func _run_validation() -> void:
 			_fail("Detailed Baghdad 200 m worship collision lost Arabic source name or worship classification: " + str(core_case))
 			core_root.free()
 			return
+		for required_detail in core_case.required_details:
+			if core_details[0].get_node_or_null(str(required_detail)) == null:
+				_fail("Detailed Baghdad 200 m worship roof detail is missing: " + str(core_case.type) + "/" + str(required_detail))
+				core_root.free()
+				return
 		core_root.free()
-	print("Baghdad detailed 200 m worship QA passed: shrine and monastery polygons retain collision, distinct roof detail and Arabic source metadata.")
+	print("Baghdad detailed 200 m worship QA passed: mosque, church, shrine and monastery polygons retain collision, distinct roof features and Arabic source metadata.")
 	# Conflicting religion/building tags must remain neutral in the detailed
 	# 200 m amenity layer instead of receiving a false mosque/church silhouette.
 	var conflict_root := Node3D.new()
