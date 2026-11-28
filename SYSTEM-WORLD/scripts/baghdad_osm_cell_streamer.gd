@@ -1145,11 +1145,11 @@ func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, heigh
 	elif kind == "shrine":
 		var shrine_dome := MeshInstance3D.new()
 		shrine_dome.name = "ShrineDome"
-		var dome_mesh := SphereMesh.new()
-		dome_mesh.radius = clampf(footprint_scale * 0.13, 1.0, 3.0)
-		dome_mesh.height = dome_mesh.radius * 1.35
-		shrine_dome.mesh = dome_mesh
-		shrine_dome.position.y = dome_mesh.height * 0.42
+		var shrine_dome_mesh := SphereMesh.new()
+		shrine_dome_mesh.radius = clampf(footprint_scale * 0.13, 1.0, 3.0)
+		shrine_dome_mesh.height = shrine_dome_mesh.radius * 1.35
+		shrine_dome.mesh = shrine_dome_mesh
+		shrine_dome.position.y = shrine_dome_mesh.height * 0.42
 		shrine_dome.material_override = _building_material_for("shrine")
 		detail_root.add_child(shrine_dome)
 		for index in range(4):
