@@ -197,7 +197,8 @@ func _run() -> void:
 	if mosque_polygon_built != 1 or mosque_mesh == null or str(mosque_mesh.get_meta("system_facility_type", "")) != "mosque":
 		_fail("Regional mosque polygon was not built as a mapped-footprint mosque.")
 		return
-	if mosque_detail == null or mosque_detail.get_node_or_null("RoofDome") == null or mosque_detail.get_node_or_null("MinaretMarker") == null:
+	var mosque_minarets := mosque_detail.find_children("Minaret_*", "MeshInstance3D", true, false) if mosque_detail != null else []
+	if mosque_detail == null or mosque_detail.get_node_or_null("RoofDome") == null or mosque_minarets.is_empty():
 		_fail("Regional mosque polygon is missing its dome/minaret silhouette details.")
 		return
 
