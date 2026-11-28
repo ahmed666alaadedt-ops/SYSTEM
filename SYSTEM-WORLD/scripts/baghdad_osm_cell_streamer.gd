@@ -330,8 +330,6 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 				Vector3(p1.x, _terrain_height(p1) + height, p1.y),
 				Vector3(p2.x, _terrain_height(p2) + height, p2.y))
 		surface.generate_normals()
-		if not overview_mode and prefix == "OSMRoad" and not is_bridge:
-			_collect_road_center_markings(parent, line, width, feature_tags)
 		var mesh := _commit_surface_tool_if_valid(surface)
 		if mesh == null:
 			continue
@@ -1344,6 +1342,8 @@ func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, mate
 			_add_triangle(surface, a, c, b)
 			_add_triangle(surface, b, c, d)
 		surface.generate_normals()
+		if not overview_mode and prefix == "OSMRoad" and not is_bridge:
+			_collect_road_center_markings(parent, line, width, feature_tags)
 		var mesh := _commit_surface_tool_if_valid(surface)
 		if mesh == null:
 			continue
