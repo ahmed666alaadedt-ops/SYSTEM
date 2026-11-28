@@ -1704,13 +1704,13 @@ func _find_entrance_building_association(point: Vector2, building_features: Arra
 				second_distance = distance
 	if best_id == "" or best_distance > 10.0:
 		return {"status": "unmatched", "building_id": "", "distance_m": best_distance if best_distance < INF else -1.0}
-	if second_distance < INF and second_distance - best_distance < 0.75:
-		return {"status": "review_ambiguous", "building_id": best_id, "distance_m": best_distance}
 	var access := str(best_tags.get("access", "")).to_lower()
 	var entrance_access := str(entrance_tags.get("access", "")).to_lower()
 	var sensitive_site := _is_sensitive_state_site(best_tags)
 	if sensitive_site or entrance_access in ["no", "private", "restricted", "military"] or access in ["no", "private", "restricted", "military"]:
 		return {"status": "restricted", "building_id": best_id, "distance_m": best_distance, "sensitive_site": true}
+	if second_distance < INF and second_distance - best_distance < 0.75:
+		return {"status": "review_ambiguous", "building_id": best_id, "distance_m": best_distance}
 	if best_distance <= 2.0:
 		return {"status": "associated", "building_id": best_id, "distance_m": best_distance}
 	if best_distance <= 5.0:
