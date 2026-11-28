@@ -376,7 +376,7 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 		instance.set_meta("system_facade_detail_level", "regional_extrusion_lod")
 		instance.set_meta("system_access_state", "regional_exterior_lod_no_collision_or_interior")
 		parent.add_child(instance)
-		if kind in ["mosque", "church"]:
+		if kind in ["mosque", "church", "shrine", "monastery"]:
 			_add_polygon_worship_detail(parent, ring, height, kind, feature_id, tags)
 		built += 1
 	return built
@@ -1038,6 +1038,10 @@ func _building_display_name(kind: String, tags: Dictionary) -> String:
 			return "مسجد"
 		"church":
 			return "كنيسة"
+		"shrine":
+			return "مزار"
+		"monastery":
+			return "دير"
 		_:
 			return "مبنى في بغداد"
 
@@ -1112,7 +1116,7 @@ func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, heigh
 				small_dome.position = Vector3(cos(angle) * footprint_width * 0.22, dome_height * 0.20, sin(angle) * footprint_depth * 0.22)
 				small_dome.material_override = _building_material_for("mosque")
 				detail_root.add_child(small_dome)
-	else:
+	elif kind == "church":
 		var tower := MeshInstance3D.new()
 		tower.name = "ChurchBellTower"
 		var tower_mesh := BoxMesh.new()
@@ -1138,6 +1142,47 @@ func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, heigh
 		cross_arm.position = cross.position + Vector3(0.0, 0.3, 0.0)
 		cross_arm.material_override = _building_material_for("church")
 		detail_root.add_child(cross_arm)
+	elif kind == "shrine":
+		var shrine_dome := MeshInstance3D.new()
+		shrine_dome.name = "ShrineDome"
+		var dome_mesh := SphereMesh.new()
+		dome_mesh.radius = clampf(footprint_scale * 0.13, 1.0, 3.0)
+		dome_mesh.height = dome_mesh.radius * 1.35
+		shrine_dome.mesh = dome_mesh
+		shrine_dome.position.y = dome_mesh.height * 0.42
+		shrine_dome.material_override = _building_material_for("shrine")
+		detail_root.add_child(shrine_dome)
+		for index in range(4):
+			var finial := MeshInstance3D.new()
+			finial.name = "ShrineCornerFinial_%02d" % index
+			var finial_mesh := CylinderMesh.new()
+			finial_mesh.top_radius = 0.08
+			finial_mesh.bottom_radius = 0.22
+			finial_mesh.height = clampf(height * 0.45, 2.0, 6.0)
+			finial.mesh = finial_mesh
+			var side_x := -1.0 if index % 2 == 0 else 1.0
+			var side_z := -1.0 if index < 2 else 1.0
+			finial.position = Vector3(side_x * footprint_width * 0.34, finial_mesh.height * 0.5, side_z * footprint_depth * 0.34)
+			finial.material_override = _building_material_for("shrine")
+			detail_root.add_child(finial)
+	else:
+		# A neutral cloister roofline for monastery footprints; no denomination-
+		# specific symbols are inferred from the generic OSM monastery tag.
+		var cloister_material := _building_material_for("monastery")
+		var beam_height := clampf(footprint_scale * 0.055, 0.8, 2.0)
+		var beam_width := maxf(2.0, footprint_width * 0.62)
+		var beam_depth := maxf(2.0, footprint_depth * 0.62)
+		for side in range(4):
+			var arcade := MeshInstance3D.new()
+			arcade.name = "MonasteryCloister_%d" % side
+			var arcade_mesh := BoxMesh.new()
+			arcade_mesh.size = Vector3(beam_width, beam_height, 0.65) if side < 2 else Vector3(0.65, beam_height, beam_depth)
+			arcade.mesh = arcade_mesh
+			var offset_x := 0.0 if side < 2 else (-beam_width * 0.5 if side == 2 else beam_width * 0.5)
+			var offset_z := (-beam_depth * 0.5 if side == 0 else beam_depth * 0.5) if side < 2 else 0.0
+			arcade.position = Vector3(offset_x, beam_height * 0.5, offset_z)
+			arcade.material_override = cloister_material
+			detail_root.add_child(arcade)
 
 
 func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, material: Material, lift: float, prefix: String) -> int:
@@ -1310,11 +1355,59 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 		_build_mosque_landmark(parent, feature, coordinates)
 	elif worship_type == "church":
 		_build_church_landmark(parent, feature, coordinates)
+	elif worship_type in ["shrine", "monastery"]:
+		_build_neutral_worship_landmark(parent, feature, coordinates, worship_type)
 	else:
 		# Unknown and contradictory tags stay neutral; never assign a false
 		# religious silhouette to an unresolved OSM point.
 		_add_point_marker(parent, coordinates, amenity_material, 0.48, "OSMAmenity_%s" % str(feature.get("id", "")))
 	return 1
+
+
+func _build_neutral_worship_landmark(parent: Node3D, feature: Dictionary, coordinates: Array, worship_type: String) -> void:
+	if coordinates.size() < 2:
+		return
+	var point := Vector2(float(coordinates[0]), float(coordinates[1]))
+	var root := Node3D.new()
+	root.name = "OSM%s_%s" % ["Shrine" if worship_type == "shrine" else "Monastery", str(feature.get("id", "unknown"))]
+	root.position = Vector3(point.x, _terrain_height(point) + 0.08, point.y)
+	root.set_meta("landmark_type", worship_type)
+	root.set_meta("osm_feature_id", str(feature.get("id", "")))
+	root.set_meta("system_display_name", _building_display_name(worship_type, feature.get("tags", {})))
+	root.set_meta("system_source_name", str(feature.get("tags", {}).get("name", "")))
+	root.set_meta("system_source_name_ar", str(feature.get("tags", {}).get("name:ar", "")))
+	root.set_meta("system_religion", str(feature.get("tags", {}).get("religion", "")))
+	parent.add_child(root)
+	var body := MeshInstance3D.new()
+	body.name = "WorshipBuildingBody"
+	var body_mesh := BoxMesh.new()
+	body_mesh.size = Vector3(5.0, 3.0, 5.0) if worship_type == "shrine" else Vector3(6.0, 3.2, 8.0)
+	body.mesh = body_mesh
+	body.position.y = body_mesh.size.y * 0.5
+	body.material_override = _building_material_for(worship_type)
+	root.add_child(body)
+	if worship_type == "shrine":
+		var dome := MeshInstance3D.new()
+		dome.name = "ShrineDome"
+		var dome_mesh := SphereMesh.new()
+		dome_mesh.radius = 1.65
+		dome_mesh.height = 2.2
+		dome.mesh = dome_mesh
+		dome.position.y = 3.7
+		dome.material_override = _building_material_for("shrine")
+		root.add_child(dome)
+	else:
+		for index in range(4):
+			var pillar := MeshInstance3D.new()
+			pillar.name = "MonasteryCloisterPillar_%02d" % index
+			var pillar_mesh := CylinderMesh.new()
+			pillar_mesh.top_radius = 0.18
+			pillar_mesh.bottom_radius = 0.22
+			pillar_mesh.height = 2.8
+			pillar.mesh = pillar_mesh
+			pillar.position = Vector3(-2.1 if index % 2 == 0 else 2.1, 1.4, -2.8 if index < 2 else 2.8)
+			pillar.material_override = _building_material_for("monastery")
+			root.add_child(pillar)
 
 
 func _build_church_landmark(parent: Node3D, feature: Dictionary, coordinates: Array) -> void:
@@ -1602,6 +1695,10 @@ func _building_material_for(kind: String) -> StandardMaterial3D:
 			material.albedo_color = Color(0.72, 0.67, 0.52)
 		"church":
 			material.albedo_color = Color(0.70, 0.63, 0.52)
+		"shrine":
+			material.albedo_color = Color(0.76, 0.62, 0.39)
+		"monastery":
+			material.albedo_color = Color(0.66, 0.59, 0.49)
 	return material
 
 
