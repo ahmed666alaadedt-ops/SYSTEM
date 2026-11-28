@@ -814,7 +814,7 @@ func _run_validation() -> void:
 	# Baghdad airship, and enforces ticket -> payment -> boarding -> arrival.
 	var air_transport = AIR_TRANSPORT.new()
 	root.add_child(air_transport)
-	if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or air_transport.get_node_or_null("BaghdadAirshipCircularRoute/HunterInspiredPassengerAirshipRouteFollower/HunterInspiredBaghdadPassengerAirship") == null:
+if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or air_transport.get_node_or_null("BaghdadAirshipPassengerStation/AirshipPlatformCollision") == null or air_transport.get_node_or_null("BaghdadAirshipCircularRoute/HunterInspiredPassengerAirshipRouteFollower/HunterInspiredBaghdadPassengerAirship") == null:
 		_fail("Baghdad passenger airship station or moving route scene was not created.")
 		return
 	var airship_path := air_transport.get_node("BaghdadAirshipCircularRoute") as Path3D
@@ -830,7 +830,7 @@ func _run_validation() -> void:
 		return
 	var qa_airport_data: Dictionary = air_transport.city_airports["qa_baghdad"]
 	var qa_airport: Node3D = qa_airport_data.get("terminal")
-	if qa_airport == null or qa_airport.get_node_or_null("PassengerTerminalMain") == null or qa_airport.get_node_or_null("CivilPassengerAircraftDisplay") == null or qa_airport.find_children("AirportPassengerSpawn_*", "Marker3D", true, false).size() != 16:
+	if qa_airport == null or qa_airport.get_node_or_null("TerminalFloorSlab") == null or qa_airport.get_node_or_null("AirportTerminalCollision") == null or qa_airport.get_node_or_null("CivilPassengerAircraftDisplay") == null or qa_airport.find_children("AirportPassengerSpawn_*", "Marker3D", true, false).size() != 16:
 		_fail("Civil airport terminal, parked aircraft or passenger spawn anchors were not authored.")
 		return
 	air_transport._register_route_pair("qa_baghdad", "qa_paris", "aircraft")
