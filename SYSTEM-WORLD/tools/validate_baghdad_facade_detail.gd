@@ -36,6 +36,10 @@ func _run() -> void:
 
 	# Inspect the generator's source transforms before they are packed into MultiMesh.
 	# This avoids depending on renderer-side MultiMesh readback in headless CI.
+	var generated_architecture: Array = streamer.get_meta("system_facade_architecture_transforms", [])
+	if generated_architecture.is_empty() or generated_architecture.size() > 12:
+		_fail("Modern apartment facade must generate 1..12 lightweight architectural fins/cornices.")
+		return
 	var generated_transforms: Array = streamer.get_meta("system_facade_window_transforms", [])
 	if generated_transforms.is_empty() or generated_transforms.size() > 32:
 		_fail("Generated facade transforms are outside the mobile-safe 1..32 per-building budget.")
@@ -66,10 +70,18 @@ func _run() -> void:
 			return
 
 	streamer.call("_flush_facade_window_multimesh", streamer)
+	streamer.call("_flush_facade_architecture_multimesh", streamer)
 	var building := streamer.get_node_or_null("OSMBuilding_apartment_block_facade_validation_apartment_001") as MeshInstance3D
 	var windows := streamer.get_node_or_null("BaghdadCellFacadeWindows") as MultiMeshInstance3D
 	if building == null or windows == null or windows.multimesh == null:
 		_fail("High-detail apartment is missing its instanced facade-window resource.")
+		return
+	var architecture := streamer.get_node_or_null("BaghdadCellModernFacadeArchitecture") as MultiMeshInstance3D
+	if architecture == null or architecture.multimesh == null or architecture.multimesh.instance_count != generated_architecture.size():
+		_fail("Modern facade architecture MultiMesh does not preserve the generated trim instances.")
+		return
+	if str(architecture.get_meta("system_facade_detail_type", "")) != "modern_architectural_fins_and_cornices" or int(architecture.get_meta("system_facade_architecture_draw_calls_per_cell", 0)) != 1:
+		_fail("Modern facade architecture is missing its mobile-safe single-draw-call classification.")
 		return
 	var window_count := windows.multimesh.instance_count
 	if window_count != generated_transforms.size():
