@@ -1199,6 +1199,14 @@ func _building_display_name(kind: String, tags: Dictionary) -> String:
 			return "مزار"
 		"monastery":
 			return "دير"
+		"education_building":
+			return "مبنى تعليمي"
+		"healthcare_building":
+			return "مرفق صحي"
+		"civic_building":
+			return "مرفق خدمي حكومي"
+		"hospitality_building":
+			return "فندق أو دار ضيافة"
 		_:
 			return "مبنى في بغداد"
 
@@ -2193,6 +2201,17 @@ func _building_kind(tags: Dictionary) -> String:
 	var worship_type := _worship_facility_type(tags)
 	if worship_type in ["mosque", "church", "shrine", "monastery"]:
 		return worship_type
+	var amenity_kind := str(tags.get("amenity", "")).to_lower()
+	var healthcare_kind := str(tags.get("healthcare", "")).to_lower()
+	var tourism_kind := str(tags.get("tourism", "")).to_lower()
+	if kind in ["school", "college", "university", "kindergarten"] or amenity_kind in ["school", "college", "university", "kindergarten"]:
+		return "education_building"
+	if kind in ["hospital", "clinic", "healthcare"] or amenity_kind in ["hospital", "clinic"] or healthcare_kind != "":
+		return "healthcare_building"
+	if kind in ["fire_station", "police", "government"] or amenity_kind in ["fire_station", "police", "townhall"] or str(tags.get("office", "")).to_lower() == "government":
+		return "civic_building"
+	if kind in ["hotel", "hostel", "guest_house"] or tourism_kind in ["hotel", "hostel", "guest_house"]:
+		return "hospitality_building"
 	return "general_building"
 
 
@@ -2247,6 +2266,14 @@ func _building_material_for(kind: String) -> StandardMaterial3D:
 			material.albedo_color = Color(0.76, 0.62, 0.39)
 		"monastery":
 			material.albedo_color = Color(0.66, 0.59, 0.49)
+		"education_building":
+			material.albedo_color = Color(0.72, 0.66, 0.48)
+		"healthcare_building":
+			material.albedo_color = Color(0.66, 0.76, 0.78)
+		"civic_building":
+			material.albedo_color = Color(0.62, 0.67, 0.72)
+		"hospitality_building":
+			material.albedo_color = Color(0.74, 0.62, 0.50)
 	return material
 
 
