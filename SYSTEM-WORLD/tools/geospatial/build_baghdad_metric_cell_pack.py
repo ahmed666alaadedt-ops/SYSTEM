@@ -33,7 +33,7 @@ KEEP_TAGS = {
     "landuse", "amenity", "railway", "surface", "maxspeed", "lanes",
     "oneway", "access", "service", "tunnel", "layer", "leisure",
     "shop", "tourism", "historic", "man_made", "water", "place",
-    "religion", "operator", "aeroway", "barrier", "foot", "cycleway",
+    "religion", "operator", "aeroway", "military", "security", "barrier", "foot", "cycleway",
     "wetland", "tidal", "seasonal", "marsh",
     "healthcare", "emergency", "office", "craft", "cuisine", "opening_hours",
     "public_transport", "brand", "building:use", "addr:street", "addr:city",
