@@ -598,7 +598,7 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 				_add_luxury_residential_entry_details(parent, ring, height, kind, feature_id, approach)
 		built += 1
 		if kind == "church" or kind == "mosque":
-			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
+			_add_polygon_worship_detail(parent, ring, height, kind, feature_id, tags)
 	return built
 
 
