@@ -13,9 +13,9 @@ const AIRSHIP_BALLOON_DIAMETER_M := 28.0
 const AIRSHIP_CABIN_LENGTH_M := 45.0
 const AIRSHIP_MIN_CAPACITY := 40
 const AIRSHIP_MAX_CAPACITY := 60
-const AIRSHIP_ROUTE_RADIUS_M := 900.0
+const AIRSHIP_ROUTE_RADIUS_M := 3000.0
 const AIRSHIP_CRUISE_ALTITUDE_M := 190.0
-const AIRSHIP_SPEED_MPS := 42.0
+const AIRSHIP_SPEED_MPS := 17.5
 const CITY_AIRCRAFT_CAPACITY := 180
 
 var city_airports: Dictionary = {}
@@ -416,6 +416,9 @@ func _build_baghdad_airship() -> void:
 	var path := Path3D.new()
 	path.name = "BaghdadAirshipCircularRoute"
 	path.position = _baghdad_anchor_position
+	path.set_meta("system_route_radius_m", AIRSHIP_ROUTE_RADIUS_M)
+	path.set_meta("system_cruise_altitude_m", AIRSHIP_CRUISE_ALTITUDE_M)
+	path.set_meta("system_cruise_speed_mps", AIRSHIP_SPEED_MPS)
 	var curve := Curve3D.new()
 	for index in range(9):
 		var angle := TAU * float(index) / 8.0
