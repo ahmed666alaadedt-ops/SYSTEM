@@ -26,6 +26,9 @@ var _last_center_cell := Vector2i(2147483647, 2147483647)
 
 var road_material: StandardMaterial3D
 var road_marking_material: StandardMaterial3D
+var sidewalk_material: StandardMaterial3D
+var streetlight_metal_material: StandardMaterial3D
+var streetlight_glow_material: StandardMaterial3D
 var bridge_material: StandardMaterial3D
 var water_material: StandardMaterial3D
 var land_material: StandardMaterial3D
@@ -132,6 +135,22 @@ func _create_materials() -> void:
 	road_marking_material.roughness = 0.86
 	road_marking_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 
+	sidewalk_material = StandardMaterial3D.new()
+	sidewalk_material.albedo_color = Color(0.48, 0.46, 0.41)
+	sidewalk_material.roughness = 0.94
+	sidewalk_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	streetlight_metal_material = StandardMaterial3D.new()
+	streetlight_metal_material.albedo_color = Color(0.12, 0.15, 0.17)
+	streetlight_metal_material.metallic = 0.62
+	streetlight_metal_material.roughness = 0.48
+
+	streetlight_glow_material = StandardMaterial3D.new()
+	streetlight_glow_material.albedo_color = Color(1.0, 0.78, 0.43)
+	streetlight_glow_material.emission_enabled = true
+	streetlight_glow_material.emission = Color(1.0, 0.58, 0.22)
+	streetlight_glow_material.emission_energy_multiplier = 1.25
+
 	bridge_material = StandardMaterial3D.new()
 	bridge_material.albedo_color = Color(0.34, 0.35, 0.36)
 	bridge_material.roughness = 0.82
@@ -224,6 +243,8 @@ func _load_cell(cell: Vector2i) -> void:
 		road_count += _build_line_feature(cell_root, feature, _road_width(feature.get("tags", {})), road_material, 0.16, "OSMRoad")
 	if not overview_mode:
 		_flush_road_marking_multimesh(cell_root)
+		_flush_sidewalk_multimesh(cell_root)
+		_flush_streetlight_multimeshes(cell_root)
 	var building_count := 0
 	var building_features: Array = layers.get("buildings", [])
 	var building_feature_ids: Dictionary = {}
@@ -1344,6 +1365,8 @@ func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, mate
 		surface.generate_normals()
 		if not overview_mode and prefix == "OSMRoad" and not is_bridge:
 			_collect_road_center_markings(parent, line, width, feature_tags)
+			_collect_sidewalk_transforms(parent, line, width, feature_tags, lift)
+			_collect_streetlight_transforms(parent, line, width, feature_tags, is_bridge)
 		var mesh := _commit_surface_tool_if_valid(surface)
 		if mesh == null:
 			continue
@@ -1742,6 +1765,176 @@ func _collect_road_center_markings(parent: Node3D, line: PackedVector2Array, roa
 			transforms.append(Transform3D(basis, position))
 			cursor += dash_length + dash_gap
 	parent.set_meta("system_road_marking_transforms", transforms)
+
+
+func _collect_sidewalk_transforms(parent: Node3D, line: PackedVector2Array, road_width: float, tags: Dictionary, road_lift: float) -> void:
+	# Build sidewalks only where OSM explicitly maps them. Footway/path ways
+	# remain their own mapped geometry and are not duplicated as road-edge walks.
+	var general := str(tags.get("sidewalk", "")).to_lower()
+	if general in ["no", "none", "separate", ""]:
+		if not tags.has("sidewalk:left") and not tags.has("sidewalk:right"):
+			return
+	var left_tag := str(tags.get("sidewalk:left", general)).to_lower()
+	var right_tag := str(tags.get("sidewalk:right", general)).to_lower()
+	var left_enabled := left_tag in ["yes", "both", "left", "right", "raised", "lowered", "shared"]
+	var right_enabled := right_tag in ["yes", "both", "left", "right", "raised", "lowered", "shared"]
+	if general == "both":
+		left_enabled = true
+		right_enabled = true
+	if not left_enabled and not right_enabled:
+		return
+	var transforms: Array = parent.get_meta("system_sidewalk_transforms", [])
+	for segment_index in range(line.size() - 1):
+		if transforms.size() >= 1000:
+			break
+		var start: Vector2 = line[segment_index]
+		var finish: Vector2 = line[segment_index + 1]
+		var segment := finish - start
+		var length := segment.length()
+		if length < 1.0:
+			continue
+		var direction := segment / length
+		var side := Vector2(-direction.y, direction.x)
+		var midpoint := (start + finish) * 0.5
+		var sidewalk_width := 1.45
+		var offset := road_width * 0.5 + sidewalk_width * 0.5 + 0.18
+		var rotation_basis := Basis(
+			Vector3(direction.x, 0.0, direction.y),
+			Vector3.UP,
+			Vector3(-direction.y, 0.0, direction.x)
+		)
+		if left_enabled:
+			var left_point := midpoint + side * offset
+			var left_basis := rotation_basis.scaled(Vector3(length, 0.12, sidewalk_width))
+			transforms.append(Transform3D(left_basis, Vector3(left_point.x, _terrain_height(left_point) + road_lift + 0.075, left_point.y)))
+		if right_enabled and transforms.size() < 1000:
+			var right_point := midpoint - side * offset
+			var right_basis := rotation_basis.scaled(Vector3(length, 0.12, sidewalk_width))
+			transforms.append(Transform3D(right_basis, Vector3(right_point.x, _terrain_height(right_point) + road_lift + 0.075, right_point.y)))
+	parent.set_meta("system_sidewalk_transforms", transforms)
+
+
+func _flush_sidewalk_multimesh(parent: Node3D) -> void:
+	var transforms: Array = parent.get_meta("system_sidewalk_transforms", [])
+	if transforms.is_empty():
+		return
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.mesh = BoxMesh.new()
+	multimesh.instance_count = transforms.size()
+	for index in range(transforms.size()):
+		multimesh.set_instance_transform(index, transforms[index])
+	var sidewalks := MultiMeshInstance3D.new()
+	sidewalks.name = "BaghdadCellMappedSidewalks"
+	sidewalks.multimesh = multimesh
+	sidewalks.material_override = sidewalk_material
+	sidewalks.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	sidewalks.set_meta("system_road_detail_type", "osm_explicit_sidewalks")
+	sidewalks.set_meta("system_sidewalk_count", transforms.size())
+	sidewalks.set_meta("system_sidewalk_draw_calls_per_cell", 1)
+	parent.add_child(sidewalks)
+	parent.set_meta("system_sidewalk_instance_count", transforms.size())
+	parent.set_meta("system_sidewalk_transforms", [])
+
+
+func _collect_streetlight_transforms(parent: Node3D, line: PackedVector2Array, road_width: float, tags: Dictionary, is_bridge: bool) -> void:
+	# OSM's lit=yes confirms a lit road, not exact lamp coordinates. Fixtures
+	# are therefore explicitly marked as inferred spacing, never as surveyed POIs.
+	if is_bridge or road_width < 5.8 or str(tags.get("lit", "")).to_lower() not in ["yes", "automatic"]:
+		return
+	var poles: Array = parent.get_meta("system_streetlight_pole_transforms", [])
+	var arms: Array = parent.get_meta("system_streetlight_arm_transforms", [])
+	var heads: Array = parent.get_meta("system_streetlight_head_transforms", [])
+	for segment_index in range(line.size() - 1):
+		if poles.size() >= 36:
+			break
+		var start: Vector2 = line[segment_index]
+		var finish: Vector2 = line[segment_index + 1]
+		var segment := finish - start
+		var length := segment.length()
+		if length < 18.0:
+			continue
+		var direction := segment / length
+		var side := Vector2(-direction.y, direction.x)
+		var cursor := 14.0
+		while cursor < length - 4.0 and poles.size() < 36:
+			var point := start + direction * cursor
+			var side_sign := 1.0 if (poles.size() % 2) == 0 else -1.0
+			var lateral := side * side_sign
+			var pole_point := point + lateral * (road_width * 0.5 + 0.95)
+			var ground := _terrain_height(pole_point)
+			poles.append(Transform3D(
+				Basis().scaled(Vector3(0.16, 5.4, 0.16)),
+				Vector3(pole_point.x, ground + 2.7, pole_point.y)
+			))
+			var arm_direction := -lateral
+			var arm_basis := Basis(
+				Vector3(arm_direction.x, 0.0, arm_direction.y),
+				Vector3.UP,
+				Vector3(-arm_direction.y, 0.0, arm_direction.x)
+			).scaled(Vector3(1.15, 0.10, 0.10))
+			var arm_center := pole_point + arm_direction * 0.58
+			arms.append(Transform3D(arm_basis, Vector3(arm_center.x, ground + 5.15, arm_center.y)))
+			var head_basis := Basis().scaled(Vector3(0.46, 0.16, 0.30))
+			var head_point := pole_point + arm_direction * 1.12
+			heads.append(Transform3D(head_basis, Vector3(head_point.x, ground + 5.08, head_point.y)))
+			cursor += 30.0
+	parent.set_meta("system_streetlight_pole_transforms", poles)
+	parent.set_meta("system_streetlight_arm_transforms", arms)
+	parent.set_meta("system_streetlight_head_transforms", heads)
+
+
+func _flush_streetlight_multimeshes(parent: Node3D) -> void:
+	var poles: Array = parent.get_meta("system_streetlight_pole_transforms", [])
+	var arms: Array = parent.get_meta("system_streetlight_arm_transforms", [])
+	var heads: Array = parent.get_meta("system_streetlight_head_transforms", [])
+	if poles.is_empty():
+		return
+	var pole_mesh := BoxMesh.new()
+	var arm_mesh := BoxMesh.new()
+	var head_mesh := BoxMesh.new()
+	var pole_multi := MultiMesh.new()
+	pole_multi.transform_format = MultiMesh.TRANSFORM_3D
+	pole_multi.mesh = pole_mesh
+	pole_multi.instance_count = poles.size()
+	var arm_multi := MultiMesh.new()
+	arm_multi.transform_format = MultiMesh.TRANSFORM_3D
+	arm_multi.mesh = arm_mesh
+	arm_multi.instance_count = arms.size()
+	var head_multi := MultiMesh.new()
+	head_multi.transform_format = MultiMesh.TRANSFORM_3D
+	head_multi.mesh = head_mesh
+	head_multi.instance_count = heads.size()
+	for index in range(poles.size()):
+		pole_multi.set_instance_transform(index, poles[index])
+		arm_multi.set_instance_transform(index, arms[index])
+		head_multi.set_instance_transform(index, heads[index])
+	var pole_node := MultiMeshInstance3D.new()
+	pole_node.name = "BaghdadCellStreetlightPoles"
+	pole_node.multimesh = pole_multi
+	pole_node.material_override = streetlight_metal_material
+	pole_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(pole_node)
+	var arm_node := MultiMeshInstance3D.new()
+	arm_node.name = "BaghdadCellStreetlightArms"
+	arm_node.multimesh = arm_multi
+	arm_node.material_override = streetlight_metal_material
+	arm_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(arm_node)
+	var head_node := MultiMeshInstance3D.new()
+	head_node.name = "BaghdadCellStreetlightHeads"
+	head_node.multimesh = head_multi
+	head_node.material_override = streetlight_glow_material
+	head_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(head_node)
+	for node in [pole_node, arm_node, head_node]:
+		node.set_meta("system_road_detail_type", "inferred_lighting_on_osm_lit_road")
+		node.set_meta("system_streetlight_source", "inferred_spacing_from_osm_lit_yes_not_surveyed_fixture")
+		node.set_meta("system_streetlight_draw_calls_per_cell", 3)
+	parent.set_meta("system_streetlight_count", poles.size())
+	parent.set_meta("system_streetlight_pole_transforms", [])
+	parent.set_meta("system_streetlight_arm_transforms", [])
+	parent.set_meta("system_streetlight_head_transforms", [])
 
 
 func _flush_road_marking_multimesh(parent: Node3D) -> void:
