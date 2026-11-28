@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "2026-11-28.4",
+  "version": "2026-11-28.5",
   "coordinate_reference_system": "EPSG:4326",
   "coordinate_order": "latitude_longitude",
   "world_model": "real_earth",
@@ -486,6 +486,383 @@
             "accurate river span and piers",
             "both bank approaches",
             "subtle architectural night lighting and collision-ready deck"
+          ]
+        },
+        "baghdad_khulafa_mosque": {
+          "name": {
+            "ar": "جامع الخلفاء",
+            "en": "Al-Khulafa Mosque"
+          },
+          "type": "abbasid_historic_mosque",
+          "latitude": 33.33889,
+          "longitude": 44.39791,
+          "location": {
+            "ar": "الرصافة، شارع الجمهورية قرب سوق الغزل",
+            "en": "الرصافة، شارع الجمهورية قرب سوق الغزل"
+          },
+          "source_urls": [
+            "https://mapcarta.com/W949437742"
+          ],
+          "geometry_status": "coordinate_reference_verified; exact_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "historic Abbasid minaret silhouette",
+            "accurate OSM footprint and courtyard",
+            "Suq al-Ghazl street context"
+          ]
+        },
+        "baghdad_khilani_mosque": {
+          "name": {
+            "ar": "جامع الخلاني",
+            "en": "Al-Khilani Mosque"
+          },
+          "type": "historic_shia_mosque",
+          "latitude": 33.3335,
+          "longitude": 44.4052,
+          "location": {
+            "ar": "الرصافة، بغداد",
+            "en": "الرصافة، بغداد"
+          },
+          "source_urls": [
+            "https://en.wikipedia.org/wiki/Al-Khilani_Mosque"
+          ],
+          "geometry_status": "coordinate_reference_verified; exact_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "main dome and minaret",
+            "historic Iraqi Islamic facade",
+            "accurate parcel and street access"
+          ]
+        },
+        "baghdad_haydar_khana_mosque": {
+          "name": {
+            "ar": "جامع الحيدرخانة",
+            "en": "Haydar-Khana Mosque"
+          },
+          "type": "ottoman_historic_mosque",
+          "latitude": 33.325,
+          "longitude": 44.42194,
+          "location": {
+            "ar": "الرصافة، محلة الحيدرخانة، شارع الرشيد",
+            "en": "الرصافة، محلة الحيدرخانة، شارع الرشيد"
+          },
+          "source_urls": [
+            "https://en.wikipedia.org/wiki/Haydar-Khana_Mosque"
+          ],
+          "geometry_status": "coordinate_reference_verified; exact_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "Ottoman mosque and blue glazed tile domes",
+            "minaret and Al-Rashid Street frontage",
+            "accurate courtyard and entrance"
+          ]
+        },
+        "baghdad_aquli_mosque": {
+          "name": {
+            "ar": "جامع العاقولي",
+            "en": "Al-Aquli Mosque"
+          },
+          "type": "il_khanid_historic_mosque",
+          "latitude": 33.3425,
+          "longitude": 44.39118,
+          "location": {
+            "ar": "الرصافة، محلة الحيدرخانة",
+            "en": "الرصافة، محلة الحيدرخانة"
+          },
+          "source_urls": [
+            "https://prayertime.live/mosques/al-aquli-mosque"
+          ],
+          "geometry_status": "coordinate_reference_verified; exact_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "Ilkhanid-era mosque massing",
+            "single minaret",
+            "historic street fabric"
+          ]
+        },
+        "baghdad_umm_al_qura_mosque": {
+          "name": {
+            "ar": "جامع أم القرى",
+            "en": "Umm al-Qura Mosque"
+          },
+          "type": "modern_grand_mosque",
+          "latitude": 33.337711,
+          "longitude": 44.296058,
+          "location": {
+            "ar": "العدل، الكرخ",
+            "en": "العدل، الكرخ"
+          },
+          "source_urls": [
+            "https://en.wikipedia.org/wiki/Umm_al-Qura_Mosque"
+          ],
+          "geometry_status": "coordinate_reference_verified; exact_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "large modern Iraqi mosque complex",
+            "central dome and minaret group from real references",
+            "forecourt and perimeter access"
+          ]
+        },
+        "baghdad_our_lady_of_sorrows_church": {
+          "name": {
+            "ar": "كنيسة أم الأحزان",
+            "en": "Church of Mary Mother of Sorrows"
+          },
+          "type": "chaldean_catholic_historic_church",
+          "latitude": 33.338139,
+          "longitude": 44.395528,
+          "location": {
+            "ar": "الرصافة، الشورجة، عقد النصارى",
+            "en": "الرصافة، الشورجة، عقد النصارى"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/leglise-om-al-ahzane-mere-des-douleurs-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "historic church rebuilt and raised in 1889",
+            "Shorja lane and churchyard context",
+            "accurate footprint and apse"
+          ]
+        },
+        "baghdad_mar_gorgis_chaldean_church": {
+          "name": {
+            "ar": "كنيسة مار كوركيس الكلدانية",
+            "en": "Mar Gorgis Chaldean Church"
+          },
+          "type": "chaldean_catholic_church",
+          "latitude": 33.31285,
+          "longitude": 44.472664,
+          "location": {
+            "ar": "بغداد الجديدة، حي سومر",
+            "en": "بغداد الجديدة، حي سومر"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/leglise-chaldeenne-mar-guorguis-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "reverse-arch architecture",
+            "earthenware brick and reinforced concrete",
+            "apse chapel and stained glass"
+          ]
+        },
+        "baghdad_mar_gorgis_greek_orthodox_cathedral": {
+          "name": {
+            "ar": "كاتدرائية مار كوركيس للروم الأرثوذكس",
+            "en": "Mar Gorgis Greek Orthodox Cathedral"
+          },
+          "type": "greek_orthodox_cathedral",
+          "latitude": 33.300583,
+          "longitude": 44.446444,
+          "location": {
+            "ar": "حي الرياض، شارع طارق بن زياد",
+            "en": "حي الرياض، شارع طارق بن زياد"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/the-mar-gorgis-church-in-baqofa/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "Byzantine decorative exterior",
+            "semicircular vault and apse",
+            "ornamental facade and church compound"
+          ]
+        },
+        "baghdad_saint_john_chaldean_church": {
+          "name": {
+            "ar": "كنيسة مار يوحنا الكلدانية",
+            "en": "Saint John Chaldean Church"
+          },
+          "type": "chaldean_catholic_church",
+          "latitude": 33.25256,
+          "longitude": 44.38381,
+          "location": {
+            "ar": "الكرخ، بغداد",
+            "en": "الكرخ، بغداد"
+          },
+          "source_urls": [
+            "https://mapcarta.com/W829067309"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "use exact OSM building polygon",
+            "entrance and street relationship",
+            "real-photo architectural details"
+          ],
+          "source_ids": {
+            "osm_way": 829067309
+          }
+        },
+        "baghdad_saint_joseph_latin_cathedral": {
+          "name": {
+            "ar": "كاتدرائية مار يوسف والقديسة تريزا اللاتينية",
+            "en": "Saint Joseph and Saint Teresa Latin Cathedral"
+          },
+          "type": "latin_catholic_cathedral",
+          "latitude": 33.309444,
+          "longitude": 44.434722,
+          "location": {
+            "ar": "الرصافة، حي الوحدة، طريق 42",
+            "en": "الرصافة، حي الوحدة، طريق 42"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/la-cathedrale-latine-saint-joseph-et-sainte-therese-de-lenfant-jesus-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "1984 cathedral building",
+            "large garden and Marian grotto",
+            "Saint Joseph Centre and campus boundary"
+          ]
+        },
+        "baghdad_sayidat_al_najat_cathedral": {
+          "name": {
+            "ar": "كاتدرائية سيدة النجاة",
+            "en": "Sayidat al-Najat Cathedral"
+          },
+          "type": "syriac_catholic_cathedral",
+          "latitude": 33.307081,
+          "longitude": 44.426189,
+          "location": {
+            "ar": "الكرادة الشرقية، الرصافة",
+            "en": "الكرادة الشرقية، الرصافة"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/la-cathedrale-sayidat-al-najatte-notre-dame-du-salut-ou-notre-dame-du-perpetuel-secours-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "1968 cathedral volume",
+            "front facade and dome from reference",
+            "forecourt and Karrada streets"
+          ]
+        },
+        "baghdad_mar_yousef_chaldean_cathedral": {
+          "name": {
+            "ar": "كاتدرائية مار يوسف الكلدانية",
+            "en": "Mar Yousef Chaldean Cathedral"
+          },
+          "type": "chaldean_catholic_cathedral",
+          "latitude": 33.301469,
+          "longitude": 44.428247,
+          "location": {
+            "ar": "الكرادة الشرقية، الرصافة",
+            "en": "الكرادة الشرقية، الرصافة"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/la-cathedrale-mar-youssef-kharbanda-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "1956 cathedral and restored facade",
+            "accurate street frontage",
+            "dome and interior only from real references"
+          ]
+        },
+        "baghdad_virgin_mary_patriarchal_cathedral": {
+          "name": {
+            "ar": "كاتدرائية مريم العذراء البطريركية",
+            "en": "Patriarchal Cathedral of the Virgin Mary"
+          },
+          "type": "church_of_the_east_cathedral",
+          "latitude": 33.305042,
+          "longitude": 44.453003,
+          "location": {
+            "ar": "كرادة، معسكر سارة، حي الرياض",
+            "en": "كرادة، معسكر سارة، حي الرياض"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/la-cathedrale-patriarcale-assyrienne-de-la-vierge-marie-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "cathedral occupies first floor of larger building",
+            "patriarchal seat compound context",
+            "do not use generic church template"
+          ]
+        },
+        "baghdad_mar_petros_mar_paulos_cathedral": {
+          "name": {
+            "ar": "كاتدرائية مار بطرس ومار بولس",
+            "en": "St Peter and St Paul Syriac Orthodox Cathedral"
+          },
+          "type": "syriac_orthodox_cathedral",
+          "latitude": 33.31305,
+          "longitude": 44.440561,
+          "location": {
+            "ar": "الرصافة، شارع الصناعة، حي الوحدة",
+            "en": "الرصافة، شارع الصناعة، حي الوحدة"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/la-cathedrale-mar-petros-et-mar-paulos-de-bagdad-saints-pierre-et-paul/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "large hall over 1800 square metres",
+            "high two-part sloping roof",
+            "northeast orientation and front esplanade"
+          ]
+        },
+        "baghdad_our_lady_queen_of_rosary_church": {
+          "name": {
+            "ar": "كنيسة سيدة الوردية",
+            "en": "Our Lady Queen of the Rosary Church"
+          },
+          "type": "chaldean_catholic_church",
+          "latitude": 33.293594,
+          "longitude": 44.419442,
+          "location": {
+            "ar": "الكرادة، شارع خارجة",
+            "en": "الكرادة، شارع خارجة"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/leglise-chaldeenne-vierge-marie-reine-du-rosaire-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "triangular facade pediment",
+            "pointed arch windows",
+            "central cupola with lantern and Saint Rita oratory"
+          ]
+        },
+        "baghdad_saint_joseph_latin_church_old": {
+          "name": {
+            "ar": "كنيسة مار يوسف اللاتينية القديمة",
+            "en": "Old Saint Joseph Latin Church"
+          },
+          "type": "historic_latin_church",
+          "latitude": 33.338861,
+          "longitude": 44.396528,
+          "location": {
+            "ar": "الرصافة، عقد النصارى قرب الشورجة",
+            "en": "الرصافة، عقد النصارى قرب الشورجة"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/leglise-latine-mar-youssef-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; building_footprint_and_architecture_mesh_pending",
+          "visual_requirements": [
+            "cross-shaped historic plan",
+            "hemispherical dome and circular drum",
+            "current building status must be verified before rendering"
+          ]
+        },
+        "baghdad_syriac_catholic_immaculate_conception_former": {
+          "name": {
+            "ar": "موقع كنيسة الحبل بلا دنس السريانية الكاثوليكية السابقة",
+            "en": "Former Syriac Catholic Church of the Immaculate Conception Site"
+          },
+          "type": "demolished_historic_church_site",
+          "latitude": 33.338425,
+          "longitude": 44.395672,
+          "location": {
+            "ar": "الرصافة، الشورجة، عقد النصارى",
+            "en": "الرصافة، الشورجة، عقد النصارى"
+          },
+          "source_urls": [
+            "https://www.mesopotamiaheritage.org/en/monuments/leglise-syriaque-catholique-vierge-marie-immaculee-conception-de-bagdad/"
+          ],
+          "geometry_status": "heritage_coordinate_verified; demolished_in_2018; do_not_render_as_existing_church",
+          "visual_requirements": [
+            "historic site only; demolished in 2018",
+            "do not render as existing church",
+            "retain heritage record and current verified land use"
           ]
         }
       }
