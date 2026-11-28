@@ -168,17 +168,23 @@ func board_ticket(ticket_id: String, player_id: String) -> bool:
 	var ticket: Dictionary = tickets[ticket_id]
 	if str(ticket.player_id) != player_id or str(ticket.status) != "paid":
 		return false
-	ticket.status = "boarded"
+	var route: Dictionary = routes.get(str(ticket.route_id), {})
+	ticket.status = "in_transit"
+	ticket.departure_unix = int(Time.get_unix_time_from_system())
+	ticket.arrival_unix = int(ticket.departure_unix) + int(route.get("duration_minutes", 5)) * 60
 	tickets[ticket_id] = ticket
 	ticket_status_changed.emit(ticket.duplicate(true))
 	return true
 
 
-func complete_ticket_travel(ticket_id: String, player_id: String) -> Dictionary:
+func complete_ticket_travel(ticket_id: String, player_id: String, now_unix: int = -1) -> Dictionary:
 	if not tickets.has(ticket_id):
 		return {}
 	var ticket: Dictionary = tickets[ticket_id]
-	if str(ticket.player_id) != player_id or str(ticket.status) != "boarded":
+	if str(ticket.player_id) != player_id or str(ticket.status) != "in_transit":
+		return {}
+	var current_unix := now_unix if now_unix >= 0 else int(Time.get_unix_time_from_system())
+	if current_unix < int(ticket.get("arrival_unix", 0)):
 		return {}
 	var route: Dictionary = routes.get(str(ticket.route_id), {})
 	var destination_id := str(route.get("destination_city_id", ""))
