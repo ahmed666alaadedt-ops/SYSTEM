@@ -460,6 +460,37 @@ func _run_validation() -> void:
 			return
 		poi_root.free()
 	print("Baghdad expanded OSM POI category QA passed: shops, tourism, heritage, leisure, aeroway, healthcare and civic offices.")
+
+	# Regional building footprints must carry the same typed public-service
+	# categories as point POIs, rather than being anonymous generic blocks.
+	var service_building_root := Node3D.new()
+	var service_building_cases := [
+		{"id": "runtime_school_polygon", "tags": {"building": "school", "amenity": "school", "name:ar": "مدرسة اختبار بغداد"}, "expected": "education", "name": "مدرسة اختبار بغداد"},
+		{"id": "runtime_hospital_polygon", "tags": {"building": "hospital", "amenity": "hospital", "name:ar": "مستشفى اختبار بغداد"}, "expected": "healthcare", "name": "مستشفى اختبار بغداد"},
+		{"id": "runtime_fire_station_polygon", "tags": {"building": "fire_station", "amenity": "fire_station", "name:ar": "مركز إطفاء اختبار"}, "expected": "civic", "name": "مركز إطفاء اختبار"}
+	]
+	var service_polygon_index := 0
+	for service_case in service_building_cases:
+		var offset_x := float(service_polygon_index) * 30.0
+		var service_feature := {
+			"id": str(service_case.id),
+			"osm_type": "way",
+			"geometry": {"type": "Polygon", "coordinates": [[[offset_x, 0.0], [offset_x + 18.0, 0.0], [offset_x + 18.0, 12.0], [offset_x, 12.0], [offset_x, 0.0]]]},
+			"tags": service_case.tags
+		}
+		var service_built := regional_urban._build_building_overview_feature(service_building_root, service_feature)
+		var service_node := service_building_root.get_node_or_null("OSMOverviewBuilding_%s" % str(service_case.id)) as MeshInstance3D
+		if service_built != 1 or service_node == null or str(service_node.get_meta("system_facility_type", "")) != str(service_case.expected):
+			_fail("Baghdad public-service building footprint category was not retained: " + str(service_case.tags))
+			service_building_root.free()
+			return
+		if str(service_node.get_meta("system_display_name", "")) != str(service_case.name):
+			_fail("Baghdad public-service building footprint lost its Arabic OSM name: " + str(service_case.tags))
+			service_building_root.free()
+			return
+		service_polygon_index += 1
+	service_building_root.free()
+	print("Baghdad public-service building footprint QA passed: schools, hospitals, fire stations and Arabic names.")
 	print("Baghdad citywide urban overview passed: buildings=", overview_buildings.size(), " POI markers=", poi_markers.size(), " resolution=1 km.")
 	regional_urban.queue_free()
 	regional_roads.queue_free()
