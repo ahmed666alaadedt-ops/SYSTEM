@@ -817,6 +817,10 @@ func _run_validation() -> void:
 	if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or air_transport.get_node_or_null("BaghdadAirshipCircularRoute/HunterInspiredPassengerAirshipRouteFollower/HunterInspiredBaghdadPassengerAirship") == null:
 		_fail("Baghdad passenger airship station or moving route scene was not created.")
 		return
+	var airship_path := air_transport.get_node("BaghdadAirshipCircularRoute") as Path3D
+	if float(airship_path.get_meta("system_route_radius_m", 0.0)) != 3000.0 or float(airship_path.get_meta("system_cruise_altitude_m", 0.0)) != 190.0 or not is_equal_approx(float(airship_path.get_meta("system_cruise_speed_mps", 0.0)), 17.5):
+		_fail("Baghdad airship scenic route radius, altitude or cruise speed metadata failed.")
+		return
 	var airship_node := air_transport.get_node("BaghdadAirshipCircularRoute/HunterInspiredPassengerAirshipRouteFollower/HunterInspiredBaghdadPassengerAirship")
 	if float(airship_node.get_meta("system_airship_length_m", 0.0)) != 90.0 or int(airship_node.get_meta("system_passenger_capacity_max", 0)) != 60 or not bool(airship_node.get_meta("system_led_advertising", false)):
 		_fail("Baghdad passenger airship dimensions, capacity or illuminated advertising metadata failed.")
