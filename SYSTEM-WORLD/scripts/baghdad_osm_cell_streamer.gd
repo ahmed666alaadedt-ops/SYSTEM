@@ -240,7 +240,8 @@ func _load_cell(cell: Vector2i) -> void:
 	var road_features: Array = layers.get("roads", [])
 	var road_count := 0
 	for feature in road_features:
-		road_count += _build_line_feature(cell_root, feature, _road_width(feature.get("tags", {})), road_material, 0.16, "OSMRoad")
+		var road_tags: Dictionary = feature.get("tags", {})
+		road_count += _build_line_feature(cell_root, feature, _road_width(road_tags), _road_surface_material(road_tags), 0.16, "OSMRoad")
 	if not overview_mode:
 		_flush_road_marking_multimesh(cell_root)
 		_flush_sidewalk_multimesh(cell_root)
@@ -1966,6 +1967,13 @@ func _flush_road_marking_multimesh(parent: Node3D) -> void:
 	parent.add_child(markings)
 	parent.set_meta("system_road_marking_instance_count", transforms.size())
 	parent.set_meta("system_road_marking_transforms", [])
+
+
+func _road_surface_material(tags: Dictionary) -> Material:
+	var highway := str(tags.get("highway", "")).to_lower()
+	if highway in ["footway", "path", "pedestrian", "steps", "bridleway"]:
+		return sidewalk_material
+	return road_material
 
 
 func _road_width(tags: Dictionary) -> float:
