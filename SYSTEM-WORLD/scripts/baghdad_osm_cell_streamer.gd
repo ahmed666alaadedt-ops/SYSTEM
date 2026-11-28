@@ -365,6 +365,7 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 			instance.set_meta("osm_feature_id", feature_id)
 			instance.set_meta("system_osm_type", str(feature.get("osm_type", "")))
 			instance.set_meta("system_worship_geometry_imported", _worship_facility_type(tags) != "")
+			instance.set_meta("system_source_worship_classification", _worship_facility_type(tags))
 		instance.set_meta("system_geometry_type", str(geometry.get("type", "")))
 		if sensitive_site:
 			instance.set_meta("system_sensitive_site_neutralized", true)
