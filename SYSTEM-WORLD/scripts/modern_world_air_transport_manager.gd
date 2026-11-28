@@ -453,15 +453,18 @@ func _build_baghdad_airship() -> void:
 	_add_box(airship, "AirshipSideLEDAdvertising", Vector3(0, -9.5, 5.35), Vector3(24, 2.0, 0.35), _emissive_material(Color(0.95, 0.58, 0.12)))
 	_add_label(airship, "AirshipLEDAdText", "SYSTEM WORLD • BAGHDAD AIRSHIP", Vector3(0, -9.1, 5.55), Color(1.0, 0.88, 0.55))
 	_add_box(airship, "AirshipSYSTEMWorldLogo", Vector3(0, 17, 0), Vector3(12, 1.0, 2.5), _emissive_material(Color(0.95, 0.78, 0.26)))
-	for seat_index in range(12):
-		var x := -18.0 + float(seat_index % 6) * 7.0
-		var z := -2.6 if seat_index < 6 else 2.6
-		_add_box(airship, "PassengerSeat_%02d" % seat_index, Vector3(x, -10.7, z), Vector3(2.4, 1.2, 2.0), cabin_material)
+	for seat_index in range(AIRSHIP_MAX_CAPACITY):
+		var row := int(seat_index / 6)
+		var column := seat_index % 6
+		var x := -18.0 + float(row) * 4.0
+		var z := -3.5 + float(column) * 1.4 if column < 3 else 0.8 + float(column - 3) * 1.4
+		_add_box(airship, "PassengerSeat_%02d" % seat_index, Vector3(x, -10.7, z), Vector3(1.4, 1.0, 1.2), cabin_material)
 	airship.set_meta("system_airship_length_m", AIRSHIP_LENGTH_M)
 	airship.set_meta("system_balloon_diameter_m", AIRSHIP_BALLOON_DIAMETER_M)
 	airship.set_meta("system_passenger_cabin_length_m", AIRSHIP_CABIN_LENGTH_M)
 	airship.set_meta("system_passenger_capacity_min", AIRSHIP_MIN_CAPACITY)
 	airship.set_meta("system_passenger_capacity_max", AIRSHIP_MAX_CAPACITY)
+	airship.set_meta("system_visible_seat_count", AIRSHIP_MAX_CAPACITY)
 	airship.set_meta("system_led_advertising", true)
 	airship.set_meta("system_route_id", "baghdad_airship_loop")
 	airship.set_meta("system_viewing_cabin", true)
