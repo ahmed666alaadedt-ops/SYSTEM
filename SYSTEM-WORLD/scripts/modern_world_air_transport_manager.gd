@@ -41,15 +41,15 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _airship_follow == null:
-		return
-	if _airship_dwell_remaining > 0.0:
-		_airship_dwell_remaining = maxf(0.0, _airship_dwell_remaining - delta)
-		return
-	_airship_follow.progress += AIRSHIP_SPEED_MPS * delta
-	if _airship_follow.progress >= _airship_path_length:
-		_airship_follow.progress = 0.0
-		_airship_dwell_remaining = 20.0
+	if _airship_follow != null:
+		if _airship_dwell_remaining > 0.0:
+			_airship_dwell_remaining = maxf(0.0, _airship_dwell_remaining - delta)
+		else:
+			_airship_follow.progress += AIRSHIP_SPEED_MPS * delta
+			if _airship_follow.progress >= _airship_path_length:
+				_airship_follow.progress = 0.0
+				_airship_dwell_remaining = 20.0
+	_update_passenger_arrivals()
 
 
 func _register_existing_city_airports() -> void:
@@ -205,12 +205,15 @@ func complete_ticket_travel(ticket_id: String, player_id: String, now_unix: int 
 	ticket.status = "arrived"
 	var route_id := str(ticket.route_id)
 	route_ticket_counts[route_id] = maxi(0, int(route_ticket_counts.get(route_id, 0)) - int(ticket.passenger_count))
+	var destination_position: Vector3 = airport.get("position", Vector3.ZERO) + Vector3(0.0, 2.0, 0.0)
 	ticket.destination_city_id = destination_id
-	ticket.arrival_position = airport.position
+	ticket.arrival_position = destination_position
+	ticket.player_teleported = _try_teleport_player(ticket, destination_position)
+	ticket.teleport_pending = not bool(ticket.player_teleported)
 	tickets[ticket_id] = ticket
 	ticket_status_changed.emit(ticket.duplicate(true))
 	passenger_arrived.emit(ticket.duplicate(true))
-	return {"ticket": ticket.duplicate(true), "destination_position": airport.position, "destination_city_name": airport.city_name}
+	return {"ticket": ticket.duplicate(true), "destination_position": destination_position, "destination_city_name": airport.city_name}
 
 
 func _refresh_terminal_route_boards() -> void:
@@ -244,6 +247,47 @@ func request_route_selection(player_id: String, origin_city_id: String) -> Array
 	var available := get_available_routes(origin_city_id)
 	route_selection_requested.emit(player_id, available.duplicate(true))
 	return available
+
+
+
+func _find_system_player(player_id: String) -> Node3D:
+	var players := get_tree().get_nodes_in_group("system_player")
+	for item in players:
+		if not item is Node3D:
+			continue
+		if item.has_meta("system_player_id") and str(item.get_meta("system_player_id")) == player_id:
+			return item as Node3D
+	if players.size() == 1 and players[0] is Node3D:
+		return players[0] as Node3D
+	return null
+
+
+func _try_teleport_player(ticket: Dictionary, destination_position: Vector3) -> bool:
+	var player_id := str(ticket.get("player_id", ""))
+	var player := _find_system_player(player_id)
+	if player == null:
+		return false
+	if player is CharacterBody3D:
+		(player as CharacterBody3D).velocity = Vector3.ZERO
+	player.global_position = destination_position
+	return true
+
+
+func _update_passenger_arrivals() -> void:
+	var now_unix := int(Time.get_unix_time_from_system())
+	for ticket_id_value in tickets.keys():
+		var ticket_id := str(ticket_id_value)
+		var ticket: Dictionary = tickets[ticket_id]
+		if str(ticket.get("status", "")) == "in_transit" and now_unix >= int(ticket.get("arrival_unix", 0)):
+			if _find_system_player(str(ticket.get("player_id", ""))) != null:
+				complete_ticket_travel(ticket_id, str(ticket.get("player_id", "")), now_unix)
+		elif str(ticket.get("status", "")) == "arrived" and bool(ticket.get("teleport_pending", false)):
+			var destination_position: Vector3 = ticket.get("arrival_position", Vector3.ZERO)
+			if _try_teleport_player(ticket, destination_position):
+				ticket.player_teleported = true
+				ticket.teleport_pending = false
+				tickets[ticket_id] = ticket
+				ticket_status_changed.emit(ticket.duplicate(true))
 
 
 func get_available_routes(origin_city_id: String = "") -> Array:
