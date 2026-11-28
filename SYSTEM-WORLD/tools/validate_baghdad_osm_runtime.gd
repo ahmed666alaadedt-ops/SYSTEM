@@ -696,6 +696,22 @@ func _run_validation() -> void:
 		shrine_point_root.free()
 		return
 	shrine_point_root.free()
+	if not streamer._is_hidden_restricted_map_feature({"access": "private"}) or not streamer._is_hidden_restricted_map_feature({"access": "restricted"}):
+		_fail("Restricted-access public-map feature filter did not suppress private/restricted access tags.")
+		return
+	var hidden_entrance_root := Node3D.new()
+	var private_entrance := {"id": "synthetic_private_entrance_qa", "geometry": {"type": "Point", "coordinates": [4.0, 4.0]}, "tags": {"entrance": "main", "access": "private"}}
+	if streamer._build_entrance_feature(hidden_entrance_root, private_entrance, []) != 0 or not hidden_entrance_root.get_children().is_empty():
+		_fail("Private synthetic entrance was exposed as a map marker.")
+		hidden_entrance_root.free()
+		return
+	var sensitive_entrance_building := {"id": "synthetic_sensitive_entrance_building", "geometry": {"type": "Polygon", "coordinates": [[[0.0, 0.0], [12.0, 0.0], [12.0, 12.0], [0.0, 12.0], [0.0, 0.0]]]}, "tags": {"building": "government", "office": "government"}}
+	var entrance_near_sensitive_site := {"id": "synthetic_sensitive_entrance_qa", "geometry": {"type": "Point", "coordinates": [6.0, 6.0]}, "tags": {"entrance": "main"}}
+	if streamer._build_entrance_feature(hidden_entrance_root, entrance_near_sensitive_site, [sensitive_entrance_building]) != 0 or not hidden_entrance_root.get_children().is_empty():
+		_fail("Entrance associated with a sensitive building was exposed as a map marker.")
+		hidden_entrance_root.free()
+		return
+	hidden_entrance_root.free()
 	var neutral_site_root := Node3D.new()
 	var neutral_site_feature := {
 		"id": "synthetic_sensitive_site_qa",
