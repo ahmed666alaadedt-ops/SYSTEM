@@ -343,6 +343,10 @@ func _run() -> void:
 
 	# Road details must honor explicit OSM sidewalk sides and lit-road tags,
 	# while keeping inferred lamp positions clearly distinct from surveyed POIs.
+	var footway_material: Material = streamer.call("_road_surface_material", {"highway": "footway"})
+	if footway_material != streamer.get("sidewalk_material"):
+		_fail("Mapped OSM footways must use pedestrian pavement instead of the asphalt road material.")
+		return
 	var road_detail_feature := {
 		"id": "road_detail_validation_001",
 		"geometry": {"type": "LineString", "coordinates": [[0.0, 80.0], [96.0, 80.0]]},
