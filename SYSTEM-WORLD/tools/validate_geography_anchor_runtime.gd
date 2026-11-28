@@ -48,6 +48,22 @@ func _run_validation() -> void:
 			_fail("Baghdad landmark was not projected from its real coordinate: " + landmark_id)
 			return
 
+	var sindbad_candidate_id := "baghdad_sindbad_palace_candidate"
+	if not landmarks.has(sindbad_candidate_id):
+		_fail("Golden-domed Sindbad Palace candidate record is missing")
+		return
+	var sindbad_candidate: Dictionary = landmarks[sindbad_candidate_id]
+	if sindbad_candidate.has("latitude") or sindbad_candidate.has("longitude"):
+		_fail("Unverified Sindbad Palace candidate must not contain guessed coordinates")
+		return
+	if bool(sindbad_candidate.get("runtime_projection_allowed", true)):
+		_fail("Unverified Sindbad Palace candidate must remain disabled for runtime projection")
+		return
+	var candidate_position: Vector3 = geography.call("get_landmark_world_position", "city_baghdad", sindbad_candidate_id)
+	if candidate_position != Vector3.ZERO:
+		_fail("Unverified Sindbad Palace candidate was incorrectly projected into gameplay")
+		return
+
 	var packed := load("res://MainScene.tscn") as PackedScene
 	if packed == null:
 		_fail("Canonical MainScene could not be loaded")
@@ -85,7 +101,8 @@ func _run_validation() -> void:
 		return
 
 	print("SYSTEM GEOGRAPHY QA PASS: Baghdad city anchor is connected to WGS84 registry.")
-	print("SYSTEM GEOGRAPHY QA PASS: %d named Baghdad memorial/ceremonial landmarks are registered and projected." % required_landmarks.size())
+	print("SYSTEM GEOGRAPHY QA PASS: %d verified Baghdad memorial/ceremonial landmarks are registered and projected." % required_landmarks.size())
+	print("SYSTEM GEOGRAPHY QA PASS: unverified golden-domed Sindbad Palace candidate is registered but safely excluded from runtime projection.")
 	print("SYSTEM GEOGRAPHY QA LIMIT: only the Baghdad anchor is real-data-backed; other city layouts remain prototypes.")
 	quit(0)
 
