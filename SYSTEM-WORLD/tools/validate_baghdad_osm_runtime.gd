@@ -388,7 +388,8 @@ func _run_validation() -> void:
 		"tags": {"amenity": "place_of_worship", "religion": "muslim", "building": "church"}
 	}
 	var conflict_built := regional_urban._build_amenity_feature(conflict_root, conflict_feature)
-	if conflict_built != 1 or not conflict_root.find_children("OSMAmenity_*", "MeshInstance3D", true, false).size() > 0:
+	var neutral_conflict_markers := conflict_root.find_children("OSMAmenity_*", "MeshInstance3D", true, false)
+	if conflict_built != 1 or neutral_conflict_markers.is_empty():
 		_fail("Conflicting worship point tags did not remain a neutral amenity marker.")
 		conflict_root.free()
 		return
