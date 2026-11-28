@@ -220,9 +220,9 @@ func _load_cell(cell: Vector2i) -> void:
 	var building_features: Array = layers.get("buildings", [])
 	var building_feature_ids: Dictionary = {}
 	for feature in building_features:
-		var building_id := str(feature.get("id", ""))
-		if building_id != "":
-			building_feature_ids[building_id] = true
+		var building_key := _osm_feature_key(feature)
+		if building_key != "":
+			building_feature_ids[building_key] = true
 		if overview_mode:
 			building_count += _build_building_overview_feature(cell_root, feature)
 		else:
@@ -250,8 +250,8 @@ func _load_cell(cell: Vector2i) -> void:
 		if overview_mode:
 			# A worship polygon can be present in both OSM layers. The building
 			# layer already rendered its exact footprint, so avoid a duplicate.
-			var feature_id := str(feature.get("id", ""))
-			if _is_polygon_worship_feature(feature) and building_feature_ids.has(feature_id):
+			var feature_key := _osm_feature_key(feature)
+			if _is_polygon_worship_feature(feature) and building_feature_ids.has(feature_key):
 				continue
 			amenity_count += _build_regional_poi_feature(cell_root, feature)
 		else:
@@ -328,6 +328,9 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 		instance.material_override = _building_material_for(kind)
 		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		instance.set_meta("osm_feature_id", feature_id)
+		instance.set_meta("system_osm_type", str(feature.get("osm_type", "")))
+		instance.set_meta("system_geometry_type", str(geometry.get("type", "")))
+		instance.set_meta("system_worship_geometry_imported", _worship_facility_type(tags) != "")
 		instance.set_meta("baghdad_building_type", kind)
 		instance.set_meta("system_architecture_class", kind)
 		var amenity_kind := str(tags.get("amenity", "")).to_lower()
@@ -355,6 +358,14 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
 		built += 1
 	return built
+
+
+func _osm_feature_key(feature: Dictionary) -> String:
+	var osm_type := str(feature.get("osm_type", "")).to_lower()
+	var feature_id := str(feature.get("id", ""))
+	if osm_type == "" or feature_id == "":
+		return ""
+	return osm_type + "/" + feature_id
 
 
 func _is_polygon_worship_feature(feature: Dictionary) -> bool:
