@@ -821,6 +821,14 @@ if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or a
 	if float(airship_path.get_meta("system_route_radius_m", 0.0)) != 3000.0 or float(airship_path.get_meta("system_cruise_altitude_m", 0.0)) != 190.0 or not is_equal_approx(float(airship_path.get_meta("system_cruise_speed_mps", 0.0)), 17.5):
 		_fail("Baghdad airship scenic route radius, altitude or cruise speed metadata failed.")
 		return
+	var airship_curve := airship_path.curve
+	if airship_curve == null or not airship_curve.get_point_position(0).is_equal_approx(airship_curve.get_point_position(airship_curve.get_point_count() - 1)) or not airship_curve.get_point_position(0).is_equal_approx(Vector3(0.0, 190.0, 0.0)):
+		_fail("Baghdad airship route does not pass through and return to its boarding station waypoint.")
+		return
+	var airship_station := air_transport.get_node("BaghdadAirshipPassengerStation")
+	if airship_station.get_node_or_null("AirshipMooringTower") == null or airship_station.get_node_or_null("AirshipPassengerElevator") == null or airship_station.get_node_or_null("AirshipPassengerBridge") == null:
+		_fail("Baghdad airship elevated boarding tower, elevator or passenger bridge is missing.")
+		return
 	var airship_node := air_transport.get_node("BaghdadAirshipCircularRoute/HunterInspiredPassengerAirshipRouteFollower/HunterInspiredBaghdadPassengerAirship")
 	if float(airship_node.get_meta("system_airship_length_m", 0.0)) != 90.0 or int(airship_node.get_meta("system_passenger_capacity_max", 0)) != 60 or int(airship_node.get_meta("system_visible_seat_count", 0)) != 60 or not bool(airship_node.get_meta("system_led_advertising", false)):
 		_fail("Baghdad passenger airship dimensions, capacity or illuminated advertising metadata failed.")
