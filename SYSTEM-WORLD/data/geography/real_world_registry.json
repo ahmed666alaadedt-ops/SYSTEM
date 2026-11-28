@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "2026-11-28.2",
+  "version": "2026-11-28.3",
   "coordinate_reference_system": "EPSG:4326",
   "coordinate_order": "latitude_longitude",
   "world_model": "real_earth",
@@ -184,6 +184,60 @@
             "palace exterior and grounds pending photo or authoritative site identification"
           ],
           "runtime_projection_allowed": false
+        },
+        "baghdad_republic_bridge": {
+          "name": {
+            "ar": "جسر الجمهورية",
+            "en": "Republic Bridge"
+          },
+          "type": "road_bridge",
+          "latitude": 33.32463,
+          "longitude": 44.40434,
+          "location": {
+            "ar": "الرصافة والكرخ، يعبر نهر دجلة",
+            "en": "Al-Rusafa and Al-Karkh, crossing the Tigris River"
+          },
+          "source_ids": {
+            "osm_way": 1077808833
+          },
+          "source_urls": [
+            "https://mapcarta.com/W1077808833",
+            "https://www.wikidata.org/wiki/Q35587674"
+          ],
+          "geometry_status": "coordinate_reference_verified; bridge_deck_piers_collision_and_approach_geometry_pending",
+          "visual_requirements": [
+            "full bridge deck spanning the Tigris",
+            "accurate piers and river clearance",
+            "road approaches aligned to both riverbanks",
+            "pedestrian edges and collision geometry"
+          ]
+        },
+        "baghdad_14_tamuz_bridge": {
+          "name": {
+            "ar": "جسر 14 تموز (الجسر المعلق)",
+            "en": "14th of July Suspension Bridge"
+          },
+          "type": "suspension_road_bridge",
+          "latitude": 33.29632,
+          "longitude": 44.39987,
+          "location": {
+            "ar": "الكرخ والرصافة، يعبر نهر دجلة",
+            "en": "Al-Karkh and Al-Rusafa, crossing the Tigris River"
+          },
+          "source_ids": {
+            "osm_way": 863346634
+          },
+          "source_urls": [
+            "https://mapcarta.com/W863346634",
+            "https://bridgemeister.com/bridge.php?bid=519"
+          ],
+          "geometry_status": "coordinate_reference_verified; cable_tower_deck_and_collision_geometry_pending",
+          "visual_requirements": [
+            "suspension bridge towers and main cables",
+            "suspended road deck with side walkways",
+            "river clearance and both bank approaches",
+            "collision geometry for deck and pedestrian edges"
+          ]
         }
       }
     }
