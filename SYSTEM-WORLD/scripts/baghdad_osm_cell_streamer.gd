@@ -364,7 +364,7 @@ func _is_polygon_worship_feature(feature: Dictionary) -> bool:
 		return false
 	var tags: Dictionary = feature.get("tags", {})
 	var building_kind := str(tags.get("building", "")).to_lower()
-	return building_kind in ["mosque", "church"] or str(tags.get("amenity", "")).to_lower() == "place_of_worship"
+	return building_kind in ["mosque", "church", "shrine"] or str(tags.get("amenity", "")).to_lower() == "place_of_worship"
 
 
 func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
@@ -402,10 +402,14 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 				display_name = "جامع أو مسجد"
 			"church":
 				display_name = "كنيسة"
+			"shrine":
+				display_name = "مزار أو مرقد"
 			"religious_tag_conflict":
 				display_name = "دار عبادة - تعارض في بيانات OSM"
-			_:
+			"place_of_worship":
 				display_name = "دار عبادة - النوع غير محدد"
+			_:
+				display_name = "مرفق ديني"
 	elif amenity in ["hospital", "clinic", "doctors", "pharmacy"] or healthcare != "":
 		facility_type = "healthcare"
 		display_name = "مرفق صحي"
@@ -1437,7 +1441,7 @@ func _building_kind(tags: Dictionary) -> String:
 	if kind in ["commercial", "office", "retail", "industrial"]:
 		return "commercial_building"
 	var worship_type := _worship_facility_type(tags)
-	if worship_type in ["mosque", "church"]:
+	if worship_type in ["mosque", "church", "shrine"]:
 		return worship_type
 	return "general_building"
 
@@ -1456,6 +1460,8 @@ func _worship_facility_type(tags: Dictionary) -> String:
 		return "mosque"
 	if building_kind == "church":
 		return "church"
+	if building_kind == "shrine":
+		return "shrine"
 	if amenity_kind == "place_of_worship":
 		return "place_of_worship"
 	return ""
