@@ -80,6 +80,7 @@ jobs:
           "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_facade_detail.gd > "$RUNNER_TEMP/baghdad-facade-detail.log" 2>&1
           godot_status=$?
           grep -E "Baghdad facade detail validation|SCRIPT ERROR|Parse Error|ERROR:|WARNING:" "$RUNNER_TEMP/baghdad-facade-detail.log" | tail -n 80 || true
+          grep -F "Baghdad facade detail validation passed:" "$RUNNER_TEMP/baghdad-facade-detail.log"
           if grep -E "SCRIPT ERROR|Parse Error" "$RUNNER_TEMP/baghdad-facade-detail.log"; then exit 1; fi
           exit "$godot_status"
 
