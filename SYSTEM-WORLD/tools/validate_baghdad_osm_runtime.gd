@@ -97,6 +97,19 @@ func _run_validation() -> void:
 		return
 	amenity_test_root.free()
 	print("Baghdad OSM amenity QA passed: Arabic name, category, interaction and accessibility metadata.")
+	var concave_building_ring := PackedVector2Array([
+		Vector2(0.0, 0.0), Vector2(10.0, 0.0), Vector2(10.0, 2.0),
+		Vector2(2.0, 2.0), Vector2(2.0, 10.0), Vector2(0.0, 10.0)
+	])
+	var concave_anchor: Vector2 = streamer._polygon_anchor_point(concave_building_ring)
+	if not Geometry2D.is_point_in_polygon(concave_anchor, concave_building_ring):
+		_fail("Concave Baghdad building anchor was placed outside its mapped footprint.")
+		return
+	var arithmetic_vertex_mean := Vector2(4.0, 4.0)
+	if Geometry2D.is_point_in_polygon(arithmetic_vertex_mean, concave_building_ring):
+		_fail("Concave footprint regression fixture no longer detects the unsafe arithmetic vertex mean.")
+		return
+	print("Baghdad OSM concave-footprint anchor QA passed: discovery/approach positions remain inside the polygon.")
 	if not streamer.enabled:
 		_fail("Baghdad OSM cell pack did not enable.")
 		return
