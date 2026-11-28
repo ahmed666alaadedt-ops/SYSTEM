@@ -2091,7 +2091,15 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] Exact-head Godot validation must confirm the shader material, TIME-driven code and bank-foam mesh are present; real-device visual review remains required for reflections, transparency, current direction and mobile GPU cost.
 
 
-## Baghdad detailed public-service building classification — 28 November 2026
+## Baghdad source-tagged building roof detail — 28 November 2026
+
+- [x] Retain OSM roof:shape, roof:material, roof:colour, roof:height, roof:levels, roof:angle and roof:orientation tags in the metric-cell pack for future geometry decisions.
+- [x] Preserve mapped roof metadata on detailed building nodes; unknown and unsupported roof shapes are explicitly retained without inventing a roof form.
+- [x] Generate a dedicated triangulated pyramidal roof mesh only when OSM explicitly tags roof:shape=pyramidal, using the real footprint interior anchor and mapped roof height/material/colour when available.
+- [x] Add a synthetic runtime validator for pyramidal roof mesh validity and source metadata.
+- [ ] Exact-head Godot/Android CI and visual inspection on real irregular OSM footprints remain required; gabled/hipped roof meshes are not yet generated.
+
+
 
 - [x] Distinguish mapped school/college/university/kindergarten, hospital/clinic/healthcare, civic/fire/police/government and hotel/hostel footprints in detailed OSM building generation.
 - [x] Give these source-tagged classes Arabic fallback names and separate facade material families while preserving worship classification precedence.
