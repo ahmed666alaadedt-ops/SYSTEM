@@ -31,6 +31,7 @@ func _ready() -> void:
 	_build_baghdad_airship()
 	_register_existing_city_airports()
 	_build_bidirectional_city_routes()
+	_register_airship_loop_route()
 	print("SYSTEM WORLD: air transport initialized. City terminals: ", city_airports.size(), " routes: ", routes.size(), " airship capacity: ", AIRSHIP_MIN_CAPACITY, "-", AIRSHIP_MAX_CAPACITY)
 
 
@@ -48,7 +49,7 @@ func _register_existing_city_airports() -> void:
 	for city_name in anchors:
 		var anchor: Vector2 = anchors[city_name]
 		var terminal_position := Vector3(anchor.x + CITY_AIRPORT_OFFSET.x, 0.0, anchor.y + CITY_AIRPORT_OFFSET.y)
-		register_city_airport(_city_id(str(city_name)), str(city_name), terminal_position, "prototype_world_city_anchor" if str(city_name) != "Baghdad" else "baghdad_world_anchor")
+		register_city_airport(_city_id(str(city_name)), str(city_name), terminal_position, "prototype_layout_offset" if str(city_name) != "Baghdad" else "authored_gameplay_offset_from_wgs84_city_anchor")
 
 
 func _city_id(city_name: String) -> String:
@@ -168,6 +169,8 @@ func complete_ticket_travel(ticket_id: String, player_id: String) -> Dictionary:
 		return {}
 	var airport: Dictionary = city_airports[destination_id]
 	ticket.status = "arrived"
+	var route_id := str(ticket.route_id)
+	route_ticket_counts[route_id] = maxi(0, int(route_ticket_counts.get(route_id, 0)) - int(ticket.passenger_count))
 	ticket.destination_city_id = destination_id
 	ticket.arrival_position = airport.position
 	tickets[ticket_id] = ticket
@@ -201,6 +204,17 @@ func restore_travel_state(state: Dictionary) -> bool:
 	route_ticket_counts = state.route_ticket_counts.duplicate(true)
 	return true
 
+
+func _register_airship_loop_route() -> void:
+	routes["baghdad_airship_loop"] = {
+		"route_id": "baghdad_airship_loop",
+		"origin_city_id": "baghdad",
+		"destination_city_id": "baghdad",
+		"transport_type": "fictional_airship",
+		"duration_minutes": 18,
+		"capacity": AIRSHIP_MAX_CAPACITY,
+		"enabled": true
+	}
 
 func _build_civil_terminal(parent: Node3D, city_name: String) -> void:
 	var shell_material := _material(Color(0.58, 0.66, 0.72), 0.34, 0.42)
