@@ -454,7 +454,7 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
 	var geometry_type := str(geometry.get("type", ""))
 	var aeroway_kind := str(tags.get("aeroway", "")).to_lower()
-	if geometry_type == "LineString" and aeroway_kind in ["runway", "taxiway"]:
+	if geometry_type in ["LineString", "MultiLineString"] and aeroway_kind in ["runway", "taxiway"]
 		var runway_width := 42.0 if aeroway_kind == "runway" else 18.0
 		return _build_line_feature(parent, feature, runway_width, bridge_material, 0.12, "OSMCivilAirport_" + aeroway_kind)
 	if geometry_type in ["Polygon", "MultiPolygon"] and aeroway_kind == "apron":
@@ -645,7 +645,8 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 			building.set_meta("system_source_name_ar", str(tags.get("name:ar", "")))
 			building.set_meta("system_religion", str(tags.get("religion", "")))
 			building.set_meta("system_denomination", str(tags.get("denomination", "")))
-			building.set_meta("system_worship_classification", _worship_facility_type(tags))
+			building.set_meta("system_worship_classification", _game_worship_presentation_type(tags))
+			building.set_meta("system_source_worship_classification", _worship_facility_type(tags))
 		else:
 			building.set_meta("system_sensitive_site_neutralized", true)
 		building.set_meta("system_geometry_type", str(geometry.get("type", "")))
@@ -676,7 +677,8 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 			body.set_meta("system_source_name_ar", str(tags.get("name:ar", "")))
 			body.set_meta("system_religion", str(tags.get("religion", "")))
 			body.set_meta("system_denomination", str(tags.get("denomination", "")))
-			body.set_meta("system_worship_classification", _worship_facility_type(tags))
+			body.set_meta("system_worship_classification", _game_worship_presentation_type(tags))
+			body.set_meta("system_source_worship_classification", _worship_facility_type(tags))
 			body.set_meta("system_geometry_type", str(geometry.get("type", "")))
 		else:
 			body.set_meta("system_sensitive_site_neutralized", true)
