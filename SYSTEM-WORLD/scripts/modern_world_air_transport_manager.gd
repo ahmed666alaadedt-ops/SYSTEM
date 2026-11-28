@@ -454,6 +454,7 @@ func _build_baghdad_airship() -> void:
 	balloon.rotation.z = PI * 0.5
 	balloon.position.y = 14
 	balloon.material_override = balloon_material
+	balloon.visibility_range_end = 5000.0
 	airship.add_child(balloon)
 	_add_box(airship, "45mPassengerCabin", Vector3(0, -8, 0), Vector3(AIRSHIP_CABIN_LENGTH_M, 6, 10), cabin_material)
 	_add_box(airship, "CabinWindowBandLeft", Vector3(0, -6.5, 5.15), Vector3(38, 1.5, 0.25), window_material)
@@ -503,6 +504,7 @@ func _add_box(parent: Node3D, node_name: String, position: Vector3, size: Vector
 	instance.position = position
 	instance.material_override = material
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	instance.visibility_range_end = 2500.0
 	parent.add_child(instance)
 	return instance
 
@@ -516,6 +518,7 @@ func _add_label(parent: Node3D, node_name: String, label_text: String, position:
 	label.font_size = 38
 	label.modulate = color
 	label.outline_size = 6
+	label.visibility_range_end = 2500.0
 	parent.add_child(label)
 	return label
 
