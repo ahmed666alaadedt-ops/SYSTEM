@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "region": "Baghdad Municipality, Iraq",
+  "boundary_relation": 5638803,
+  "source": "OpenStreetMap contributors; BBBike.org Iraq PBF extract",
+  "source_snapshot_utc": "2026-11-26T23:59:51Z",
+  "license": "ODbL-1.0",
+  "status": "candidate_data_audit_not_ground_truth",
+  "deduplication": "Unique OSM objects keyed by @type + @id across clipped amenities and buildings layers; repeated LineString/Polygon representations of the same closed way counted once.",
+  "totals": {
+    "unique_religious_or_religion_tagged_objects": 585,
+    "mosques": 240,
+    "churches": 71,
+    "other_or_unspecified_place_of_worship": 257,
+    "monasteries": 4,
+    "religion_tagged_non_worship_features": 11,
+    "conflicting_religion_vs_building_tags": 2
+  },
+  "geometry_notes": {
+    "source_layers": [
+      "amenities.geojson",
+      "buildings.geojson"
+    ],
+    "source_feature_counts": {
+      "amenities": 17054,
+      "buildings": 41694
+    },
+    "duplicate_geometry_note": "Closed OSM ways can appear as both LineString and Polygon in the amenities export; the audit deduplicates by OSM object identity.",
+    "point_and_polygon_import_required": true,
+    "visual_completion_verified": false
+  },
+  "tag_conflicts": [
+    {
+      "osm_type": "way",
+      "osm_id": 235576428,
+      "name": "جامع الوهاب",
+      "religion": "muslim",
+      "building": "church",
+      "review_required": true
+    },
+    {
+      "osm_type": "way",
+      "osm_id": 237172430,
+      "religion": "muslim",
+      "building": "church",
+      "review_required": true
+    }
+  ],
+  "limitations": [
+    "Counts describe the downloaded OSM snapshot only, not a complete census of all real-world Baghdad places of worship.",
+    "Some place_of_worship objects have no religion tag and are intentionally kept in an unspecified category.",
+    "Regional 1 km geometry is exterior-only; it does not prove interiors, collision, signage, or architectural fidelity.",
+    "The 200 m detailed pack and regional overview must be validated independently."
+  ]
+}
