@@ -28,7 +28,8 @@ AREA_LAYERS = {"landuse", "natural-water", "wetlands"}
 KEEP_TAGS = {
     "name", "name:en", "name:ar", "ref", "highway", "building",
     "building:levels", "building:material", "height", "min_height",
-    "roof:shape", "roof:material", "bridge", "waterway", "natural",
+    "roof:shape", "roof:material", "roof:colour", "roof:height",
+    "roof:levels", "roof:angle", "roof:orientation", "bridge", "waterway", "natural",
     "landuse", "amenity", "railway", "surface", "maxspeed", "lanes",
     "oneway", "access", "service", "tunnel", "layer", "leisure",
     "shop", "tourism", "historic", "man_made", "water", "place",
