@@ -77,6 +77,26 @@ func _run_validation() -> void:
 			return
 	entrance_test_root.free()
 	print("Baghdad OSM entrance association QA passed: nearest footprint, private access and ambiguous matches are distinguished.")
+	var amenity_test_root := Node3D.new()
+	root.add_child(amenity_test_root)
+	var mapped_shop := {
+		"id": "runtime_amenity_test",
+		"geometry": {"type": "Point", "coordinates": [12.0, 15.0]},
+		"tags": {"shop": "clothes", "name:ar": "متجر ملابس تجريبي", "wheelchair": "yes", "opening_hours": "Mo-Sa 09:00-21:00"}
+	}
+	if int(streamer._build_amenity_feature(amenity_test_root, mapped_shop)) != 1:
+		_fail("Mapped OSM shop amenity did not build.")
+		return
+	var amenity_node := amenity_test_root.get_node_or_null("OSMAmenity_runtime_amenity_test") as Node3D
+	if amenity_node == null or str(amenity_node.get_meta("system_display_name", "")) != "متجر ملابس تجريبي" or str(amenity_node.get_meta("system_amenity_type", "")) != "clothes":
+		_fail("Mapped OSM amenity did not preserve its Arabic name and category.")
+		return
+	var amenity_interaction := amenity_node.get_node_or_null("MappedAmenityInteraction") as StaticBody3D
+	if amenity_interaction == null or not amenity_interaction.is_in_group("system_interactable") or bool(amenity_interaction.get_meta("system_can_enter", true)) or str(amenity_interaction.get_meta("system_wheelchair_tag", "")) != "yes":
+		_fail("Mapped OSM amenity interaction/accessibility metadata is missing or incorrectly grants interior access.")
+		return
+	amenity_test_root.free()
+	print("Baghdad OSM amenity QA passed: Arabic name, category, interaction and accessibility metadata.")
 	if not streamer.enabled:
 		_fail("Baghdad OSM cell pack did not enable.")
 		return
