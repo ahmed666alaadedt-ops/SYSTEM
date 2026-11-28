@@ -106,8 +106,42 @@ func _run() -> void:
 		_fail("Regional overview must preserve the mapped OSM building footprint extrusion.")
 		return
 
+	# Luxury residential footprints must get a distinct road-facing entry treatment
+	# in the 200 m close-range renderer, not only a different material tint.
+	var villa_feature := {
+		"id": "facade_validation_villa_001",
+		"geometry": {
+			"type": "Polygon",
+			"coordinates": [[[40.0, 0.0], [60.0, 0.0], [60.0, 20.0], [40.0, 20.0], [40.0, 0.0]]]
+		},
+		"tags": {
+			"building": "villa",
+			"height": "9",
+			"name:ar": "فيلا اختبار الواجهة"
+		}
+	}
+	var nearby_road := [{
+		"id": "facade_validation_road_001",
+		"geometry": {"type": "LineString", "coordinates": [[20.0, 10.0], [35.0, 10.0]]},
+		"tags": {"highway": "residential"}
+	}]
+	var villa_built := int(streamer.call("_build_building_feature", streamer, villa_feature, nearby_road))
+	if villa_built != 1:
+		_fail("Synthetic Baghdad villa footprint did not build.")
+		return
+	var villa_entrance := streamer.get_node_or_null("LuxuryResidentialEntrance_facade_validation_villa_001") as Node3D
+	if villa_entrance == null or str(villa_entrance.get_meta("system_luxury_building_kind", "")) != "villa":
+		_fail("Close-range villa renderer did not create its distinct road-facing entrance treatment.")
+		return
+	if streamer.get_node_or_null("LuxuryEntryColumn_facade_validation_villa_001_L") == null or streamer.get_node_or_null("LuxuryEntryColumn_facade_validation_villa_001_R") == null:
+		_fail("Villa entrance is missing its paired architectural columns.")
+		return
+	if streamer.get_node_or_null("LuxuryEntryLintel_facade_validation_villa_001") == null or streamer.get_node_or_null("LuxuryEntryCanopy_facade_validation_villa_001") == null:
+		_fail("Villa entrance is missing its lintel or covered entry canopy.")
+		return
+
 	print("Baghdad facade detail validation passed: five-floor apartment generated ", window_count,
-		" instanced windows across five vertical facade bands in one cell-level MultiMesh; regional 1 km overview remains extrusion-only; per-building window budget <= 32.")
+		" instanced windows across five vertical facade bands; regional 1 km overview remains extrusion-only; close-range villa includes a road-facing columned entry canopy; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
 	quit(0)
 
