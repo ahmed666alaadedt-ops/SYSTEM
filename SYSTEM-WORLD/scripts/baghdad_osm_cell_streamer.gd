@@ -348,6 +348,7 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 			var aeroway_kind := str(tags.get("aeroway", "")).to_lower()
 			var public_transport_kind := str(tags.get("public_transport", "")).to_lower()
 			var railway_kind := str(tags.get("railway", "")).to_lower()
+			var highway_kind := str(tags.get("highway", "")).to_lower()
 			if amenity_kind in ["hospital", "clinic", "doctors", "pharmacy"] or healthcare_kind != "":
 				facility_type = "healthcare"
 			elif amenity_kind in ["school", "university", "college", "kindergarten"] or str(tags.get("education", "")).to_lower() != "":
@@ -368,7 +369,7 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 				facility_type = "heritage"
 			elif leisure_kind != "":
 				facility_type = "leisure"
-			elif amenity_kind in ["bus_station", "bus_stop", "ferry_terminal", "parking"] or public_transport_kind in ["station", "platform", "stop_position"] or railway_kind in ["station", "halt", "tram_stop", "subway_entrance"] or aeroway_kind != "":
+			elif amenity_kind in ["bus_station", "bus_stop", "ferry_terminal", "parking", "taxi"] or public_transport_kind in ["station", "platform", "stop_position"] or railway_kind in ["station", "halt", "tram_stop", "subway_entrance"] or highway_kind in ["bus_stop", "platform"] or aeroway_kind != "":
 				facility_type = "transport"
 		if facility_type != "":
 			instance.set_meta("system_facility_type", facility_type)
@@ -446,6 +447,7 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	var aeroway := str(tags.get("aeroway", "")).to_lower()
 	var public_transport := str(tags.get("public_transport", "")).to_lower()
 	var railway := str(tags.get("railway", "")).to_lower()
+	var highway := str(tags.get("highway", "")).to_lower()
 	var facility_type := "public_service"
 	var display_name := "مرفق خدمي"
 	var worship_type := _worship_facility_type(tags)
@@ -496,7 +498,7 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	elif leisure != "":
 		facility_type = "leisure"
 		display_name = "مرفق ترفيهي أو حديقة"
-	elif amenity in ["bus_station", "bus_stop", "ferry_terminal", "parking"] or public_transport in ["station", "platform", "stop_position"] or railway in ["station", "halt", "tram_stop", "subway_entrance"]:
+	elif amenity in ["bus_station", "bus_stop", "ferry_terminal", "parking", "taxi"] or public_transport in ["station", "platform", "stop_position"] or railway in ["station", "halt", "tram_stop", "subway_entrance"] or highway in ["bus_stop", "platform"]:
 		facility_type = "transport"
 		display_name = "مرفق نقل عام"
 	elif aeroway != "":
