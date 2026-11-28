@@ -883,10 +883,20 @@ if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or a
 	if str(air_transport.get_ticket(qa_ticket_id).get("status", "")) != "in_transit" or not air_transport.complete_ticket_travel(qa_ticket_id, "qa_player").is_empty():
 		_fail("Passenger route did not enforce its scheduled in-transit duration.")
 		return
+	var qa_player := CharacterBody3D.new()
+	qa_player.name = "QA_AirPassenger"
+	qa_player.add_to_group("system_player")
+	qa_player.set_meta("system_player_id", "qa_player")
+	qa_player.global_position = Vector3.ZERO
+	qa_player.velocity = Vector3(12.0, 0.0, 0.0)
+	root.add_child(qa_player)
 	var arrival: Dictionary = air_transport.complete_ticket_travel(qa_ticket_id, "qa_player", int(Time.get_unix_time_from_system()) + 86400)
-	if arrival.is_empty() or str(arrival.get("destination_city_name", "")) != "Paris QA" or str(air_transport.get_ticket(qa_ticket_id).get("status", "")) != "arrived":
-		_fail("Passenger city-to-city arrival resolution failed.")
+	var expected_arrival_position: Vector3 = air_transport.city_airports["qa_paris"].get("position") + Vector3(0.0, 2.0, 0.0)
+	if arrival.is_empty() or str(arrival.get("destination_city_name", "")) != "Paris QA" or str(air_transport.get_ticket(qa_ticket_id).get("status", "")) != "arrived" or not bool(air_transport.get_ticket(qa_ticket_id).get("player_teleported", false)) or not qa_player.global_position.is_equal_approx(expected_arrival_position) or qa_player.velocity != Vector3.ZERO:
+		_fail("Passenger city-to-city arrival did not teleport the player to the destination terminal and stop movement.")
+		qa_player.queue_free()
 		return
+	qa_player.queue_free()
 	var travel_state: Dictionary = air_transport.export_travel_state()
 	if not air_transport.restore_travel_state(travel_state):
 		_fail("Passenger travel state save/restore contract failed.")
