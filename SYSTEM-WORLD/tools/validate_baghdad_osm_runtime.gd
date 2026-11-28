@@ -834,7 +834,7 @@ if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or a
 		_fail("Baghdad airship route does not pass through and return to its boarding station waypoint.")
 		return
 	var airship_station := air_transport.get_node("BaghdadAirshipPassengerStation")
-	if airship_station.get_node_or_null("AirshipMooringTower") == null or airship_station.get_node_or_null("AirshipPassengerElevator") == null or airship_station.get_node_or_null("AirshipPassengerBridge") == null:
+	if airship_station.get_node_or_null("AirshipMooringTower") == null or airship_station.get_node_or_null("AirshipPassengerElevator") == null or airship_station.get_node_or_null("AirshipPassengerBridge") == null or airship_station.get_node_or_null("AirshipMooringTowerCollision") == null or airship_station.get_node_or_null("AirshipPassengerBridgeCollision") == null:
 		_fail("Baghdad airship elevated boarding tower, elevator or passenger bridge is missing.")
 		return
 	var airship_node := air_transport.get_node("BaghdadAirshipCircularRoute/HunterInspiredPassengerAirshipRouteFollower/HunterInspiredBaghdadPassengerAirship")
