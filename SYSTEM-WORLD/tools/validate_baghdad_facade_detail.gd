@@ -36,6 +36,11 @@ func _run() -> void:
 
 	# Inspect the generator's source transforms before they are packed into MultiMesh.
 	# This avoids depending on renderer-side MultiMesh readback in headless CI.
+	var generated_balconies: Array = streamer.get_meta("system_balcony_slab_transforms", [])
+	var generated_balcony_rails: Array = streamer.get_meta("system_balcony_rail_transforms", [])
+	if generated_balconies.is_empty() or generated_balconies.size() != generated_balcony_rails.size() or generated_balconies.size() > 16:
+		_fail("Five-floor apartment must generate paired mobile-safe balcony slabs and rails.")
+		return
 	var generated_architecture: Array = streamer.get_meta("system_facade_architecture_transforms", [])
 	if generated_architecture.is_empty() or generated_architecture.size() > 12:
 		_fail("Modern apartment facade must generate 1..12 lightweight architectural fins/cornices.")
@@ -70,7 +75,19 @@ func _run() -> void:
 			return
 
 	streamer.call("_flush_facade_window_multimesh", streamer)
+	streamer.call("_flush_apartment_balcony_multimeshes", streamer)
 	streamer.call("_flush_facade_architecture_multimesh", streamer)
+	var balcony_slabs := streamer.get_node_or_null("BaghdadCellApartmentBalconySlabs") as MultiMeshInstance3D
+	var balcony_rails := streamer.get_node_or_null("BaghdadCellApartmentBalconyRails") as MultiMeshInstance3D
+	if balcony_slabs == null or balcony_rails == null or balcony_slabs.multimesh == null or balcony_rails.multimesh == null:
+		_fail("Apartment facade balcony slab/rail MultiMeshes are missing.")
+		return
+	if balcony_slabs.multimesh.instance_count != generated_balconies.size() or balcony_rails.multimesh.instance_count != generated_balcony_rails.size():
+		_fail("Apartment facade balcony MultiMesh counts do not match generated transforms.")
+		return
+	if str(balcony_slabs.get_meta("system_facade_detail_type", "")) != "apartment_balcony_slabs" or str(balcony_rails.get_meta("system_facade_detail_type", "")) != "apartment_balcony_rails":
+		_fail("Apartment facade balcony resources are missing their distinct detail classifications.")
+		return
 	var building := streamer.get_node_or_null("OSMBuilding_apartment_block_facade_validation_apartment_001") as MeshInstance3D
 	var windows := streamer.get_node_or_null("BaghdadCellFacadeWindows") as MultiMeshInstance3D
 	if building == null or windows == null or windows.multimesh == null:
