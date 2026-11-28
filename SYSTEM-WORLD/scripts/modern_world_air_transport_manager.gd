@@ -92,6 +92,8 @@ func register_city_airport(city_id: String, city_name: String, world_position: V
 	_build_civil_terminal(airport_root, city_name)
 	_build_runway_and_apron(airport_root)
 	_build_parked_passenger_aircraft(airport_root)
+	if city_id != "baghdad":
+		_build_city_airship_gate(airport_root, city_id, city_name)
 	city_airports[city_id] = {
 		"city_id": city_id,
 		"city_name": city_name,
@@ -439,6 +441,46 @@ func _build_runway_and_apron(parent: Node3D) -> void:
 	for index in range(8):
 		var z := -165.0 - float(index) * 23.0
 		_add_box(parent, "ApronTaxiLine_%02d" % index, Vector3(0, 0.28, z), Vector3(1.2, 0.04, 9), marking)
+
+
+
+func _build_city_airship_gate(parent: Node3D, city_id: String, city_name: String) -> void:
+	var gate := Node3D.new()
+	gate.name = "CityAirshipPassengerGate"
+	gate.position = Vector3(-70, 0, 0)
+	gate.set_meta("system_transport_type", "fictional_airship")
+	gate.set_meta("system_transport_city_id", city_id)
+	gate.set_meta("system_transport_city_name", city_name)
+	gate.set_meta("system_airship_gate_capacity", AIRSHIP_MAX_CAPACITY)
+	parent.add_child(gate)
+	var platform_material := _material(Color(0.28, 0.34, 0.4), 0.52, 0.38)
+	var glow := _emissive_material(Color(0.18, 0.72, 1.0))
+	_add_box(gate, "CityAirshipGatePlatform", Vector3(0, 1, 0), Vector3(38, 2, 30), platform_material)
+	_add_box_collision(gate, "CityAirshipGatePlatformCollision", Vector3(0, 1, 0), Vector3(38, 2, 30))
+	_add_box(gate, "CityAirshipMooringTower", Vector3(-17, 95, 0), Vector3(7, 190, 7), platform_material)
+	_add_box_collision(gate, "CityAirshipMooringTowerCollision", Vector3(-17, 95, 0), Vector3(7, 190, 7))
+	_add_box(gate, "CityAirshipElevatorCabin", Vector3(-17, 92, 0), Vector3(4.5, 12, 4.5), glow)
+	_add_box(gate, "CityAirshipPassengerBridge", Vector3(0, 180, 0), Vector3(36, 1.8, 7), glow)
+	_add_box_collision(gate, "CityAirshipPassengerBridgeCollision", Vector3(0, 180, 0), Vector3(36, 1.8, 7))
+	_add_label(gate, "CityAirshipGateSign", city_name.to_upper() + " AIRSHIP GATE", Vector3(0, 8, 16), Color(0.2, 0.86, 1.0))
+	var interaction := Area3D.new()
+	interaction.name = "CityAirshipTicketAndBoardingInteraction"
+	interaction.add_to_group("system_interactable")
+	var interaction_shape := CollisionShape3D.new()
+	var interaction_box := BoxShape3D.new()
+	interaction_box.size = Vector3(34, 6, 26)
+	interaction_shape.shape = interaction_box
+	interaction.add_child(interaction_shape)
+	interaction.set_meta("system_interaction_prompt", "شراء تذكرة المنطاد والصعود")
+	interaction.set_meta("system_transport_type", "fictional_airship")
+	interaction.set_meta("system_transport_city_id", city_id)
+	gate.add_child(interaction)
+	var airship_spawn := Marker3D.new()
+	airship_spawn.name = "AirshipArrivalAndDepartureSpawn"
+	airship_spawn.position = Vector3(0, 190, 0)
+	airship_spawn.set_meta("system_airship_spawn_role", "intercity_airship_docking")
+	gate.add_child(airship_spawn)
+	gate.set_meta("system_boarding_flow", ["ticket_validation", "ground_lounge", "elevator", "elevated_bridge", "airship_cabin"])
 
 
 func _build_baghdad_airship_station() -> void:
