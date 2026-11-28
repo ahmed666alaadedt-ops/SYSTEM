@@ -251,7 +251,9 @@ func _load_cell(cell: Vector2i) -> void:
 			# A worship polygon can be present in both OSM layers. The building
 			# layer already rendered its exact footprint, so avoid a duplicate.
 			var feature_key := _osm_feature_key(feature)
-			if _is_polygon_worship_feature(feature) and building_feature_ids.has(feature_key):
+			var amenity_geometry: Dictionary = feature.get("geometry", {})
+			var amenity_geometry_type := str(amenity_geometry.get("type", ""))
+			if feature_key != "" and building_feature_ids.has(feature_key) and amenity_geometry_type in ["Polygon", "MultiPolygon"]:
 				continue
 			amenity_count += _build_regional_poi_feature(cell_root, feature)
 		else:
@@ -411,7 +413,13 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	var tags: Dictionary = feature.get("tags", {})
 	var amenity := str(tags.get("amenity", "")).to_lower()
 	var shop := str(tags.get("shop", "")).to_lower()
+	var tourism := str(tags.get("tourism", "")).to_lower()
+	var historic := str(tags.get("historic", "")).to_lower()
+	var leisure := str(tags.get("leisure", "")).to_lower()
 	var healthcare := str(tags.get("healthcare", "")).to_lower()
+	var craft := str(tags.get("craft", "")).to_lower()
+	var office := str(tags.get("office", "")).to_lower()
+	var aeroway := str(tags.get("aeroway", "")).to_lower()
 	var facility_type := "public_service"
 	var display_name := "مرفق خدمي"
 	var worship_type := _worship_facility_type(tags)
@@ -447,9 +455,21 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	elif amenity in ["school", "university", "college", "kindergarten"]:
 		facility_type = "education"
 		display_name = "مؤسسة تعليمية"
-	elif amenity in ["fire_station", "post_office", "bank", "townhall", "library"]:
+	elif amenity in ["fire_station", "post_office", "bank", "townhall", "library"] or office != "" or craft != "":
 		facility_type = "civic"
 		display_name = "مرفق عام"
+	elif tourism != "":
+		facility_type = "tourism"
+		display_name = "مرفق سياحي"
+	elif historic != "":
+		facility_type = "heritage"
+		display_name = "موقع تراثي"
+	elif leisure != "":
+		facility_type = "leisure"
+		display_name = "مرفق ترفيهي أو حديقة"
+	elif aeroway != "":
+		facility_type = "transport"
+		display_name = "مرفق طيران"
 	var custom_name := str(tags.get("name:ar", tags.get("name", ""))).strip_edges()
 	if custom_name != "":
 		display_name = custom_name
