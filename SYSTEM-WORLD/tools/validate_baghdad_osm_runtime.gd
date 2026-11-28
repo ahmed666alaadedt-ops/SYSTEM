@@ -1,6 +1,7 @@
 extends SceneTree
 
 const BAGHDAD_STREAMER = preload("res://scripts/baghdad_osm_cell_streamer.gd")
+const AIR_TRANSPORT = preload("res://scripts/modern_world_air_transport_manager.gd")
 const TERRAIN_MANAGER = preload("res://scripts/modern_continent_manager.gd")
 
 
@@ -674,6 +675,82 @@ func _run_validation() -> void:
 	service_building_root.free()
 	print("Baghdad public-service building footprint QA passed: schools, hospitals, fire stations, markets, transit stations and Arabic names.")
 	print("Baghdad citywide urban overview passed: buildings=", overview_buildings.size(), " POI markers=", poi_markers.size(), " resolution=1 km.")
+	# Game-only worship overrides preserve original OSM classification while
+	# presenting shrine landmarks as mosque architecture in the playable map.
+	var shrine_tags := {"building": "shrine", "name:ar": "اسم مرقد اختبار"}
+	if streamer._worship_facility_type(shrine_tags) != "shrine" or streamer._game_worship_presentation_type(shrine_tags) != "mosque" or streamer._game_building_kind(shrine_tags) != "mosque":
+		_fail("Baghdad shrine-to-mosque game presentation override failed or altered source classification.")
+		return
+	if not streamer._is_sensitive_state_site({"amenity": "police"}) or not streamer._is_sensitive_state_site({"military": "airfield"}) or not streamer._is_sensitive_state_site({"office": "government"}):
+		_fail("Sensitive state/security feature classifier missed a synthetic test category.")
+		return
+	var neutral_site_root := Node3D.new()
+	var neutral_site_feature := {
+		"id": "synthetic_sensitive_site_qa",
+		"osm_type": "way",
+		"geometry": {"type": "Polygon", "coordinates": [[[0.0, 0.0], [20.0, 0.0], [20.0, 16.0], [0.0, 16.0], [0.0, 0.0]]]},
+		"tags": {"building": "government", "office": "government", "name:ar": "اسم حساس للاختبار"}
+	}
+	if streamer._build_building_overview_feature(neutral_site_root, neutral_site_feature) != 1:
+		_fail("Sensitive synthetic building was not retained as a neutral urban shell.")
+		neutral_site_root.free()
+		return
+	var neutral_site_mesh := neutral_site_root.get_node_or_null("OSMOverviewBuilding_synthetic_sensitive_site_qa") as MeshInstance3D
+	if neutral_site_mesh == null or str(neutral_site_mesh.get_meta("system_display_name", "")) != "مبنى معماري" or neutral_site_mesh.has_meta("system_facility_type") or neutral_site_mesh.has_meta("system_osm_type"):
+		_fail("Sensitive synthetic building leaked its source function/name into player-facing overview metadata.")
+		neutral_site_root.free()
+		return
+	neutral_site_root.free()
+	var hidden_poi_root := Node3D.new()
+	var sensitive_poi := {"id": "synthetic_sensitive_poi_qa", "geometry": {"type": "Point", "coordinates": [0.0, 0.0]}, "tags": {"amenity": "police", "name": "Synthetic Sensitive POI"}}
+	if streamer._build_regional_poi_feature(hidden_poi_root, sensitive_poi) != 0 or not hidden_poi_root.get_children().is_empty():
+		_fail("Sensitive synthetic point POI was exposed on the regional map.")
+		hidden_poi_root.free()
+		return
+	hidden_poi_root.free()
+	print("Baghdad presentation/privacy QA passed: shrine game override preserves OSM source type; sensitive POIs are suppressed and sensitive footprints remain neutral shells.")
+
+	# The passenger air transport manager builds terminals and a circular
+	# Baghdad airship, and enforces ticket -> payment -> boarding -> arrival.
+	var air_transport = AIR_TRANSPORT.new()
+	root.add_child(air_transport)
+	if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or air_transport.get_node_or_null("BaghdadAirshipCircularRoute/HunterInspiredPassengerAirshipRouteFollower/HunterInspiredBaghdadPassengerAirship") == null:
+		_fail("Baghdad passenger airship station or moving route scene was not created.")
+		return
+	var airship_node := air_transport.get_node("BaghdadAirshipCircularRoute/HunterInspiredPassengerAirshipRouteFollower/HunterInspiredBaghdadPassengerAirship")
+	if float(airship_node.get_meta("system_airship_length_m", 0.0)) != 90.0 or int(airship_node.get_meta("system_passenger_capacity_max", 0)) != 60 or not bool(airship_node.get_meta("system_led_advertising", false)):
+		_fail("Baghdad passenger airship dimensions, capacity or illuminated advertising metadata failed.")
+		return
+	if not air_transport.register_city_airport("qa_baghdad", "Baghdad QA", Vector3.ZERO, "synthetic_test") or not air_transport.register_city_airport("qa_paris", "Paris QA", Vector3(12000.0, 0.0, 0.0), "synthetic_test"):
+		_fail("Synthetic civil city airports could not be registered.")
+		return
+	air_transport._register_route_pair("qa_baghdad", "qa_paris", "aircraft")
+	var qa_route_id := "qa_baghdad__qa_paris__aircraft"
+	if not air_transport.get_available_routes("qa_baghdad").any(func(route): return str(route.route_id) == qa_route_id):
+		_fail("City-to-city passenger route was not exposed as an available route.")
+		return
+	if not air_transport.create_ticket("qa_player", qa_route_id, 181).is_empty():
+		_fail("Passenger ticket exceeded the configured aircraft capacity.")
+		return
+	var qa_ticket: Dictionary = air_transport.create_ticket("qa_player", qa_route_id, 2)
+	var qa_ticket_id := str(qa_ticket.get("ticket_id", ""))
+	if qa_ticket_id.is_empty() or str(qa_ticket.get("status", "")) != "pending_payment" or air_transport.board_ticket(qa_ticket_id, "qa_player"):
+		_fail("Passenger ticket did not enforce payment before boarding.")
+		return
+	if not air_transport.confirm_ticket_payment(qa_ticket_id, "synthetic-payment-receipt") or not air_transport.board_ticket(qa_ticket_id, "qa_player"):
+		_fail("Passenger payment confirmation or boarding transition failed.")
+		return
+	var arrival: Dictionary = air_transport.complete_ticket_travel(qa_ticket_id, "qa_player")
+	if arrival.is_empty() or str(arrival.get("destination_city_name", "")) != "Paris QA" or str(air_transport.get_ticket(qa_ticket_id).get("status", "")) != "arrived":
+		_fail("Passenger city-to-city arrival resolution failed.")
+		return
+	var travel_state: Dictionary = air_transport.export_travel_state()
+	if not air_transport.restore_travel_state(travel_state):
+		_fail("Passenger travel state save/restore contract failed.")
+		return
+	print("SYSTEM WORLD air transport QA passed: Baghdad airship, city airports, route availability, ticket capacity, payment gate, boarding, arrival and save/restore.")
+	air_transport.queue_free()
+
 	regional_urban.queue_free()
 	regional_roads.queue_free()
 	streamer.queue_free()
