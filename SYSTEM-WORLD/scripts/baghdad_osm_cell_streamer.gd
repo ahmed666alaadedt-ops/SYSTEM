@@ -357,12 +357,12 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 		if mesh == null:
 			continue
 		var instance := MeshInstance3D.new()
-		instance.name = "OSMOverviewBuilding_%s" % feature_id
+		instance.name = "OSMOverviewNeutralBuilding_%d" % parent.get_child_count() if sensitive_site else "OSMOverviewBuilding_%s" % feature_id
 		instance.mesh = mesh
 		instance.material_override = _building_material_for(kind)
 		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		instance.set_meta("osm_feature_id", feature_id)
 		if not sensitive_site:
+			instance.set_meta("osm_feature_id", feature_id)
 			instance.set_meta("system_osm_type", str(feature.get("osm_type", "")))
 			instance.set_meta("system_worship_geometry_imported", _worship_facility_type(tags) != "")
 		instance.set_meta("system_geometry_type", str(geometry.get("type", "")))
@@ -590,7 +590,8 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		kind = "general_building"
 	var geometry_type := str(geometry.get("type", ""))
 	if geometry_type == "Point":
-		_add_point_marker(parent, geometry.get("coordinates", []), amenity_material, 0.8, "OSMBuildingPoint")
+		if not sensitive_site:
+			_add_point_marker(parent, geometry.get("coordinates", []), amenity_material, 0.8, "OSMBuildingPoint")
 		return 0
 	for polygon in _extract_polygons(geometry):
 		if polygon.size() < 4:
@@ -632,11 +633,12 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 			continue
 		var feature_id := str(feature.get("id", "unknown"))
 		var building := MeshInstance3D.new()
-		building.name = "OSMBuilding_%s_%s" % [kind, feature_id]
+		building.name = "OSMBuilding_Neutral_%d" % parent.get_child_count() if sensitive_site else "OSMBuilding_%s_%s" % [kind, feature_id]
 		building.mesh = mesh
 		building.material_override = _building_material_for(kind)
 		building.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-		building.set_meta("osm_feature_id", feature_id)
+		if not sensitive_site:
+			building.set_meta("osm_feature_id", feature_id)
 		building.set_meta("baghdad_building_type", kind)
 		building.set_meta("system_display_name", "مبنى معماري" if sensitive_site else _game_building_display_name(kind, tags))
 		if not sensitive_site:
@@ -652,9 +654,9 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		building.set_meta("system_geometry_type", str(geometry.get("type", "")))
 		var roof_shape := "flat" if sensitive_site else str(tags.get("roof:shape", "flat")).to_lower()
 		building.set_meta("system_roof_shape", roof_shape)
-		building.set_meta("system_roof_material", str(tags.get("roof:material", "")))
-		building.set_meta("system_roof_colour", str(tags.get("roof:colour", "")))
-		building.set_meta("system_roof_geometry_state", "source_tagged_pyramidal_mesh" if roof_shape == "pyramidal" else ("source_tagged_flat" if roof_shape == "flat" else "source_tagged_shape_retained_no_mesh"))
+		building.set_meta("system_roof_material", "" if sensitive_site else str(tags.get("roof:material", "")))
+		building.set_meta("system_roof_colour", "" if sensitive_site else str(tags.get("roof:colour", "")))
+		building.set_meta("system_roof_geometry_state", "neutral_flat_shell" if sensitive_site else ("source_tagged_pyramidal_mesh" if roof_shape == "pyramidal" else ("source_tagged_flat" if roof_shape == "flat" else "source_tagged_shape_retained_no_mesh")))
 		parent.add_child(building)
 		if roof_shape == "pyramidal":
 			_add_pyramidal_roof(parent, ring, height, feature_id, tags)
@@ -667,7 +669,7 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		building.set_meta("system_facade_window_count", facade_window_count)
 		building.set_meta("system_facade_window_sampling", "even_distribution_across_facades")
 		var body := StaticBody3D.new()
-		body.name = "OSMBuildingCollision_%s" % feature_id
+		body.name = "OSMBuildingCollision_Neutral_%d" % parent.get_child_count() if sensitive_site else "OSMBuildingCollision_%s" % feature_id
 		if not sensitive_site:
 			body.add_to_group("system_interactable")
 			body.set_meta("osm_feature_id", feature_id)
@@ -689,7 +691,8 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 			footprint_center.y
 		)
 		var estimated_floors := maxi(1, int(ceil(height / 3.2)))
-		body.set_meta("system_location_position", footprint_position)
+		if not sensitive_site:
+			body.set_meta("system_location_position", footprint_position)
 		body.set_meta("system_access_state", "neutral_exterior_shell" if sensitive_site else "exterior_only")
 		if not sensitive_site:
 			body.set_meta("system_building_height_m", height)
