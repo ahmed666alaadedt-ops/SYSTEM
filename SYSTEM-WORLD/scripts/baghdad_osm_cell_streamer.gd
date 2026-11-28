@@ -624,7 +624,14 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		building.set_meta("system_denomination", str(tags.get("denomination", "")))
 		building.set_meta("system_worship_classification", _worship_facility_type(tags))
 		building.set_meta("system_geometry_type", str(geometry.get("type", "")))
+		var roof_shape := str(tags.get("roof:shape", "flat")).to_lower()
+		building.set_meta("system_roof_shape", roof_shape)
+		building.set_meta("system_roof_material", str(tags.get("roof:material", "")))
+		building.set_meta("system_roof_colour", str(tags.get("roof:colour", "")))
+		building.set_meta("system_roof_geometry_state", "source_tagged_pyramidal_mesh" if roof_shape == "pyramidal" else ("source_tagged_flat" if roof_shape == "flat" else "source_tagged_shape_retained_no_mesh"))
 		parent.add_child(building)
+		if roof_shape == "pyramidal":
+			_add_pyramidal_roof(parent, ring, height, feature_id, tags)
 		var facade_window_count := _add_procedural_facade_windows(parent, ring, height, kind, feature_id)
 		var balcony_detail_count := _collect_apartment_balconies(parent, ring, height, kind, feature_id)
 		var architecture_detail_count := _collect_modern_facade_architecture(parent, ring, height, kind, feature_id)
@@ -677,6 +684,76 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		if kind in ["church", "mosque", "shrine", "monastery"]:
 			_add_polygon_worship_detail(parent, ring, height, kind, feature_id, tags)
 	return built
+
+
+func _add_pyramidal_roof(parent: Node3D, ring: PackedVector2Array, building_height: float, feature_id: String, tags: Dictionary) -> bool:
+	if ring.size() < 3:
+		return false
+	var anchor := _polygon_anchor_point(ring)
+	if not Geometry2D.is_point_in_polygon(anchor, ring):
+		return false
+	var roof_height := float(tags.get("roof:height", 0.0))
+	if roof_height <= 0.0:
+		var roof_levels := float(tags.get("roof:levels", 0.0))
+		var bounds := _polygon_bounds_size(ring)
+		roof_height = roof_levels * 2.5 if roof_levels > 0.0 else clampf(minf(bounds.x, bounds.y) * 0.16, 1.0, 4.5)
+	roof_height = clampf(roof_height, 0.6, 12.0)
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for index in range(ring.size()):
+		var p0 := ring[index]
+		var p1 := ring[(index + 1) % ring.size()]
+		var base0 := Vector3(p0.x, _terrain_height(p0) + building_height, p0.y)
+		var base1 := Vector3(p1.x, _terrain_height(p1) + building_height, p1.y)
+		var peak := Vector3(anchor.x, _terrain_height(anchor) + building_height + roof_height, anchor.y)
+		_add_triangle(surface, base0, peak, base1)
+	surface.generate_normals()
+	var mesh := _commit_surface_tool_if_valid(surface)
+	if mesh == null:
+		return false
+	var material := StandardMaterial3D.new()
+	material.roughness = 0.82
+	var mapped_colour := str(tags.get("roof:colour", "")).strip_edges()
+	if mapped_colour != "":
+		material.albedo_color = Color.from_string(mapped_colour, Color(0.55, 0.31, 0.20))
+	else:
+		var mapped_material := str(tags.get("roof:material", "")).to_lower()
+		match mapped_material:
+			"metal", "zinc", "copper":
+				material.albedo_color = Color(0.34, 0.39, 0.42)
+				material.metallic = 0.55
+			"thatch", "wood":
+				material.albedo_color = Color(0.43, 0.31, 0.19)
+			"tiles", "terracotta":
+				material.albedo_color = Color(0.55, 0.29, 0.20)
+			_:
+				material.albedo_color = Color(0.57, 0.53, 0.46)
+	var roof := MeshInstance3D.new()
+	roof.name = "OSMPyramidalRoof_%s" % feature_id
+	roof.mesh = mesh
+	roof.material_override = material
+	roof.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	roof.set_meta("system_roof_shape", "pyramidal")
+	roof.set_meta("system_roof_height_m", roof_height)
+	roof.set_meta("system_roof_material", str(tags.get("roof:material", "")))
+	roof.set_meta("system_roof_colour", mapped_colour)
+	parent.add_child(roof)
+	return true
+
+
+func _polygon_bounds_size(ring: PackedVector2Array) -> Vector2:
+	if ring.is_empty():
+		return Vector2.ZERO
+	var min_x := INF
+	var max_x := -INF
+	var min_y := INF
+	var max_y := -INF
+	for point in ring:
+		min_x = minf(min_x, point.x)
+		max_x = maxf(max_x, point.x)
+		min_y = minf(min_y, point.y)
+		max_y = maxf(max_y, point.y)
+	return Vector2(max_x - min_x, max_y - min_y)
 
 
 func _add_luxury_residential_entry_details(
