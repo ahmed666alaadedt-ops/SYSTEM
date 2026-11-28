@@ -104,7 +104,9 @@ func _register_route_pair(origin_id: String, destination_id: String, transport_t
 		return
 	var origin: Dictionary = city_airports[origin_id]
 	var destination: Dictionary = city_airports[destination_id]
-	var distance := origin.position.distance_to(destination.position)
+	var origin_position: Vector3 = origin.get("position", Vector3.ZERO)
+	var destination_position: Vector3 = destination.get("position", Vector3.ZERO)
+	var distance: float = origin_position.distance_to(destination_position)
 	var duration_minutes := maxi(5, int(ceil(distance / 230.0 / 60.0)))
 	var route_id := origin_id + "__" + destination_id + "__" + transport_type
 	var reverse_id := destination_id + "__" + origin_id + "__" + transport_type
