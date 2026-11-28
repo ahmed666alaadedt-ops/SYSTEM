@@ -24,10 +24,12 @@ def classify(tags: dict[str, object]) -> str | None:
     amenity = str(tags.get("amenity", "")).lower()
     religion = str(tags.get("religion", "")).lower()
     building = str(tags.get("building", "")).lower()
-    if amenity != "place_of_worship" and building not in {
+    if amenity not in {"place_of_worship", "monastery"} and building not in {
         "mosque", "church", "synagogue", "temple", "monastery", "shrine"
     }:
         return None
+    if amenity == "monastery" or building == "monastery":
+        return "monastery"
     if (religion in {"muslim", "islam"} and building == "church") or (
         religion in {"christian", "christianity"} and building == "mosque"
     ):
@@ -75,11 +77,14 @@ def main() -> None:
     conflicts = []
     raw_religions: Counter[str] = Counter()
     raw_place_of_worship = 0
+    raw_monastery = 0
     for (osm_type, osm_id), record in sorted(objects.items()):
         tags = record["tags"]
         if str(tags.get("amenity", "")).lower() == "place_of_worship":
             raw_place_of_worship += 1
             raw_religions[str(tags.get("religion", "")).lower() or "(missing)"] += 1
+        if str(tags.get("amenity", "")).lower() == "monastery":
+            raw_monastery += 1
         category = classify(tags)
         if category is None:
             continue
@@ -105,9 +110,11 @@ def main() -> None:
         "mosques": categories["mosque"],
         "churches": categories["church"],
         "shrines": categories["shrine"],
+        "monasteries": categories["monastery"],
         "other_or_unspecified": categories["other_or_unspecified"],
         "conflicting_tags": categories["conflict"],
         "raw_amenity_place_of_worship_objects": raw_place_of_worship,
+        "raw_amenity_monastery_objects": raw_monastery,
     }
     report = {
         "schema_version": "1.1",
