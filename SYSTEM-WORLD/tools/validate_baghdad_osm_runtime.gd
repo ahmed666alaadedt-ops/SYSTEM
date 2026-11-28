@@ -749,6 +749,34 @@ func _run_validation() -> void:
 		runway_root.free()
 		return
 	runway_root.free()
+	var terminal_root := Node3D.new()
+	var terminal_feature := {
+		"id": "synthetic_civil_terminal_qa",
+		"geometry": {"type": "Polygon", "coordinates": [[[20.0, 0.0], [42.0, 0.0], [42.0, 14.0], [20.0, 14.0], [20.0, 0.0]]]},
+		"tags": {"aeroway": "terminal"}
+	}
+	if streamer._build_regional_poi_feature(terminal_root, terminal_feature) != 1:
+		_fail("Public civil airport terminal footprint was not rendered.")
+		terminal_root.free()
+		return
+	var terminal_mesh := terminal_root.get_node_or_null("OSMOverviewBuilding_synthetic_civil_terminal_qa") as MeshInstance3D
+	if terminal_mesh == null or str(terminal_mesh.get_meta("system_facility_type", "")) != "transport" or str(terminal_mesh.get_meta("system_display_name", "")) != "صالة ركاب جوية":
+		_fail("Public civil airport terminal did not retain its passenger terminal type.")
+		terminal_root.free()
+		return
+	terminal_root.free()
+	var airport_marker_root := Node3D.new()
+	var airport_marker_feature := {"id": "synthetic_civil_aerodrome_qa", "geometry": {"type": "Point", "coordinates": [0.0, 0.0]}, "tags": {"aeroway": "aerodrome"}}
+	if streamer._build_regional_poi_feature(airport_marker_root, airport_marker_feature) != 1:
+		_fail("Public civil aerodrome POI marker was not rendered.")
+		airport_marker_root.free()
+		return
+	var airport_marker := airport_marker_root.get_node_or_null("OSMRegionalPOI_transport_synthetic_civil_aerodrome_qa")
+	if airport_marker == null or str(airport_marker.get_meta("system_display_name", "")) != "مطار مدني":
+		_fail("Public civil aerodrome POI was not labeled as a civil airport.")
+		airport_marker_root.free()
+		return
+	airport_marker_root.free()
 	var shrine_polygon_root := Node3D.new()
 	var shrine_polygon := {
 		"id": "synthetic_shrine_polygon_qa",
@@ -780,6 +808,11 @@ func _run_validation() -> void:
 		return
 	if not air_transport.register_city_airport("qa_baghdad", "Baghdad QA", Vector3.ZERO, "synthetic_test") or not air_transport.register_city_airport("qa_paris", "Paris QA", Vector3(12000.0, 0.0, 0.0), "synthetic_test"):
 		_fail("Synthetic civil city airports could not be registered.")
+		return
+	var qa_airport_data: Dictionary = air_transport.city_airports["qa_baghdad"]
+	var qa_airport: Node3D = qa_airport_data.get("terminal")
+	if qa_airport == null or qa_airport.get_node_or_null("PassengerTerminalMain") == null or qa_airport.get_node_or_null("CivilPassengerAircraftDisplay") == null or qa_airport.find_children("AirportPassengerSpawn_*", "Marker3D", true, false).size() != 16:
+		_fail("Civil airport terminal, parked aircraft or passenger spawn anchors were not authored.")
 		return
 	air_transport._register_route_pair("qa_baghdad", "qa_paris", "aircraft")
 	var airship_over_capacity := air_transport.create_ticket("qa_player", "baghdad_airship_loop", 61)
