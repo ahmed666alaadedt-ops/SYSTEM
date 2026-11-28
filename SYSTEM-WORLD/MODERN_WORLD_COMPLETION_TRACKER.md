@@ -2163,3 +2163,28 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] Keep the citywide multi-million lighting plan based primarily on emissive/instanced fixtures, baked/static contribution and distance/region LOD; reserve real dynamic lights for nearby gameplay-relevant sources.
 - [ ] Report separately: authored/placed visual fixtures, active emissive instances, dynamic Light3D nodes, and tested Android performance. A target count is not an implementation or a verified frame-rate result.
 - [ ] Physical Android night-scene review, readability, visual density, glare control, performance and memory validation remain outstanding until tested on a device.
+
+## Baghdad worship display overrides, neutral civic architecture and inter-city aviation — 28 November 2026
+
+### Worship presentation override
+- [ ] In the game presentation layer only, render mapped shrine/mausoleum landmarks as mosque-style game architecture as requested by the user. Preserve original OSM tags, source IDs, names and audit classification in source data; do not rewrite the source dataset or claim the real-world site is a mosque.
+- [ ] Apply the override consistently to polygon footprints and point-only landmarks in both the close-range 200 m streamer and 1 km regional overview. Keep source provenance available to QA, while player-facing labels and silhouette follow the approved game override.
+- [ ] Add runtime regression fixtures for polygon and point shrine records; assert mosque-style presentation and unchanged source metadata.
+
+### Sensitive state/security sites
+- [ ] Suppress sensitive state/security/military facility labels, POI markers, functional classifications, interaction prompts and facility-specific details from player-facing map output.
+- [ ] Where a building footprint must remain for urban continuity, render only a generic neutral architectural shell with no identifying name, category, marker, interaction or inferred function. Do not relabel a sensitive site as a police station, airport or military facility.
+- [ ] Keep ordinary publicly documented civilian airports and public transport facilities distinct from suppressed sensitive sites; never expose security layouts, restricted access points or operational details.
+- [ ] Add synthetic privacy regression fixtures that verify sensitive tags do not leak into visible labels, POI markers, interactions or exported player-facing metadata, without logging or publishing real sensitive site locations.
+
+### Civil airports and city-to-city passenger transport
+- [ ] Add a civil aviation layer to the Baghdad geospatial import and runtime: retain source-tagged public aerodromes, terminals, runways and heliports only where public OSM data explicitly maps them; distinguish polygon footprints from point POIs and do not infer missing facilities.
+- [ ] Build explorable passenger terminals with ticketing/check-in, departure boards, boarding gates, waiting areas, baggage/arrival flow and NPC passenger activity; separate authored gameplay interiors from the factual OSM exterior footprint.
+- [ ] Add a playable inter-city route network connecting supported SYSTEM WORLD cities. Player chooses a destination, purchases/uses a ticket, boards, experiences departure and arrival, and appears at the destination airport/terminal. Route endpoints and travel duration must come from the authored world transport registry, not guessed real-world schedules.
+- [ ] Add a Hunter × Hunter-inspired airship/blimp service as a distinct fictional passenger transport class: visible airship, mooring/boarding platform, passenger cabin, crew, departure/arrival sequence and city-to-city routes. It is a game-world transport feature, not an assertion that a real OSM airport exists at its fictional mooring site.
+- [ ] Support multiple aircraft/airship departures, NPC passenger boarding, ticket validation, route availability, travel state save/restore and safe fallback if a destination scene/streaming region is unavailable.
+- [ ] Add runtime tests for civil aeroway extraction, terminal/runway feature typing, route registry validity, ticket/boarding state transitions, arrival destination resolution and airship route behavior. Do not mark the system complete until exact-head CI and in-game visual/device review pass.
+
+### Acceptance boundaries
+- The above items are approved requirements, not claims of implementation or visual completion. Existing mapped transit POIs and the existing OSM `aeroway=terminal` POI classification do not by themselves provide airport geometry, passenger interiors, airship assets or inter-city travel.
+- Preserve the Draft PR and current branch workflow. Do not merge to main without explicit approval.
