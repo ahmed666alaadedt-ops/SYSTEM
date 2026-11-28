@@ -861,6 +861,18 @@ if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or a
 	if int(qa_airship_route.get("capacity", 0)) != 60 or str(qa_airship_route.get("transport_type", "")) != "fictional_airship":
 		_fail("Inter-city passenger airship route did not retain its 60-seat service type.")
 		return
+	var qa_player := CharacterBody3D.new()
+	qa_player.name = "QA_AirPassenger"
+	qa_player.add_to_group("system_player")
+	qa_player.set_meta("system_player_id", "qa_player")
+	qa_player.global_position = Vector3(12000.0, 0.0, 0.0)
+	qa_player.velocity = Vector3(12.0, 0.0, 0.0)
+	root.add_child(qa_player)
+	if not air_transport.create_ticket("qa_player", "qa_baghdad__qa_paris__aircraft", 1).is_empty():
+		_fail("Passenger was allowed to buy a ticket from an airport other than their current origin city.")
+		qa_player.queue_free()
+		return
+	qa_player.global_position = Vector3.ZERO
 	var airship_over_capacity := air_transport.create_ticket("qa_player", "baghdad_airship_loop", 61)
 	var airship_full_ticket: Dictionary = air_transport.create_ticket("qa_player", "baghdad_airship_loop", 60)
 	if not airship_over_capacity.is_empty() or airship_full_ticket.is_empty() or int(airship_full_ticket.get("passenger_count", 0)) != 60:
@@ -884,13 +896,6 @@ if air_transport.get_node_or_null("BaghdadAirshipPassengerStation") == null or a
 	if str(air_transport.get_ticket(qa_ticket_id).get("status", "")) != "in_transit" or not air_transport.complete_ticket_travel(qa_ticket_id, "qa_player").is_empty():
 		_fail("Passenger route did not enforce its scheduled in-transit duration.")
 		return
-	var qa_player := CharacterBody3D.new()
-	qa_player.name = "QA_AirPassenger"
-	qa_player.add_to_group("system_player")
-	qa_player.set_meta("system_player_id", "qa_player")
-	qa_player.global_position = Vector3.ZERO
-	qa_player.velocity = Vector3(12.0, 0.0, 0.0)
-	root.add_child(qa_player)
 	var arrival: Dictionary = air_transport.complete_ticket_travel(qa_ticket_id, "qa_player", int(Time.get_unix_time_from_system()) + 86400)
 	var expected_arrival_position: Vector3 = air_transport.city_airports["qa_paris"].get("position") + Vector3(0.0, 2.0, 0.0)
 	if arrival.is_empty() or str(arrival.get("destination_city_name", "")) != "Paris QA" or str(air_transport.get_ticket(qa_ticket_id).get("status", "")) != "arrived" or not bool(air_transport.get_ticket(qa_ticket_id).get("player_teleported", false)) or not qa_player.global_position.is_equal_approx(expected_arrival_position) or qa_player.velocity != Vector3.ZERO:
