@@ -2091,6 +2091,15 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] Exact-head Godot validation must confirm the shader material, TIME-driven code and bank-foam mesh are present; real-device visual review remains required for reflections, transparency, current direction and mobile GPU cost.
 
 
+## Baghdad OSM street furniture, pedestrian safety and transit tag retention — 28 November 2026
+
+- [x] Extend the existing metric-cell pack tag allowlist to retain mapped street lighting (`lit`, `street_lamp`), crossings and traffic calming, bus stops/shelters, benches, drinking water, waste bins, toilets, fountains, playgrounds, parking and bicycle parking.
+- [x] Retain pedestrian accessibility and surface context including kerbs, tactile paving, footways, sidewalk sides, cycleway sides, incline and smoothness.
+- [x] Retain additional road operation tags for lane direction/turn lanes, junctions, conditional access, fees and route/network context.
+- [ ] Rebuild the metric-cell pack from the authoritative source GeoJSON and verify feature/tag counts; updating the allowlist alone does not change already-built cell packs.
+- [ ] Add dedicated 3D rendering and collision/interaction only for source-backed street furniture, crossings, transit stops and public facilities; do not invent fixture coordinates from generic road tags.
+- [ ] Validate lighting inference from `lit=yes` separately from mapped physical lamp nodes; inferred illumination is not a surveyed lamp inventory.
+
 ## Baghdad OSM entrance access and accessibility metadata — 28 November 2026
 
 - [x] Preserve entrance/door type, entrance-level access, wheelchair, foot, indoor, level, service and emergency tags on mapped entrance nodes and interaction bodies.
