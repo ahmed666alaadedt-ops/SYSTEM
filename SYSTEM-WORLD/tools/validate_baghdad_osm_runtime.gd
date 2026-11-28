@@ -684,6 +684,18 @@ func _run_validation() -> void:
 	if not streamer._is_sensitive_state_site({"amenity": "police"}) or not streamer._is_sensitive_state_site({"military": "airfield"}) or not streamer._is_sensitive_state_site({"office": "government"}):
 		_fail("Sensitive state/security feature classifier missed a synthetic test category.")
 		return
+	var shrine_point_root := Node3D.new()
+	var shrine_point := {"id": "synthetic_shrine_point_qa", "geometry": {"type": "Point", "coordinates": [0.0, 0.0]}, "tags": {"amenity": "place_of_worship", "building": "shrine", "name:ar": "اسم مرقد نقطي اختباري"}}
+	if streamer._build_amenity_feature(shrine_point_root, shrine_point) != 1:
+		_fail("Synthetic shrine point was not rendered through the mosque presentation adapter.")
+		shrine_point_root.free()
+		return
+	var shrine_point_node := shrine_point_root.get_node_or_null("OSMMosque_synthetic_shrine_point_qa")
+	if shrine_point_node == null or str(shrine_point_node.get_meta("landmark_type", "")) != "mosque" or str(shrine_point_node.get_meta("system_source_worship_classification", "")) != "shrine":
+		_fail("Synthetic shrine point did not preserve source classification while presenting a mosque landmark.")
+		shrine_point_root.free()
+		return
+	shrine_point_root.free()
 	var neutral_site_root := Node3D.new()
 	var neutral_site_feature := {
 		"id": "synthetic_sensitive_site_qa",
