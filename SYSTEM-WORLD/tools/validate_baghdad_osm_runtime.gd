@@ -340,6 +340,9 @@ func _run_validation() -> void:
 	if worship_cross_layer_deduplicated < 100:
 		_fail("Full Baghdad worship QA did not exercise expected buildings/amenities OSM identity deduplication.")
 		return
+	if worship_mosque_meshes <= 0 or worship_church_meshes <= 0:
+		_fail("Full Baghdad worship polygon QA must independently verify both mosque and church footprint meshes; mosques=" + str(worship_mosque_meshes) + " churches=" + str(worship_church_meshes))
+		return
 	print("Baghdad full worship polygon runtime QA passed: ", worship_instance_count,
 		" unique cell-local polygon instances across ", worship_cell_count, " cells; cross-layer duplicates suppressed=", worship_cross_layer_deduplicated,
 		"; classified mosque meshes=", worship_mosque_meshes, " church meshes=", worship_church_meshes,
