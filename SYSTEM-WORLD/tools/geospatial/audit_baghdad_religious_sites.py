@@ -25,7 +25,7 @@ def classify(tags: dict[str, object]) -> str | None:
     religion = str(tags.get("religion", "")).lower()
     building = str(tags.get("building", "")).lower()
     if amenity != "place_of_worship" and building not in {
-        "mosque", "church", "synagogue", "temple", "monastery"
+        "mosque", "church", "synagogue", "temple", "monastery", "shrine"
     }:
         return None
     if (religion in {"muslim", "islam"} and building == "church") or (
@@ -40,6 +40,8 @@ def classify(tags: dict[str, object]) -> str | None:
         return "mosque"
     if building == "church":
         return "church"
+    if building == "shrine":
+        return "shrine"
     return "other_or_unspecified"
 
 
