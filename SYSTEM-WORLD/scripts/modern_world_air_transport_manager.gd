@@ -24,12 +24,13 @@ var route_ticket_counts: Dictionary = {}
 var ticket_sequence: int = 0
 var _airship_follow: PathFollow3D
 var _airship_station: Node3D
+var _baghdad_anchor_position: Vector3 = Vector3.ZERO
 
 
 func _ready() -> void:
+	_register_existing_city_airports()
 	_build_baghdad_airship_station()
 	_build_baghdad_airship()
-	_register_existing_city_airports()
 	_build_bidirectional_city_routes()
 	_register_airship_loop_route()
 	print("SYSTEM WORLD: air transport initialized. City terminals: ", city_airports.size(), " routes: ", routes.size(), " airship capacity: ", AIRSHIP_MIN_CAPACITY, "-", AIRSHIP_MAX_CAPACITY)
@@ -46,9 +47,16 @@ func _register_existing_city_airports() -> void:
 		push_warning("SYSTEM WORLD: city airport anchors unavailable; air terminals remain unregistered.")
 		return
 	var anchors: Dictionary = region_manager.get("city_anchors")
+	var terrain = region_manager.get("terrain")
 	for city_name in anchors:
 		var anchor: Vector2 = anchors[city_name]
-		var terminal_position := Vector3(anchor.x + CITY_AIRPORT_OFFSET.x, 0.0, anchor.y + CITY_AIRPORT_OFFSET.y)
+		var airport_x := anchor.x + CITY_AIRPORT_OFFSET.x
+		var airport_z := anchor.y + CITY_AIRPORT_OFFSET.y
+		var airport_y := float(terrain.get_terrain_height(airport_x, airport_z)) if terrain != null else 0.0
+		if str(city_name) == "Baghdad":
+			var baghdad_y := float(terrain.get_terrain_height(anchor.x, anchor.y)) if terrain != null else 0.0
+			_baghdad_anchor_position = Vector3(anchor.x, baghdad_y, anchor.y)
+		var terminal_position := Vector3(airport_x, airport_y, airport_z)
 		register_city_airport(_city_id(str(city_name)), str(city_name), terminal_position, "prototype_layout_offset" if str(city_name) != "Baghdad" else "authored_gameplay_offset_from_wgs84_city_anchor")
 
 
@@ -280,7 +288,7 @@ func _build_runway_and_apron(parent: Node3D) -> void:
 func _build_baghdad_airship_station() -> void:
 	_airship_station = Node3D.new()
 	_airship_station.name = "BaghdadAirshipPassengerStation"
-	_airship_station.position = Vector3(0, 0, 0)
+	_airship_station.position = _baghdad_anchor_position
 	_airship_station.set_meta("system_transport_type", "fictional_airship")
 	_airship_station.set_meta("system_airship_capacity_min", AIRSHIP_MIN_CAPACITY)
 	_airship_station.set_meta("system_airship_capacity_max", AIRSHIP_MAX_CAPACITY)
@@ -312,6 +320,7 @@ func _build_baghdad_airship_station() -> void:
 func _build_baghdad_airship() -> void:
 	var path := Path3D.new()
 	path.name = "BaghdadAirshipCircularRoute"
+	path.position = _baghdad_anchor_position
 	var curve := Curve3D.new()
 	for index in range(9):
 		var angle := TAU * float(index) / 8.0
