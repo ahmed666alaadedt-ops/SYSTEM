@@ -311,7 +311,35 @@ func _run_validation() -> void:
 		if str(duplicate.get_meta("osm_feature_id", "")) == worship_feature_id:
 			_fail("Religious polygon was duplicated as a POI marker instead of being deduplicated by OSM type/id.")
 			return
-	print("Baghdad religious polygon runtime QA passed: ", worship_source_type, "/", worship_feature_id, " imported as polygon extrusion without POI duplication.")
+	# Exercise real mesh construction for common OSM tagging variants. Each
+	# synthetic polygon must become a footprint mesh, never a centroid POI.
+	var synthetic_index := 0
+	for synthetic_tags in [
+		{"building": "public", "religion": "muslim"},
+		{"building": "religious", "religion": "christian"},
+		{"amenity": "place_of_worship", "religion": "muslim"}
+	]:
+		var synthetic := {
+			"id": "runtime_worship_%d" % synthetic_index,
+			"osm_type": "way",
+			"geometry": {"type": "Polygon", "coordinates": [[[0.0, 0.0], [4.0, 0.0], [4.0, 4.0], [0.0, 4.0], [0.0, 0.0]]]},
+			"tags": synthetic_tags
+		}
+		var synthetic_root := Node3D.new()
+		var synthetic_built := regional_urban._build_regional_poi_feature(synthetic_root, synthetic)
+		var synthetic_meshes := synthetic_root.find_children("OSMOverviewBuilding_*", "MeshInstance3D", true, false)
+		var synthetic_markers := synthetic_root.find_children("OSMRegionalPOI_*", "Node3D", true, false)
+		if synthetic_built != 1 or synthetic_meshes.size() != 1 or not synthetic_markers.is_empty():
+			_fail("A supported OSM worship polygon was downgraded to a point marker: " + str(synthetic_tags))
+			synthetic_root.free()
+			return
+		if str(synthetic_meshes[0].get_meta("system_footprint_geometry", "")) != "osm_polygon_extrusion":
+			_fail("Synthetic worship polygon did not preserve its actual footprint geometry.")
+			synthetic_root.free()
+			return
+		synthetic_root.free()
+		synthetic_index += 1
+	print("Baghdad religious polygon runtime QA passed: ", worship_source_type, "/", worship_feature_id, " imported as polygon extrusion without POI duplication; three OSM tagging variants also generated footprint meshes.")
 	print("Baghdad citywide urban overview passed: buildings=", overview_buildings.size(), " POI markers=", poi_markers.size(), " resolution=1 km.")
 	regional_urban.queue_free()
 	regional_roads.queue_free()
