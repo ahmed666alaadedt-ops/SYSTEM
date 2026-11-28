@@ -30,6 +30,7 @@ var water_material: StandardMaterial3D
 var land_material: StandardMaterial3D
 var building_material: StandardMaterial3D
 var facade_window_material: StandardMaterial3D
+var facade_architecture_material: StandardMaterial3D
 var amenity_material: StandardMaterial3D
 
 
@@ -153,6 +154,13 @@ func _create_materials() -> void:
 	facade_window_material.vertex_color_use_as_albedo = true
 	facade_window_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 
+	facade_architecture_material = StandardMaterial3D.new()
+	facade_architecture_material.albedo_color = Color(0.72, 0.77, 0.79)
+	facade_architecture_material.roughness = 0.48
+	facade_architecture_material.metallic = 0.28
+	facade_architecture_material.vertex_color_use_as_albedo = true
+	facade_architecture_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
 	amenity_material = StandardMaterial3D.new()
 	amenity_material.albedo_color = Color(0.15, 0.76, 0.91)
 	amenity_material.emission_enabled = true
@@ -216,6 +224,7 @@ func _load_cell(cell: Vector2i) -> void:
 			building_count += _build_building_feature(cell_root, feature, road_features)
 	if not overview_mode:
 		_flush_facade_window_multimesh(cell_root)
+		_flush_facade_architecture_multimesh(cell_root)
 	counts["buildings"] = building_count
 	var water_count := 0
 	for feature in layers.get("waterways", []):
@@ -477,7 +486,9 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		building.set_meta("osm_building_tag", str(tags.get("building", "yes")))
 		parent.add_child(building)
 		var facade_window_count := _add_procedural_facade_windows(parent, ring, height, kind, feature_id)
-		building.set_meta("system_facade_detail_level", "core_multimesh_windows" if facade_window_count > 0 else "core_extrusion_only")
+		var architecture_detail_count := _collect_modern_facade_architecture(parent, ring, height, kind, feature_id)
+		building.set_meta("system_facade_architecture_detail_count", architecture_detail_count)
+		building.set_meta("system_facade_detail_level", "modern_facade_multimesh" if architecture_detail_count > 0 else ("core_multimesh_windows" if facade_window_count > 0 else "core_extrusion_only"))
 		building.set_meta("system_facade_window_count", facade_window_count)
 		building.set_meta("system_facade_window_sampling", "even_distribution_across_facades")
 		var body := StaticBody3D.new()
@@ -702,6 +713,98 @@ func _add_procedural_facade_windows(
 	parent.set_meta("system_facade_window_transforms", cell_transforms)
 	parent.set_meta("system_facade_window_colors", cell_colors)
 	return selected_count
+
+
+func _collect_modern_facade_architecture(
+	parent: Node3D,
+	ring: PackedVector2Array,
+	height: float,
+	kind: String,
+	feature_id: String
+) -> int:
+	# Lightweight modern architectural rhythm for close-range 200 m cells:
+	# vertical corner fins and a continuous roofline cornice. All instances
+	# are packed into one cell-level MultiMesh to keep Android draw calls low.
+	if overview_mode or ring.size() < 3 or height < 5.0 or kind in ["mosque", "church"]:
+		return 0
+	var transforms: Array = parent.get_meta("system_facade_architecture_transforms", [])
+	var colors: Array = parent.get_meta("system_facade_architecture_colors", [])
+	var remaining_cell_budget := maxi(0, 600 - transforms.size())
+	var building_budget := mini(12, remaining_cell_budget)
+	if building_budget <= 0:
+		return 0
+	var color := Color(0.66, 0.73, 0.76)
+	match kind:
+		"villa":
+			color = Color(0.82, 0.76, 0.64)
+		"palace":
+			color = Color(0.86, 0.78, 0.59)
+		"detached_house":
+			color = Color(0.72, 0.65, 0.54)
+		"commercial_building":
+			color = Color(0.48, 0.64, 0.72)
+	var added := 0
+	for edge_index in range(ring.size()):
+		if added >= building_budget:
+			break
+		var start := ring[edge_index]
+		var finish := ring[(edge_index + 1) % ring.size()]
+		var edge := finish - start
+		var edge_length := edge.length()
+		if edge_length < 5.0:
+			continue
+		var tangent := edge / edge_length
+		var midpoint := (start + finish) * 0.5
+		var outward_2d := Vector2(tangent.y, -tangent.x)
+		var outward := Vector3(outward_2d.x, 0.0, outward_2d.y)
+		var facade_right := Vector3.UP.cross(outward).normalized()
+		var base_y := _terrain_height(midpoint)
+		var pilaster_basis := Basis(facade_right, Vector3.UP, outward).scaled(Vector3(0.14, height, 0.20))
+		for side_sign in [-1.0, 1.0]:
+			if added >= building_budget:
+				break
+			var along := clampf(0.75 / edge_length, 0.08, 0.22)
+			var point := start.lerp(finish, along if side_sign < 0.0 else 1.0 - along)
+			var position := Vector3(point.x, _terrain_height(point) + height * 0.5, point.y) + outward * 0.10
+			transforms.append(Transform3D(pilaster_basis, position))
+			colors.append(color)
+			added += 1
+		if added < building_budget:
+			var cornice_basis := Basis(facade_right, Vector3.UP, outward).scaled(Vector3(edge_length, 0.10, 0.22))
+			var cornice_position := Vector3(midpoint.x, base_y + height - 0.12, midpoint.y) + outward * 0.10
+			transforms.append(Transform3D(cornice_basis, cornice_position))
+			colors.append(color.lightened(0.08))
+			added += 1
+	parent.set_meta("system_facade_architecture_transforms", transforms)
+	parent.set_meta("system_facade_architecture_colors", colors)
+	return added
+
+
+func _flush_facade_architecture_multimesh(parent: Node3D) -> void:
+	var transforms: Array = parent.get_meta("system_facade_architecture_transforms", [])
+	var colors: Array = parent.get_meta("system_facade_architecture_colors", [])
+	if transforms.is_empty() or transforms.size() != colors.size():
+		return
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.use_colors = true
+	multimesh.mesh = BoxMesh.new()
+	multimesh.instance_count = transforms.size()
+	for index in range(transforms.size()):
+		multimesh.set_instance_transform(index, transforms[index])
+		multimesh.set_instance_color(index, colors[index])
+	var detail := MultiMeshInstance3D.new()
+	detail.name = "BaghdadCellModernFacadeArchitecture"
+	detail.multimesh = multimesh
+	detail.material_override = facade_architecture_material
+	detail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	detail.set_meta("system_facade_detail_type", "modern_architectural_fins_and_cornices")
+	detail.set_meta("system_facade_architecture_count", transforms.size())
+	detail.set_meta("system_facade_architecture_draw_calls_per_cell", 1)
+	parent.add_child(detail)
+	parent.set_meta("system_facade_architecture_instance_count", transforms.size())
+	parent.set_meta("system_facade_architecture_transforms", [])
+	parent.set_meta("system_facade_architecture_colors", [])
 
 
 func _flush_facade_window_multimesh(parent: Node3D) -> void:
