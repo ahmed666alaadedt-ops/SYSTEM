@@ -269,7 +269,7 @@ func _register_airship_loop_route() -> void:
 		"origin_city_id": "baghdad",
 		"destination_city_id": "baghdad",
 		"transport_type": "fictional_airship",
-		"duration_minutes": 18,
+		"duration_minutes": 24,
 		"capacity": AIRSHIP_MAX_CAPACITY,
 		"enabled": true
 	}
@@ -401,9 +401,10 @@ func _build_baghdad_airship_station() -> void:
 	var glow := _emissive_material(Color(0.18, 0.72, 1.0))
 	_add_box(_airship_station, "AirshipBoardingPlatform", Vector3(0, 1, 0), Vector3(86, 2, 54), platform_material)
 	_add_box_collision(_airship_station, "AirshipPlatformCollision", Vector3(0, 1, 0), Vector3(86, 2, 54))
-	_add_box(_airship_station, "AirshipMooringTower", Vector3(-38, 24, 0), Vector3(8, 48, 8), platform_material)
-	_add_box(_airship_station, "AirshipPassengerBridge", Vector3(-12, 10, 0), Vector3(48, 1.8, 8), glow)
-	_add_box(_airship_station, "AirshipStationSign", Vector3(0, 15, 28), Vector3(34, 3, 0.8), glow)
+	_add_box(_airship_station, "AirshipMooringTower", Vector3(-38, 95, 0), Vector3(8, 190, 8), platform_material)
+	_add_box(_airship_station, "AirshipPassengerElevator", Vector3(-38, 92, 0), Vector3(5, 12, 5), glow)
+	_add_box(_airship_station, "AirshipPassengerBridge", Vector3(-12, 180, 0), Vector3(48, 1.8, 8), glow)
+	_add_box(_airship_station, "AirshipStationSign", Vector3(0, 18, 28), Vector3(34, 3, 0.8), glow)
 	for index in range(10):
 		_add_box(_airship_station, "AirshipWaitingBench_%02d" % index, Vector3(-32.0 + float(index % 5) * 16.0, 2.2, -16.0 + float(int(index / 5)) * 28.0), Vector3(7, 1.0, 2.0), platform_material)
 	var boarding_area := Area3D.new()
@@ -430,9 +431,11 @@ func _build_baghdad_airship() -> void:
 	path.set_meta("system_cruise_altitude_m", AIRSHIP_CRUISE_ALTITUDE_M)
 	path.set_meta("system_cruise_speed_mps", AIRSHIP_SPEED_MPS)
 	var curve := Curve3D.new()
+	curve.add_point(Vector3(0.0, AIRSHIP_CRUISE_ALTITUDE_M, 0.0))
 	for index in range(9):
 		var angle := TAU * float(index) / 8.0
 		curve.add_point(Vector3(cos(angle) * AIRSHIP_ROUTE_RADIUS_M, AIRSHIP_CRUISE_ALTITUDE_M, sin(angle) * AIRSHIP_ROUTE_RADIUS_M))
+	curve.add_point(Vector3(0.0, AIRSHIP_CRUISE_ALTITUDE_M, 0.0))
 	path.curve = curve
 	add_child(path)
 	_airship_follow = PathFollow3D.new()
