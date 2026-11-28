@@ -46,6 +46,27 @@ func _run_validation() -> void:
 			_fail("Baghdad detailed building service classification/name failed: " + str(service_case.tags))
 			return
 	print("Baghdad detailed service-building QA passed: education, healthcare, civic services and hospitality remain distinct.")
+	var roof_test_root := Node3D.new()
+	root.add_child(roof_test_root)
+	var roof_test_ring := PackedVector2Array([
+		Vector2(0.0, 0.0), Vector2(12.0, 0.0), Vector2(12.0, 8.0), Vector2(0.0, 8.0)
+	])
+	var roof_test_tags := {"roof:shape": "pyramidal", "roof:material": "tiles", "roof:colour": "#8f4936", "roof:height": "3.5"}
+	if not streamer._add_pyramidal_roof(roof_test_root, roof_test_ring, 6.0, "roof_qa", roof_test_tags):
+		_fail("Mapped pyramidal Baghdad roof did not produce a valid mesh.")
+		roof_test_root.free()
+		return
+	var roof_mesh := roof_test_root.get_node_or_null("OSMPyramidalRoof_roof_qa") as MeshInstance3D
+	if roof_mesh == null or roof_mesh.mesh == null or roof_mesh.get_meta("system_roof_shape", "") != "pyramidal":
+		_fail("Pyramidal roof mesh/source metadata was not preserved.")
+		roof_test_root.free()
+		return
+	if roof_mesh.get_meta("system_roof_material", "") != "tiles" or roof_mesh.get_meta("system_roof_colour", "") != "#8f4936":
+		_fail("Mapped roof material/colour metadata was not retained.")
+		roof_test_root.free()
+		return
+	roof_test_root.free()
+	print("Baghdad mapped pyramidal roof QA passed: valid mesh and source material/colour/height metadata.")
 	# OSM entrance points must resolve to their true nearby footprint, while
 	# private and geometrically ambiguous matches remain non-enterable/review-only.
 	var entrance_test_root := Node3D.new()
