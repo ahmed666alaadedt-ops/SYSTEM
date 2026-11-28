@@ -572,6 +572,13 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		building.set_meta("osm_feature_id", feature_id)
 		building.set_meta("baghdad_building_type", kind)
 		building.set_meta("osm_building_tag", str(tags.get("building", "yes")))
+		building.set_meta("system_display_name", _building_display_name(kind, tags))
+		building.set_meta("system_source_name", str(tags.get("name", "")))
+		building.set_meta("system_source_name_ar", str(tags.get("name:ar", "")))
+		building.set_meta("system_religion", str(tags.get("religion", "")))
+		building.set_meta("system_denomination", str(tags.get("denomination", "")))
+		building.set_meta("system_worship_classification", _worship_facility_type(tags))
+		building.set_meta("system_geometry_type", str(geometry.get("type", "")))
 		parent.add_child(building)
 		var facade_window_count := _add_procedural_facade_windows(parent, ring, height, kind, feature_id)
 		var architecture_detail_count := _collect_modern_facade_architecture(parent, ring, height, kind, feature_id)
@@ -585,6 +592,12 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		body.set_meta("osm_feature_id", feature_id)
 		body.set_meta("baghdad_building_type", kind)
 		body.set_meta("osm_building_tag", str(tags.get("building", "yes")))
+		body.set_meta("system_source_name", str(tags.get("name", "")))
+		body.set_meta("system_source_name_ar", str(tags.get("name:ar", "")))
+		body.set_meta("system_religion", str(tags.get("religion", "")))
+		body.set_meta("system_denomination", str(tags.get("denomination", "")))
+		body.set_meta("system_worship_classification", _worship_facility_type(tags))
+		body.set_meta("system_geometry_type", str(geometry.get("type", "")))
 		var footprint_center := Vector2.ZERO
 		for footprint_point in ring:
 			footprint_center += footprint_point
