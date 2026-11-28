@@ -80,6 +80,7 @@ func register_city_airport(city_id: String, city_name: String, world_position: V
 	add_child(airport_root)
 	_build_civil_terminal(airport_root, city_name)
 	_build_runway_and_apron(airport_root)
+	_build_parked_passenger_aircraft(airport_root)
 	city_airports[city_id] = {
 		"city_id": city_id,
 		"city_name": city_name,
@@ -277,6 +278,36 @@ func _build_civil_terminal(parent: Node3D, city_name: String) -> void:
 	parent.set_meta("system_passenger_spawn_point_count", 16)
 	parent.set_meta("system_terminal_interior_state", "authored_terminal_layout; passenger_ui_and_live_npc_binding_pending")
 	parent.set_meta("system_terminal_city_name", city_name)
+
+
+func _build_parked_passenger_aircraft(parent: Node3D) -> void:
+	var aircraft := Node3D.new()
+	aircraft.name = "CivilPassengerAircraftDisplay"
+	aircraft.position = Vector3(66, 0.0, -118)
+	aircraft.set_meta("system_aircraft_class", "civil_passenger_aircraft")
+	aircraft.set_meta("system_route_capacity", CITY_AIRCRAFT_CAPACITY)
+	parent.add_child(aircraft)
+	var fuselage_material := _material(Color(0.78, 0.82, 0.86), 0.32, 0.22)
+	var wing_material := _material(Color(0.22, 0.28, 0.34), 0.46, 0.28)
+	var window_material := _emissive_material(Color(0.2, 0.72, 1.0))
+	var fuselage := MeshInstance3D.new()
+	fuselage.name = "PassengerAircraftFuselage"
+	var fuselage_mesh := CapsuleMesh.new()
+	fuselage_mesh.radius = 2.2
+	fuselage_mesh.height = 40.0
+	fuselage.mesh = fuselage_mesh
+	fuselage.rotation.x = PI * 0.5
+	fuselage.position.y = 4.2
+	fuselage.material_override = fuselage_material
+	aircraft.add_child(fuselage)
+	_add_box(aircraft, "PassengerAircraftMainWing", Vector3(0, 3.8, 0), Vector3(32, 0.8, 8), wing_material)
+	_add_box(aircraft, "PassengerAircraftTailWing", Vector3(0, 5.0, -18), Vector3(12, 0.6, 4), wing_material)
+	_add_box(aircraft, "PassengerAircraftTailFin", Vector3(0, 7.0, -18), Vector3(0.8, 5, 4), wing_material)
+	for side in [-1.0, 1.0]:
+		_add_box(aircraft, "PassengerAircraftEngine_%s" % str(side), Vector3(side * 9.0, 2.5, 1.0), Vector3(4.2, 3.4, 7.0), wing_material)
+		_add_box(aircraft, "PassengerAircraftWindowBand_%s" % str(side), Vector3(side * 2.12, 5.0, 0), Vector3(0.24, 1.0, 27), window_material)
+	_add_label(aircraft, "PassengerAircraftBrand", "SYSTEM AIR", Vector3(0, 6.2, 8), Color(0.12, 0.48, 0.82))
+	aircraft.set_meta("system_aircraft_visual_state", "parked_terminal_display; route travel uses ticket state manager")
 
 
 func _build_runway_and_apron(parent: Node3D) -> void:
