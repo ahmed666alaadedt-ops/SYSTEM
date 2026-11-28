@@ -1804,7 +1804,6 @@ func _collect_sidewalk_transforms(parent: Node3D, line: PackedVector2Array, road
 			continue
 		var direction := segment / length
 		var side := Vector2(-direction.y, direction.x)
-		var midpoint := (start + finish) * 0.5
 		var sidewalk_width := 1.45
 		var offset := road_width * 0.5 + sidewalk_width * 0.5 + 0.18
 		var rotation_basis := Basis(
@@ -1812,14 +1811,26 @@ func _collect_sidewalk_transforms(parent: Node3D, line: PackedVector2Array, road
 			Vector3.UP,
 			Vector3(-direction.y, 0.0, direction.x)
 		)
-		if left_enabled:
-			var left_point := midpoint + side * offset
-			var left_basis := rotation_basis.scaled(Vector3(length, 0.12, sidewalk_width))
-			transforms.append(Transform3D(left_basis, Vector3(left_point.x, _terrain_height(left_point) + road_lift + 0.075, left_point.y)))
-		if right_enabled and transforms.size() < 1000:
-			var right_point := midpoint - side * offset
-			var right_basis := rotation_basis.scaled(Vector3(length, 0.12, sidewalk_width))
-			transforms.append(Transform3D(right_basis, Vector3(right_point.x, _terrain_height(right_point) + road_lift + 0.075, right_point.y)))
+		# Split long mapped road edges into terrain-following slabs. A single
+		# 90 m box floats over height changes and looks artificial on curved streets.
+		var max_segment_length := 12.0
+		var chunk_count := maxi(1, int(ceil(length / max_segment_length)))
+		for chunk_index in range(chunk_count):
+			if transforms.size() >= 1000:
+				break
+			var chunk_start := start.lerp(finish, float(chunk_index) / float(chunk_count))
+			var chunk_finish := start.lerp(finish, float(chunk_index + 1) / float(chunk_count))
+			var chunk_length := chunk_start.distance_to(chunk_finish)
+			if chunk_length < 0.25:
+				continue
+			var midpoint := (chunk_start + chunk_finish) * 0.5
+			var chunk_basis := rotation_basis.scaled(Vector3(chunk_length, 0.12, sidewalk_width))
+			if left_enabled:
+				var left_point := midpoint + side * offset
+				transforms.append(Transform3D(chunk_basis, Vector3(left_point.x, _terrain_height(left_point) + road_lift + 0.075, left_point.y)))
+			if right_enabled and transforms.size() < 1000:
+				var right_point := midpoint - side * offset
+				transforms.append(Transform3D(chunk_basis, Vector3(right_point.x, _terrain_height(right_point) + road_lift + 0.075, right_point.y)))
 	parent.set_meta("system_sidewalk_transforms", transforms)
 
 
