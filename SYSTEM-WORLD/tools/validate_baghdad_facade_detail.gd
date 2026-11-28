@@ -304,8 +304,8 @@ func _run() -> void:
 		_fail("Conflicting OSM worship tags received an unsupported mosque/church silhouette.")
 		return
 
-	# Shrine/mausoleum footprints are a distinct religious building class,
-	# not mosque or church geometry; preserve the mapped polygon as-is.
+	# The source remains tagged as a shrine for provenance, but the approved
+	# game presentation renders it as mosque architecture and labels it as a mosque.
 	var shrine_polygon := {
 		"id": "worship_validation_shrine_polygon_001",
 		"geometry": {"type": "Polygon", "coordinates": [[[280.0, 0.0], [296.0, 0.0], [296.0, 12.0], [280.0, 12.0], [280.0, 0.0]]]},
@@ -313,14 +313,17 @@ func _run() -> void:
 	}
 	var shrine_built := int(streamer.call("_build_regional_poi_feature", worship_parent, shrine_polygon))
 	var shrine_mesh := worship_parent.get_node_or_null("OSMOverviewBuilding_worship_validation_shrine_polygon_001") as MeshInstance3D
-	if shrine_built != 1 or shrine_mesh == null or str(shrine_mesh.get_meta("system_facility_type", "")) != "shrine":
-		_fail("A mapped building=shrine polygon was not preserved as a distinct shrine feature.")
+	if shrine_built != 1 or shrine_mesh == null or str(shrine_mesh.get_meta("system_facility_type", "")) != "mosque":
+		_fail("Mapped shrine polygon did not receive the approved mosque game classification.")
 		return
-	if str(shrine_mesh.get_meta("system_footprint_geometry", "")) != "osm_polygon_extrusion" or str(shrine_mesh.get_meta("baghdad_building_type", "")) != "shrine":
-		_fail("Shrine footprint was not kept as its own mapped building class.")
+	if str(shrine_mesh.get_meta("system_footprint_geometry", "")) != "osm_polygon_extrusion" or str(shrine_mesh.get_meta("baghdad_building_type", "")) != "mosque":
+		_fail("Shrine polygon footprint was not retained as mosque-style game architecture.")
 		return
-	if worship_parent.get_node_or_null("OSMWorshipDetail_mosque_worship_validation_shrine_polygon_001") != null or worship_parent.get_node_or_null("OSMWorshipDetail_church_worship_validation_shrine_polygon_001") != null:
-		_fail("Shrine polygon received an unsupported mosque or church silhouette.")
+	if str(shrine_mesh.get_meta("system_source_worship_classification", "")) != "shrine":
+		_fail("Shrine polygon lost its original OSM source classification.")
+		return
+	if worship_parent.get_node_or_null("OSMWorshipDetail_mosque_worship_validation_shrine_polygon_001") == null or worship_parent.get_node_or_null("OSMWorshipDetail_church_worship_validation_shrine_polygon_001") != null:
+		_fail("Shrine polygon did not receive the approved mosque silhouette or received a church silhouette.")
 		return
 
 	# Monastery polygons are preserved separately from churches and shrines.
