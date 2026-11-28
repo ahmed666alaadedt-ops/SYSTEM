@@ -84,6 +84,65 @@ func _run_validation() -> void:
 		return
 	print("Baghdad Republic Bridge OSM cell passed: primary bridge=", primary_bridge.size(), " secondary bridge=", secondary_bridge.size(), " Tigris=", tigris_river.size())
 
+	# Verify the physical Republic Bridge, its safety/road details and the animated Tigris
+	# built by ModernContinentManager, not just the separate OSM centerline cell meshes.
+	var physical_bridge := terrain.get_node_or_null("BaghdadRepublicBridge") as Node3D
+	if physical_bridge == null:
+		_fail("Verified Republic Bridge polygon deck was not built in the terrain manager.")
+		return
+	var bridge_deck := physical_bridge.get_node_or_null("RepublicBridgeDeck") as MeshInstance3D
+	var bridge_collision := physical_bridge.get_node_or_null("RepublicBridgeDeckCollision/RepublicBridgeDeckCollisionShape") as CollisionShape3D
+	if bridge_deck == null or bridge_deck.mesh == null or bridge_deck.mesh.get_surface_count() == 0:
+		_fail("Republic Bridge polygon deck mesh is missing or empty.")
+		return
+	if absf(float(bridge_deck.get_meta("system_bridge_deck_height_m", -999.0)) - 18.0) > 0.01:
+		_fail("Republic Bridge physical deck is not aligned to the approved 18 m elevation.")
+		return
+	if bridge_collision == null or not bridge_collision.shape is ConcavePolygonShape3D:
+		_fail("Republic Bridge deck is missing its physical concave collision.")
+		return
+	var bridge_collision_shape := bridge_collision.shape as ConcavePolygonShape3D
+	if bridge_collision_shape.get_faces().size() < 30:
+		_fail("Republic Bridge collision does not contain the triangulated OSM deck surface.")
+		return
+	var bridge_posts := physical_bridge.get_node_or_null("RepublicBridgeGuardrailPosts") as MultiMeshInstance3D
+	if bridge_posts == null or bridge_posts.multimesh == null or bridge_posts.multimesh.instance_count < 16:
+		_fail("Republic Bridge perimeter safety posts are missing or below the minimum coverage.")
+		return
+	var bridge_rail_count := physical_bridge.find_children("RepublicBridgeGuardrail_*", "MeshInstance3D", true, false).size()
+	var bridge_handrail_count := physical_bridge.find_children("RepublicBridgeHandrail_*", "MeshInstance3D", true, false).size()
+	if bridge_rail_count < 3 or bridge_handrail_count != bridge_rail_count:
+		_fail("Republic Bridge continuous perimeter rails and handrails are incomplete.")
+		return
+	for marking_name in ["RepublicBridgeCenterlineMarkings", "RepublicBridgeLaneMarkings", "RepublicBridgeExpansionJoints"]:
+		var marking := physical_bridge.get_node_or_null(marking_name) as MeshInstance3D
+		if marking == null or marking.mesh == null or marking.mesh.get_surface_count() == 0:
+			_fail("Republic Bridge road marking or expansion-joint surface is missing: " + marking_name)
+			return
+	var bridge_poles := physical_bridge.get_node_or_null("RepublicBridgeLightPoles") as MultiMeshInstance3D
+	var bridge_lamps := physical_bridge.get_node_or_null("RepublicBridgeLampHeads") as MultiMeshInstance3D
+	if bridge_poles == null or bridge_lamps == null or bridge_poles.multimesh == null or bridge_lamps.multimesh == null:
+		_fail("Republic Bridge approach lighting is missing its instanced poles or lamp heads.")
+		return
+	if bridge_poles.multimesh.instance_count < 4 or bridge_lamps.multimesh.instance_count != bridge_poles.multimesh.instance_count:
+		_fail("Republic Bridge light poles and lamp heads are not paired across both roadways.")
+		return
+	var tigris_surface := terrain.get_node_or_null("BaghdadTigrisRiver") as MeshInstance3D
+	var tigris_foam := terrain.get_node_or_null("BaghdadTigrisBankFoam") as MeshInstance3D
+	if tigris_surface == null or tigris_surface.mesh == null or tigris_surface.mesh.get_surface_count() == 0:
+		_fail("The verified Tigris River surface mesh is missing or empty.")
+		return
+	var tigris_material := tigris_surface.material_override as ShaderMaterial
+	if tigris_material == null or tigris_material.shader == null or not tigris_material.shader.code.contains("TIME * 0.52"):
+		_fail("Tigris water surface is missing its world-space animated ripple shader.")
+		return
+	if tigris_foam == null or tigris_foam.mesh == null or tigris_foam.mesh.get_surface_count() == 0 or str(tigris_foam.get_meta("system_water_edge_detail", "")) != "soft_bank_foam":
+		_fail("Tigris riverbank soft-foam geometry is missing or invalid.")
+		return
+	print("Baghdad Republic Bridge physical-detail QA passed: triangulated deck/collision, ", bridge_posts.multimesh.instance_count,
+		" guardrail posts, rails=", bridge_rail_count, " markings/joints, paired lamps=", bridge_lamps.multimesh.instance_count,
+		"; animated Tigris shader and bank foam verified.")
+
 	var regional_roads := BAGHDAD_STREAMER.new()
 	regional_roads.name = "BaghdadRegionalRoadsValidationStreamer"
 	regional_roads.data_root = "res://data/geography/baghdad/regional_roads"
