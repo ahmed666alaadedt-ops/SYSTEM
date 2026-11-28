@@ -709,6 +709,34 @@ func _run_validation() -> void:
 		return
 	hidden_poi_root.free()
 	print("Baghdad presentation/privacy QA passed: shrine game override preserves OSM source type; sensitive POIs are suppressed and sensitive footprints remain neutral shells.")
+	var runway_root := Node3D.new()
+	var runway_feature := {
+		"id": "synthetic_civil_runway_qa",
+		"geometry": {"type": "LineString", "coordinates": [[0.0, 0.0], [0.0, 240.0]]},
+		"tags": {"aeroway": "runway", "ref": "QA-RWY"}
+	}
+	if streamer._build_regional_poi_feature(runway_root, runway_feature) != 1 or runway_root.get_child_count() == 0:
+		_fail("Public civil OSM runway line geometry was not rendered.")
+		runway_root.free()
+		return
+	runway_root.free()
+	var shrine_polygon_root := Node3D.new()
+	var shrine_polygon := {
+		"id": "synthetic_shrine_polygon_qa",
+		"geometry": {"type": "Polygon", "coordinates": [[[0.0, 0.0], [18.0, 0.0], [18.0, 12.0], [0.0, 12.0], [0.0, 0.0]]]},
+		"tags": {"building": "shrine", "name:ar": "اسم مرقد اختباري"}
+	}
+	if regional_urban._build_building_overview_feature(shrine_polygon_root, shrine_polygon) != 1:
+		_fail("Synthetic shrine polygon did not build its game presentation.")
+		shrine_polygon_root.free()
+		return
+	var shrine_mesh := shrine_polygon_root.get_node_or_null("OSMOverviewBuilding_synthetic_shrine_polygon_qa") as MeshInstance3D
+	if shrine_mesh == null or str(shrine_mesh.get_meta("baghdad_building_type", "")) != "mosque" or str(shrine_mesh.get_meta("system_display_name", "")) != "جامع أو مسجد":
+		_fail("Synthetic shrine polygon did not render as mosque-style game architecture.")
+		shrine_polygon_root.free()
+		return
+	shrine_polygon_root.free()
+
 
 	# The passenger air transport manager builds terminals and a circular
 	# Baghdad airship, and enforces ticket -> payment -> boarding -> arrival.
