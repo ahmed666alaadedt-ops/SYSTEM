@@ -244,6 +244,74 @@ func _run_validation() -> void:
 	if poi_markers.is_empty():
 		_fail("Citywide urban amenities did not produce POI markers.")
 		return
+
+	# Independently locate a genuine religious polygon in the generated OSM pack.
+	# This prevents a passing POI-marker test from masking a polygon-to-point downgrade.
+	var worship_cell := Vector2i(2147483647, 2147483647)
+	var worship_feature_id := ""
+	var worship_source_type := ""
+	for file_name in urban_files:
+		if not file_name.ends_with(".json"):
+			continue
+		var tile_path := urban_cells_path.path_join(file_name)
+		var worship_tile: Variant = JSON.parse_string(FileAccess.get_file_as_string(tile_path))
+		if not worship_tile is Dictionary:
+			continue
+		var worship_layers: Dictionary = worship_tile.get("layers", {})
+		var found := false
+		for layer_name in ["buildings", "amenities"]:
+			for feature in worship_layers.get(layer_name, []):
+				var geometry: Dictionary = feature.get("geometry", {})
+				var geometry_type := str(geometry.get("type", ""))
+				if geometry_type not in ["Polygon", "MultiPolygon"]:
+					continue
+				var tags: Dictionary = feature.get("tags", {})
+				var amenity := str(tags.get("amenity", "")).to_lower()
+				var religion := str(tags.get("religion", "")).to_lower()
+				var building := str(tags.get("building", "")).to_lower()
+				var unambiguous_worship := amenity == "place_of_worship" and religion in ["muslim", "islam", "christian", "christianity"]
+				unambiguous_worship = unambiguous_worship or building in ["mosque", "church", "shrine", "monastery"]
+				if not unambiguous_worship:
+					continue
+				worship_cell = Vector2i(int(worship_tile.get("cell_x", 0)), int(worship_tile.get("cell_z", 0)))
+				worship_feature_id = str(feature.get("id", ""))
+				worship_source_type = str(feature.get("osm_type", ""))
+				found = true
+				break
+			if found:
+				break
+		if found:
+			break
+	if worship_cell.x == 2147483647:
+		_fail("Baghdad OSM pack contains no unambiguous religious polygon for runtime geometry verification.")
+		return
+	regional_urban._load_cell(worship_cell)
+	if not regional_urban.loaded_cells.has(worship_cell):
+		_fail("Baghdad religious-site polygon cell did not load.")
+		return
+	var worship_root: Node3D = regional_urban.loaded_cells[worship_cell]
+	var worship_mesh_found := false
+	for candidate in worship_root.find_children("OSMOverviewBuilding_*", "MeshInstance3D", true, false):
+		if str(candidate.get_meta("osm_feature_id", "")) != worship_feature_id:
+			continue
+		if str(candidate.get_meta("system_osm_type", "")) != worship_source_type:
+			continue
+		if str(candidate.get_meta("system_geometry_type", "")) not in ["Polygon", "MultiPolygon"]:
+			continue
+		if str(candidate.get_meta("system_footprint_geometry", "")) != "osm_polygon_extrusion":
+			continue
+		if candidate.mesh == null or candidate.mesh.get_surface_count() == 0:
+			continue
+		worship_mesh_found = true
+		break
+	if not worship_mesh_found:
+		_fail("Religious OSM polygon was not imported as its own real-footprint building mesh.")
+		return
+	for duplicate in worship_root.find_children("OSMRegionalPOI_*", "Node3D", true, false):
+		if str(duplicate.get_meta("osm_feature_id", "")) == worship_feature_id:
+			_fail("Religious polygon was duplicated as a POI marker instead of being deduplicated by OSM type/id.")
+			return
+	print("Baghdad religious polygon runtime QA passed: ", worship_source_type, "/", worship_feature_id, " imported as polygon extrusion without POI duplication.")
 	print("Baghdad citywide urban overview passed: buildings=", overview_buildings.size(), " POI markers=", poi_markers.size(), " resolution=1 km.")
 	regional_urban.queue_free()
 	regional_roads.queue_free()
