@@ -251,6 +251,41 @@ func _run() -> void:
 		_fail("Unspecified place_of_worship points must remain neutral instead of being mislabeled as a mosque or church.")
 		return
 
+	# Neutral worship polygons retain their actual OSM footprint without an
+	# invented mosque/church silhouette when religion/building tags are absent.
+	var neutral_worship_polygon := {
+		"id": "worship_validation_neutral_polygon_001",
+		"geometry": {"type": "Polygon", "coordinates": [[[240.0, 0.0], [254.0, 0.0], [254.0, 12.0], [240.0, 12.0], [240.0, 0.0]]]},
+		"tags": {"amenity": "place_of_worship", "name:ar": "دار عبادة محايدة"}
+	}
+	var neutral_polygon_built := int(streamer.call("_build_regional_poi_feature", worship_parent, neutral_worship_polygon))
+	var neutral_polygon_mesh := worship_parent.get_node_or_null("OSMOverviewBuilding_worship_validation_neutral_polygon_001") as MeshInstance3D
+	if neutral_polygon_built != 1 or neutral_polygon_mesh == null or str(neutral_polygon_mesh.get_meta("system_facility_type", "")) != "place_of_worship":
+		_fail("Unclassified worship polygon did not preserve its mapped footprint as a neutral religious building.")
+		return
+	if str(neutral_polygon_mesh.get_meta("system_footprint_geometry", "")) != "osm_polygon_extrusion":
+		_fail("Neutral worship polygon lost its OSM footprint geometry.")
+		return
+	if worship_parent.get_node_or_null("OSMWorshipDetail_mosque_worship_validation_neutral_polygon_001") != null or worship_parent.get_node_or_null("OSMWorshipDetail_church_worship_validation_neutral_polygon_001") != null:
+		_fail("Neutral worship polygon received an invented mosque or church silhouette.")
+		return
+
+	# Conflicting OSM tags are surfaced as conflicts and receive no invented
+	# religious silhouette until their source classification is reviewed.
+	var conflicting_worship_polygon := {
+		"id": "worship_validation_conflict_polygon_001",
+		"geometry": {"type": "Polygon", "coordinates": [[[260.0, 0.0], [274.0, 0.0], [274.0, 12.0], [260.0, 12.0], [260.0, 0.0]]]},
+		"tags": {"amenity": "place_of_worship", "religion": "muslim", "building": "church", "name:ar": "دار عبادة متعارضة"}
+	}
+	var conflict_polygon_built := int(streamer.call("_build_regional_poi_feature", worship_parent, conflicting_worship_polygon))
+	var conflict_polygon_mesh := worship_parent.get_node_or_null("OSMOverviewBuilding_worship_validation_conflict_polygon_001") as MeshInstance3D
+	if conflict_polygon_built != 1 or conflict_polygon_mesh == null or str(conflict_polygon_mesh.get_meta("system_facility_type", "")) != "religious_tag_conflict":
+		_fail("Conflicting OSM worship tags were not isolated for review.")
+		return
+	if worship_parent.get_node_or_null("OSMWorshipDetail_mosque_worship_validation_conflict_polygon_001") != null or worship_parent.get_node_or_null("OSMWorshipDetail_church_worship_validation_conflict_polygon_001") != null:
+		_fail("Conflicting OSM worship tags received an unsupported mosque/church silhouette.")
+		return
+
 	print("Baghdad facade detail validation passed: five-floor apartment generated five-floor apartment generated ", window_count,
 		" instanced windows across five vertical facade bands; regional 1 km worship polygons preserve OSM footprints with distinct mosque/church silhouettes; close-range villa and palace include road-facing columned entry canopies; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
