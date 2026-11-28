@@ -11,6 +11,7 @@ on:
       - "SYSTEM-WORLD/data/geography/real_world_registry.json"
       - "SYSTEM-WORLD/tools/geospatial/clip_osm_geojson_layers.py"
       - "SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py"
+      - "SYSTEM-WORLD/tools/geospatial/audit_baghdad_religious_sites.py"
       - "SYSTEM-WORLD/scripts/baghdad_osm_cell_streamer.gd"
       - "SYSTEM-WORLD/scripts/world_manager.gd"
       - "SYSTEM-WORLD/scripts/modern_world_region_manager.gd"
@@ -280,6 +281,16 @@ jobs:
           )
           PY
 
+      - name: Audit all Baghdad religious sites across amenity and building layers
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          python3 "$GITHUB_WORKSPACE/SYSTEM-WORLD/tools/geospatial/audit_baghdad_religious_sites.py" \
+            --input-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
+            --source-verification "$RUNNER_TEMP/baghdad-source/baghdad-source-verification.json" \
+            --output "$RUNNER_TEMP/baghdad-source/baghdad-religious-sites-audit.json"
+
       - name: Verify Republic Bridge and Tigris against the current OSM snapshot
         shell: bash
         run: |
@@ -429,7 +440,10 @@ jobs:
           path = Path("baghdad-citywide-urban-1km.zip")
           expected_layers = ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "wetlands", "entrances"]
           totals = {key: 0 for key in expected_layers}
-          facility_types = {"hospital": 0, "police": 0, "mosque": 0, "shop": 0, "food": 0, "education": 0}
+          audit = json.loads(Path("baghdad-religious-sites-audit.json").read_text(encoding="utf-8"))
+          expected_worship = audit["totals"]
+          worship_objects = {}
+          facility_types = {"hospital": 0, "police": 0, "shop": 0, "food": 0, "education": 0}
           with zipfile.ZipFile(path) as archive:
               manifest = json.loads(archive.read("manifest.json"))
               names = [name for name in archive.namelist() if name.startswith("cells/") and name.endswith(".json")]
@@ -443,26 +457,61 @@ jobs:
                   layers = tile.get("layers", {})
                   for layer in expected_layers:
                       totals[layer] += len(layers.get(layer, []))
-                  for item in layers.get("amenities", []):
-                      tags = item.get("tags", {})
-                      amenity = str(tags.get("amenity", "")).lower()
-                      shop = str(tags.get("shop", "")).lower()
-                      if amenity == "hospital" or tags.get("healthcare"):
-                          facility_types["hospital"] += 1
-                      if amenity in ("police", "police_station"):
-                          facility_types["police"] += 1
-                      if amenity == "place_of_worship" and str(tags.get("religion", "")).lower() == "muslim":
-                          facility_types["mosque"] += 1
-                      if shop:
-                          facility_types["shop"] += 1
-                      if amenity in ("restaurant", "cafe", "fast_food", "food_court"):
-                          facility_types["food"] += 1
-                      if amenity in ("school", "university", "college", "kindergarten"):
-                          facility_types["education"] += 1
+                  for layer in ("amenities", "buildings"):
+                      for item in layers.get(layer, []):
+                          tags = item.get("tags", {})
+                          amenity = str(tags.get("amenity", "")).lower()
+                          religion = str(tags.get("religion", "")).lower()
+                          building = str(tags.get("building", "")).lower()
+                          osm_key = (str(item.get("osm_type", "")), str(item.get("id", "")))
+                          if amenity == "place_of_worship" or building in ("mosque", "church", "synagogue", "temple", "monastery"):
+                              record = worship_objects.setdefault(osm_key, {"tags": {}, "geometries": set()})
+                              record["tags"].update(tags)
+                              record["geometries"].add(str(item.get("geometry", {}).get("type", "unknown")))
+                          shop = str(tags.get("shop", "")).lower()
+                          if amenity == "hospital" or tags.get("healthcare"):
+                              facility_types["hospital"] += 1
+                          if amenity in ("police", "police_station"):
+                              facility_types["police"] += 1
+                          if shop:
+                              facility_types["shop"] += 1
+                          if amenity in ("restaurant", "cafe", "fast_food", "food_court"):
+                              facility_types["food"] += 1
+                          if amenity in ("school", "university", "college", "kindergarten"):
+                              facility_types["education"] += 1
           assert totals["buildings"] >= 1000, f"Too few mapped Baghdad building footprints: {totals['buildings']}"
           assert totals["amenities"] >= 10, f"Too few mapped public/commercial POIs: {totals['amenities']}"
+          actual_worship = {"mosque": 0, "church": 0, "other_or_unspecified": 0, "conflict": 0}
+          actual_geometry = {key: {} for key in actual_worship}
+          for record in worship_objects.values():
+              tags = record["tags"]
+              amenity = str(tags.get("amenity", "")).lower()
+              religion = str(tags.get("religion", "")).lower()
+              building = str(tags.get("building", "")).lower()
+              if (religion in ("muslim", "islam") and building == "church") or (religion in ("christian", "christianity") and building == "mosque"):
+                  category = "conflict"
+              elif amenity == "place_of_worship" and religion in ("muslim", "islam"):
+                  category = "mosque"
+              elif amenity == "place_of_worship" and religion in ("christian", "christianity"):
+                  category = "church"
+              elif building == "mosque":
+                  category = "mosque"
+              elif building == "church":
+                  category = "church"
+              else:
+                  category = "other_or_unspecified"
+              geometries = record["geometries"]
+              geometry = "Polygon" if "Polygon" in geometries else "MultiPolygon" if "MultiPolygon" in geometries else "Point" if "Point" in geometries else "LineString"
+              actual_worship[category] += 1
+              actual_geometry[category][geometry] = actual_geometry[category].get(geometry, 0) + 1
+          assert len(worship_objects) == expected_worship["unique_worship_objects"], (len(worship_objects), expected_worship)
+          for category, expected_key in (("mosque", "mosques"), ("church", "churches"), ("other_or_unspecified", "other_or_unspecified"), ("conflict", "conflicting_tags")):
+              assert actual_worship[category] == expected_worship[expected_key], (category, actual_worship, expected_worship)
+              assert actual_geometry[category] == audit["preferred_geometry_counts"][category], (category, actual_geometry[category], audit["preferred_geometry_counts"][category])
           print("Verified citywide Baghdad urban overview:", len(names), "occupied 1 km cells")
           print("Urban feature totals:", json.dumps(totals, ensure_ascii=False, sort_keys=True))
+          print("Deduplicated religious features in streamed pack:", json.dumps(actual_worship, ensure_ascii=False, sort_keys=True))
+          print("Religious geometry coverage:", json.dumps(actual_geometry, ensure_ascii=False, sort_keys=True))
           print("Classified facilities:", json.dumps(facility_types, ensure_ascii=False, sort_keys=True))
           PY
 
@@ -491,6 +540,7 @@ jobs:
             ${{ runner.temp }}/baghdad-source/baghdad-municipality-candidate.osm.pbf
             ${{ runner.temp }}/baghdad-source/baghdad-clip-fileinfo.json
             ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
+            ${{ runner.temp }}/baghdad-source/baghdad-religious-sites-audit.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
             ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-bridge-extended.zip
