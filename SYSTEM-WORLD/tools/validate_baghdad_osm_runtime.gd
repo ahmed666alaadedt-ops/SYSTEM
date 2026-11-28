@@ -245,72 +245,105 @@ func _run_validation() -> void:
 		_fail("Citywide urban amenities did not produce POI markers.")
 		return
 
-	# Independently locate a genuine religious polygon in the generated OSM pack.
-	# This prevents a passing POI-marker test from masking a polygon-to-point downgrade.
-	var worship_cell := Vector2i(2147483647, 2147483647)
-	var worship_feature_id := ""
-	var worship_source_type := ""
+	# Exercise every genuine religious polygon/multipolygon in all 925 regional cells.
+	# The production cell loader builds the buildings layer first, then skips an
+	# identical worship object from amenities by its OSM type/id. Reproduce that
+	# exact ordering here, while checking every emitted mesh surface.
+	var worship_instance_count := 0
+	var worship_cross_layer_deduplicated := 0
+	var worship_mosque_meshes := 0
+	var worship_church_meshes := 0
+	var worship_other_meshes := 0
+	var worship_cell_count := 0
 	for file_name in urban_files:
 		if not file_name.ends_with(".json"):
 			continue
 		var tile_path := urban_cells_path.path_join(file_name)
 		var worship_tile: Variant = JSON.parse_string(FileAccess.get_file_as_string(tile_path))
 		if not worship_tile is Dictionary:
-			continue
-		var worship_layers: Dictionary = worship_tile.get("layers", {})
-		var found := false
-		for layer_name in ["buildings", "amenities"]:
-			for feature in worship_layers.get(layer_name, []):
-				var geometry: Dictionary = feature.get("geometry", {})
-				var geometry_type := str(geometry.get("type", ""))
-				if geometry_type not in ["Polygon", "MultiPolygon"]:
-					continue
-				var tags: Dictionary = feature.get("tags", {})
-				var amenity := str(tags.get("amenity", "")).to_lower()
-				var religion := str(tags.get("religion", "")).to_lower()
-				var building := str(tags.get("building", "")).to_lower()
-				var unambiguous_worship := amenity == "place_of_worship" and religion in ["muslim", "islam", "christian", "christianity"]
-				unambiguous_worship = unambiguous_worship or building in ["mosque", "church", "shrine", "monastery"]
-				if not unambiguous_worship:
-					continue
-				worship_cell = Vector2i(int(worship_tile.get("cell_x", 0)), int(worship_tile.get("cell_z", 0)))
-				worship_feature_id = str(feature.get("id", ""))
-				worship_source_type = str(feature.get("osm_type", ""))
-				found = true
-				break
-			if found:
-				break
-		if found:
-			break
-	if worship_cell.x == 2147483647:
-		_fail("Baghdad OSM pack contains no unambiguous religious polygon for runtime geometry verification.")
-		return
-	regional_urban._load_cell(worship_cell)
-	if not regional_urban.loaded_cells.has(worship_cell):
-		_fail("Baghdad religious-site polygon cell did not load.")
-		return
-	var worship_root: Node3D = regional_urban.loaded_cells[worship_cell]
-	var worship_mesh_found := false
-	for candidate in worship_root.find_children("OSMOverviewBuilding_*", "MeshInstance3D", true, false):
-		if str(candidate.get_meta("osm_feature_id", "")) != worship_feature_id:
-			continue
-		if str(candidate.get_meta("system_osm_type", "")) != worship_source_type:
-			continue
-		if str(candidate.get_meta("system_geometry_type", "")) not in ["Polygon", "MultiPolygon"]:
-			continue
-		if str(candidate.get_meta("system_footprint_geometry", "")) != "osm_polygon_extrusion":
-			continue
-		if candidate.mesh == null or candidate.mesh.get_surface_count() == 0:
-			continue
-		worship_mesh_found = true
-		break
-	if not worship_mesh_found:
-		_fail("Religious OSM polygon was not imported as its own real-footprint building mesh.")
-		return
-	for duplicate in worship_root.find_children("OSMRegionalPOI_*", "Node3D", true, false):
-		if str(duplicate.get_meta("osm_feature_id", "")) == worship_feature_id:
-			_fail("Religious polygon was duplicated as a POI marker instead of being deduplicated by OSM type/id.")
+			_fail("Invalid Baghdad regional cell JSON during full worship polygon QA: " + file_name)
 			return
+		var worship_layers: Dictionary = worship_tile.get("layers", {})
+		var building_features: Array = worship_layers.get("buildings", [])
+		var amenity_features: Array = worship_layers.get("amenities", [])
+		var building_feature_ids: Dictionary = {}
+		for building_feature in building_features:
+			var building_key := regional_urban._osm_feature_key(building_feature)
+			if building_key != "":
+				building_feature_ids[building_key] = true
+		var cell_worship_features: Array[Dictionary] = []
+		var cell_worship_from_buildings: Array[bool] = []
+		for building_feature in building_features:
+			if regional_urban._is_polygon_worship_feature(building_feature):
+				cell_worship_features.append(building_feature)
+				cell_worship_from_buildings.append(true)
+		for amenity_feature in amenity_features:
+			if not regional_urban._is_polygon_worship_feature(amenity_feature):
+				continue
+			var amenity_key := regional_urban._osm_feature_key(amenity_feature)
+			if amenity_key != "" and building_feature_ids.has(amenity_key):
+				worship_cross_layer_deduplicated += 1
+				continue
+			cell_worship_features.append(amenity_feature)
+			cell_worship_from_buildings.append(false)
+		if cell_worship_features.is_empty():
+			continue
+		worship_cell_count += 1
+		for feature_index in range(cell_worship_features.size()):
+			var worship_feature: Dictionary = cell_worship_features[feature_index]
+			var feature_id := str(worship_feature.get("id", ""))
+			var source_type := str(worship_feature.get("osm_type", ""))
+			if feature_id == "" or source_type == "":
+				_fail("A Baghdad worship polygon is missing its stable OSM type/id in " + file_name)
+				return
+			var worship_root := Node3D.new()
+			var built_count := 0
+			if cell_worship_from_buildings[feature_index]:
+				built_count = regional_urban._build_building_overview_feature(worship_root, worship_feature)
+			else:
+				built_count = regional_urban._build_regional_poi_feature(worship_root, worship_feature)
+			var worship_meshes := worship_root.find_children("OSMOverviewBuilding_*", "MeshInstance3D", true, false)
+			var worship_markers := worship_root.find_children("OSMRegionalPOI_*", "Node3D", true, false)
+			if built_count <= 0 or worship_meshes.size() != built_count:
+				_fail("Baghdad worship polygon failed to create all expected footprint meshes: " + source_type + "/" + feature_id + " in " + file_name)
+				worship_root.free()
+				return
+			if not worship_markers.is_empty():
+				_fail("Baghdad worship polygon was downgraded or duplicated as a POI marker: " + source_type + "/" + feature_id)
+				worship_root.free()
+				return
+			for worship_mesh in worship_meshes:
+				if str(worship_mesh.get_meta("osm_feature_id", "")) != feature_id or str(worship_mesh.get_meta("system_osm_type", "")) != source_type:
+					_fail("A worship footprint mesh lost its source OSM identity: " + source_type + "/" + feature_id)
+					worship_root.free()
+					return
+				if str(worship_mesh.get_meta("system_geometry_type", "")) not in ["Polygon", "MultiPolygon"] or str(worship_mesh.get_meta("system_footprint_geometry", "")) != "osm_polygon_extrusion":
+					_fail("A worship footprint did not retain its original polygon geometry: " + source_type + "/" + feature_id)
+					worship_root.free()
+					return
+				if worship_mesh.mesh == null or worship_mesh.mesh.get_surface_count() == 0:
+					_fail("A Baghdad worship footprint mesh has no renderable surface: " + source_type + "/" + feature_id)
+					worship_root.free()
+					return
+				var facility_type := str(worship_mesh.get_meta("system_facility_type", ""))
+				if facility_type == "mosque":
+					worship_mosque_meshes += 1
+				elif facility_type == "church":
+					worship_church_meshes += 1
+				else:
+					worship_other_meshes += 1
+			worship_instance_count += 1
+			worship_root.free()
+	if worship_instance_count < 150:
+		_fail("Full Baghdad worship polygon QA found unexpectedly few runtime footprint instances: " + str(worship_instance_count))
+		return
+	if worship_cross_layer_deduplicated < 100:
+		_fail("Full Baghdad worship QA did not exercise expected buildings/amenities OSM identity deduplication.")
+		return
+	print("Baghdad full worship polygon runtime QA passed: ", worship_instance_count,
+		" unique cell-local polygon instances across ", worship_cell_count, " cells; cross-layer duplicates suppressed=", worship_cross_layer_deduplicated,
+		"; classified mosque meshes=", worship_mosque_meshes, " church meshes=", worship_church_meshes,
+		" other/unspecified worship meshes=", worship_other_meshes, ".")
 	# Exercise real mesh construction for common OSM tagging variants. Each
 	# synthetic polygon must become a footprint mesh, never a centroid POI.
 	var synthetic_index := 0
