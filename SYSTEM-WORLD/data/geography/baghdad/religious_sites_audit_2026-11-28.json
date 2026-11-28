@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "region": "Baghdad Municipality, Iraq",
   "boundary_relation": 5638803,
   "source": "OpenStreetMap contributors; BBBike.org Iraq PBF extract",
@@ -13,9 +13,10 @@
     "buildings": 41694
   },
   "totals": {
-    "unique_worship_objects": 570,
+    "unique_worship_objects": 572,
     "mosques": 240,
     "churches": 71,
+    "shrines": 2,
     "other_or_unspecified": 257,
     "conflicting_tags": 2,
     "raw_amenity_place_of_worship_objects": 561
@@ -36,6 +37,9 @@
     "church": {
       "Point": 13,
       "Polygon": 58
+    },
+    "shrine": {
+      "Polygon": 2
     },
     "other_or_unspecified": {
       "Point": 233,
@@ -77,6 +81,7 @@
   "limitations": [
     "Counts describe this downloaded OSM snapshot only, not a complete census of real-world Baghdad places of worship.",
     "OSM tags can be missing or contradictory; unspecified objects remain neutral and conflicts are not assigned a religious architectural silhouette.",
+    "The two building=shrine footprints are preserved as shrine monuments, not reclassified as mosques or churches.",
     "A mapped polygon proves only an imported exterior footprint, not a verified interior, collision, signage, or visual fidelity.",
     "The 1 km regional overview and 200 m detailed cell pack require separate validation."
   ]
