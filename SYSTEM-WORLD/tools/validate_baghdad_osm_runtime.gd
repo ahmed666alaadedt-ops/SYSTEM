@@ -507,7 +507,8 @@ func _run_validation() -> void:
 		{"tags": {"shop": "mall"}, "expected": "market"},
 		{"tags": {"amenity": "bus_station"}, "expected": "transport"},
 		{"tags": {"railway": "station"}, "expected": "transport"},
-		{"tags": {"public_transport": "platform"}, "expected": "transport"}
+		{"tags": {"public_transport": "platform"}, "expected": "transport"},
+		{"tags": {"highway": "bus_stop"}, "expected": "transport"}
 	]
 	for poi_case in poi_cases:
 		var poi_root := Node3D.new()
