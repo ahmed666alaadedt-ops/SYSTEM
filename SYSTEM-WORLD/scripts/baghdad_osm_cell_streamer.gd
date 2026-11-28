@@ -334,11 +334,11 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 		var facility_type := ""
 		if amenity_kind == "hospital" or str(tags.get("healthcare", "")).to_lower() in ["hospital", "clinic"]:
 			facility_type = "healthcare"
-		elif amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["christian", "christianity"]:
+		elif (amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["christian", "christianity"]) or str(tags.get("building", "")).to_lower() == "church":
 			facility_type = "church"
 		elif amenity_kind in ["police", "police_station"]:
 			facility_type = "police"
-		elif amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim":
+		elif (amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["muslim", "islam"]) or str(tags.get("building", "")).to_lower() == "mosque":
 			facility_type = "mosque"
 		elif str(tags.get("shop", "")) != "":
 			facility_type = "shop"
@@ -366,6 +366,9 @@ func _is_polygon_worship_feature(feature: Dictionary) -> bool:
 	if geometry_type not in ["Polygon", "MultiPolygon"]:
 		return false
 	var tags: Dictionary = feature.get("tags", {})
+	var building_kind := str(tags.get("building", "")).to_lower()
+	if building_kind in ["mosque", "church"]:
+		return true
 	if str(tags.get("amenity", "")).to_lower() != "place_of_worship":
 		return false
 	var religion := str(tags.get("religion", "")).to_lower()
@@ -405,15 +408,15 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	elif amenity in ["police", "police_station"]:
 		facility_type = "police"
 		display_name = "مركز شرطة"
-	elif amenity == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim":
+	elif (amenity == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["muslim", "islam"]) or str(tags.get("building", "")).to_lower() == "mosque":
 		facility_type = "mosque"
 		display_name = "جامع أو مسجد"
-	elif amenity == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["christian", "christianity"]:
+	elif (amenity == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["christian", "christianity"]) or str(tags.get("building", "")).to_lower() == "church":
 		facility_type = "church"
 		display_name = "كنيسة"
-	elif str(tags.get("building", "")).to_lower() == "church":
-		facility_type = "church"
-		display_name = "كنيسة"
+	elif amenity == "place_of_worship":
+		facility_type = "place_of_worship"
+		display_name = "دار عبادة - النوع غير محدد"
 	elif shop != "":
 		facility_type = "shop"
 		display_name = "محل تجاري"
@@ -1203,8 +1206,8 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 	var coordinates: Array = geometry.get("coordinates", [])
 	var worship := str(tags.get("amenity", "")) == "place_of_worship"
 	var religion := str(tags.get("religion", "")).to_lower()
-	var is_mosque := (worship and religion == "muslim") or str(tags.get("building", "")).to_lower() == "mosque"
-	var is_church := (worship and religion == "christian") or str(tags.get("building", "")).to_lower() == "church"
+	var is_mosque := (worship and religion in ["muslim", "islam"]) or str(tags.get("building", "")).to_lower() == "mosque"
+	var is_church := (worship and religion in ["christian", "christianity"]) or str(tags.get("building", "")).to_lower() == "church"
 	if is_mosque:
 		_build_mosque_landmark(parent, feature, coordinates)
 	elif is_church:
