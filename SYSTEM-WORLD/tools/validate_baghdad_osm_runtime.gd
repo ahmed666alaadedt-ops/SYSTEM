@@ -35,6 +35,17 @@ func _run_validation() -> void:
 		_fail("Arabic OSM villa/palace names were not preserved.")
 		return
 	print("Baghdad luxury-residential tagging QA passed: villa/palace classes, mapped dimensions and Arabic names.")
+	var service_building_tags := [
+		{"tags": {"building": "school", "amenity": "school"}, "expected": "education_building", "name": "مبنى تعليمي"},
+		{"tags": {"building": "hospital", "amenity": "hospital"}, "expected": "healthcare_building", "name": "مرفق صحي"},
+		{"tags": {"building": "fire_station", "amenity": "fire_station"}, "expected": "civic_building", "name": "مرفق خدمي حكومي"},
+		{"tags": {"building": "hotel", "tourism": "hotel"}, "expected": "hospitality_building", "name": "فندق أو دار ضيافة"}
+	]
+	for service_case in service_building_tags:
+		if streamer._building_kind(service_case.tags) != str(service_case.expected) or streamer._building_display_name(str(service_case.expected), service_case.tags) != str(service_case.name):
+			_fail("Baghdad detailed building service classification/name failed: " + str(service_case.tags))
+			return
+	print("Baghdad detailed service-building QA passed: education, healthcare, civic services and hospitality remain distinct.")
 	# OSM entrance points must resolve to their true nearby footprint, while
 	# private and geometrically ambiguous matches remain non-enterable/review-only.
 	var entrance_test_root := Node3D.new()
