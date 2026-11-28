@@ -59,20 +59,30 @@ func _run() -> void:
 		_fail("Facade MultiMesh must retain per-window cool/warm color variation.")
 		return
 
-	# The synthetic 16 m apartment represents five 3.15 m facade bands.
-	# Check the actual instance transforms so a non-empty MultiMesh alone
-	# cannot accidentally pass when windows occupy only one or two floors.
-	var floor_instance_counts := {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+	# Validate five distinct vertical window bands without assuming the
+	# synthetic test building sits at world elevation zero. Real Baghdad
+	# footprints inherit terrain elevation, so absolute Y thresholds are invalid.
+	var floor_levels: Array[float] = []
+	var floor_instance_counts: Array[int] = []
 	for instance_index in range(window_count):
 		var instance_transform: Transform3D = windows.multimesh.get_instance_transform(instance_index)
-		var floor_index := int(round((instance_transform.origin.y - 1.55) / 3.15))
-		if floor_index < 0 or floor_index > 4:
-			_fail("Facade window instance lies outside the five expected apartment floors.")
-			return
-		floor_instance_counts[floor_index] = int(floor_instance_counts[floor_index]) + 1
-	for floor_index in range(5):
-		if int(floor_instance_counts[floor_index]) < 3:
-			_fail("Five-floor apartment facade coverage is incomplete on floor %d." % (floor_index + 1))
+		var window_y := instance_transform.origin.y
+		var matched_floor := -1
+		for floor_index in range(floor_levels.size()):
+			if absf(window_y - floor_levels[floor_index]) <= 0.75:
+				matched_floor = floor_index
+				break
+		if matched_floor < 0:
+			floor_levels.append(window_y)
+			floor_instance_counts.append(1)
+		else:
+			floor_instance_counts[matched_floor] += 1
+	if floor_levels.size() != 5:
+		_fail("Five-floor apartment must produce five distinct facade window bands; found %d." % floor_levels.size())
+		return
+	for floor_index in range(floor_instance_counts.size()):
+		if floor_instance_counts[floor_index] < 3:
+			_fail("Five-floor apartment facade coverage is incomplete on vertical band %d." % (floor_index + 1))
 			return
 
 	var overview_parent := Node3D.new()
@@ -91,7 +101,7 @@ func _run() -> void:
 		return
 
 	print("Baghdad facade detail validation passed: five-floor apartment generated ", window_count,
-		" instanced windows across all five floors in one cell-level MultiMesh; regional 1 km overview remains extrusion-only; per-building window budget <= 32.")
+		" instanced windows across five vertical facade bands in one cell-level MultiMesh; regional 1 km overview remains extrusion-only; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
 	quit(0)
 
