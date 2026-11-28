@@ -460,8 +460,8 @@ func _build_city_airship_gate(parent: Node3D, city_id: String, city_name: String
 	_add_box(gate, "CityAirshipMooringTower", Vector3(-17, 95, 0), Vector3(7, 190, 7), platform_material)
 	_add_box_collision(gate, "CityAirshipMooringTowerCollision", Vector3(-17, 95, 0), Vector3(7, 190, 7))
 	_add_box(gate, "CityAirshipElevatorCabin", Vector3(-17, 92, 0), Vector3(4.5, 12, 4.5), glow)
-	_add_box(gate, "CityAirshipPassengerBridge", Vector3(0, 180, 0), Vector3(36, 1.8, 7), glow)
-	_add_box_collision(gate, "CityAirshipPassengerBridgeCollision", Vector3(0, 180, 0), Vector3(36, 1.8, 7))
+	_add_box(gate, "CityAirshipPassengerBridge", Vector3(0, 180, 0), Vector3(50, 1.8, 7), glow)
+	_add_box_collision(gate, "CityAirshipPassengerBridgeCollision", Vector3(0, 180, 0), Vector3(50, 1.8, 7))
 	_add_label(gate, "CityAirshipGateSign", city_name.to_upper() + " AIRSHIP GATE", Vector3(0, 8, 16), Color(0.2, 0.86, 1.0))
 	var interaction := Area3D.new()
 	interaction.name = "CityAirshipTicketAndBoardingInteraction"
