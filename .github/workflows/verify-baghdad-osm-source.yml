@@ -193,7 +193,8 @@ jobs:
           osmium tags-filter baghdad-municipality-candidate.osm.pbf w/waterway -o waterways.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf w/bridge -o bridges.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/landuse -o landuse.osm.pbf
-          osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/amenity -o amenities.osm.pbf
+          # Keep public amenities plus named commercial, visitor, heritage, leisure and specialist services.
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/amenity nwr/shop nwr/tourism nwr/historic nwr/leisure nwr/healthcare nwr/craft nwr/office nwr/emergency nwr/aeroway -o amenities.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf w/railway -o railway.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/natural=water -o natural-water.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/natural=wetland nwr/wetland -o wetlands.osm.pbf
