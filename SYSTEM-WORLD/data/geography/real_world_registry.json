@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "2026-11-28.1",
+  "version": "2026-11-28.2",
   "coordinate_reference_system": "EPSG:4326",
   "coordinate_order": "latitude_longitude",
   "world_model": "real_earth",
@@ -162,6 +162,28 @@
             "surrounding gardens, bridges and walkways",
             "underground museum volume"
           ]
+        },
+        "baghdad_sindbad_palace_candidate": {
+          "name": {
+            "ar": "قصر السندباد ذو القبة الذهبية (موقع مرشح)",
+            "en": "Golden-Domed Sindbad Palace (candidate)"
+          },
+          "type": "palace_candidate",
+          "location": {
+            "ar": "حسب وصف المستخدم: الكرخ، المنطقة الخضراء؛ الموقع الدقيق غير مؤكد",
+            "en": "User-described as Al-Karkh, Green Zone; exact site unconfirmed"
+          },
+          "source_urls": [
+            "https://iraq.worldplaces.me/view-place/35713013.html",
+            "https://www.rudawarabia.net/arabic/categories/iraq/929587"
+          ],
+          "identity_note": "Do not merge with the separately listed Sindbad/Babylon Palace in Jadriya until the golden-domed Karkh site is positively identified.",
+          "geometry_status": "candidate_record_only; coordinates_intentionally_omitted_pending_identity_and_location_verification",
+          "visual_requirements": [
+            "golden dome as described by user",
+            "palace exterior and grounds pending photo or authoritative site identification"
+          ],
+          "runtime_projection_allowed": false
         }
       }
     }
