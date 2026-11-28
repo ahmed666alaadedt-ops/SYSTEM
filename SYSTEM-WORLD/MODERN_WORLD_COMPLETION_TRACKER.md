@@ -2091,6 +2091,13 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] Exact-head Godot validation must confirm the shader material, TIME-driven code and bank-foam mesh are present; real-device visual review remains required for reflections, transparency, current direction and mobile GPU cost.
 
 
+## Baghdad detailed public-service building classification — 28 November 2026
+
+- [x] Distinguish mapped school/college/university/kindergarten, hospital/clinic/healthcare, civic/fire/police/government and hotel/hostel footprints in detailed OSM building generation.
+- [x] Give these source-tagged classes Arabic fallback names and separate facade material families while preserving worship classification precedence.
+- [x] Add validator coverage for education, healthcare, civic and hospitality building categories.
+- [ ] Confirm detailed 200 m OSM cell geometry and Arabic discovery presentation on the exact-head Godot run and Android device.
+
 ## Baghdad concave building footprint anchors — 28 November 2026
 
 - [x] Replace arithmetic vertex averages with a triangulation-derived interior anchor for building discovery positions, road-frontage approach calculations and polygon worship landmark placement.
