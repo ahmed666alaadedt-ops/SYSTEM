@@ -286,6 +286,25 @@ func _run() -> void:
 		_fail("Conflicting OSM worship tags received an unsupported mosque/church silhouette.")
 		return
 
+	# Shrine/mausoleum footprints are a distinct religious building class,
+	# not mosque or church geometry; preserve the mapped polygon as-is.
+	var shrine_polygon := {
+		"id": "worship_validation_shrine_polygon_001",
+		"geometry": {"type": "Polygon", "coordinates": [[[280.0, 0.0], [296.0, 0.0], [296.0, 12.0], [280.0, 12.0], [280.0, 0.0]]]},
+		"tags": {"building": "shrine", "religion": "muslim", "name:ar": "مرقد اختبار"}
+	}
+	var shrine_built := int(streamer.call("_build_regional_poi_feature", worship_parent, shrine_polygon))
+	var shrine_mesh := worship_parent.get_node_or_null("OSMOverviewBuilding_worship_validation_shrine_polygon_001") as MeshInstance3D
+	if shrine_built != 1 or shrine_mesh == null or str(shrine_mesh.get_meta("system_facility_type", "")) != "shrine":
+		_fail("A mapped building=shrine polygon was not preserved as a distinct shrine feature.")
+		return
+	if str(shrine_mesh.get_meta("system_footprint_geometry", "")) != "osm_polygon_extrusion" or str(shrine_mesh.get_meta("baghdad_building_type", "")) != "shrine":
+		_fail("Shrine footprint was not kept as its own mapped building class.")
+		return
+	if worship_parent.get_node_or_null("OSMWorshipDetail_mosque_worship_validation_shrine_polygon_001") != null or worship_parent.get_node_or_null("OSMWorshipDetail_church_worship_validation_shrine_polygon_001") != null:
+		_fail("Shrine polygon received an unsupported mosque or church silhouette.")
+		return
+
 	print("Baghdad facade detail validation passed: five-floor apartment generated five-floor apartment generated ", window_count,
 		" instanced windows across five vertical facade bands; regional 1 km worship polygons preserve OSM footprints with distinct mosque/church silhouettes; close-range villa and palace include road-facing columned entry canopies; per-building window budget <= 32.")
 	# Do not force dummy-renderer teardown in this Godot 4.3 geometry unit test.
