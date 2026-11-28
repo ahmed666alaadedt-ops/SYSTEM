@@ -1579,8 +1579,69 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 	else:
 		# Unknown and contradictory tags stay neutral; never assign a false
 		# religious silhouette to an unresolved OSM point.
-		_add_point_marker(parent, coordinates, amenity_material, 0.48, "OSMAmenity_%s" % str(feature.get("id", "")))
+		_build_mapped_amenity_marker(parent, feature, coordinates)
 	return 1
+
+
+func _build_mapped_amenity_marker(parent: Node3D, feature: Dictionary, coordinates: Array) -> void:
+	if coordinates.size() < 2:
+		return
+	var tags: Dictionary = feature.get("tags", {})
+	var feature_id := str(feature.get("id", "unknown"))
+	var point := Vector2(float(coordinates[0]), float(coordinates[1]))
+	var position := Vector3(point.x, _terrain_height(point), point.y)
+	var amenity_type := str(tags.get("amenity", tags.get("shop", tags.get("tourism", tags.get("leisure", tags.get("office", "place"))))))
+	var display_name := str(tags.get("name:ar", tags.get("name", "")))
+	if display_name == "":
+		display_name = "موقع بغداد: " + amenity_type
+	var mapped_root := Node3D.new()
+	mapped_root.name = "OSMAmenity_%s" % feature_id
+	mapped_root.position = position
+	mapped_root.set_meta("osm_feature_id", feature_id)
+	mapped_root.set_meta("system_amenity_type", amenity_type)
+	mapped_root.set_meta("system_display_name", display_name)
+	mapped_root.set_meta("system_source_name", str(tags.get("name", "")))
+	mapped_root.set_meta("system_source_name_ar", str(tags.get("name:ar", "")))
+	mapped_root.set_meta("system_operator", str(tags.get("operator", "")))
+	mapped_root.set_meta("system_opening_hours", str(tags.get("opening_hours", "")))
+	mapped_root.set_meta("system_access_tag", str(tags.get("access", "unknown")))
+	mapped_root.set_meta("system_wheelchair_tag", str(tags.get("wheelchair", "unknown")))
+	mapped_root.set_meta("system_cuisine", str(tags.get("cuisine", "")))
+	mapped_root.set_meta("system_access_state", "mapped_amenity_point_no_interior_scene")
+	parent.add_child(mapped_root)
+	var marker := MeshInstance3D.new()
+	marker.name = "MappedAmenityMarker"
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.48
+	mesh.height = 0.96
+	marker.mesh = mesh
+	marker.position.y = 0.48
+	marker.material_override = amenity_material
+	marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mapped_root.add_child(marker)
+	var body := StaticBody3D.new()
+	body.name = "MappedAmenityInteraction"
+	body.add_to_group("system_interactable")
+	var collision := CollisionShape3D.new()
+	var shape := SphereShape3D.new()
+	shape.radius = 0.9
+	collision.shape = shape
+	body.add_child(collision)
+	body.set_meta("osm_feature_id", feature_id)
+	body.set_meta("system_location_id", "baghdad_osm_amenity_" + feature_id)
+	body.set_meta("system_region_id", "region_baghdad")
+	body.set_meta("system_location_type", 7)
+	body.set_meta("system_fast_travel", false)
+	body.set_meta("system_location_position", position)
+	body.set_meta("system_display_name", display_name)
+	body.set_meta("system_interaction_prompt", "تفاصيل موقع خدمة محدد في بيانات الخريطة")
+	body.set_meta("system_amenity_type", amenity_type)
+	body.set_meta("system_access_tag", str(tags.get("access", "unknown")))
+	body.set_meta("system_wheelchair_tag", str(tags.get("wheelchair", "unknown")))
+	body.set_meta("system_opening_hours", str(tags.get("opening_hours", "")))
+	body.set_meta("system_access_state", "mapped_amenity_point_no_interior_scene")
+	body.set_meta("system_can_enter", false)
+	mapped_root.add_child(body)
 
 
 func _build_neutral_worship_landmark(parent: Node3D, feature: Dictionary, coordinates: Array, worship_type: String) -> void:
