@@ -1771,16 +1771,24 @@ func _collect_sidewalk_transforms(parent: Node3D, line: PackedVector2Array, road
 	# Build sidewalks only where OSM explicitly maps them. Footway/path ways
 	# remain their own mapped geometry and are not duplicated as road-edge walks.
 	var general := str(tags.get("sidewalk", "")).to_lower()
-	if general in ["no", "none", "separate", ""]:
-		if not tags.has("sidewalk:left") and not tags.has("sidewalk:right"):
-			return
-	var left_tag := str(tags.get("sidewalk:left", general)).to_lower()
-	var right_tag := str(tags.get("sidewalk:right", general)).to_lower()
-	var left_enabled := left_tag in ["yes", "both", "left", "right", "raised", "lowered", "shared"]
-	var right_enabled := right_tag in ["yes", "both", "left", "right", "raised", "lowered", "shared"]
-	if general == "both":
+	var left_enabled := false
+	var right_enabled := false
+	if general in ["yes", "both"]:
 		left_enabled = true
 		right_enabled = true
+	elif general == "left":
+		left_enabled = true
+	elif general == "right":
+		right_enabled = true
+	var left_tag := str(tags.get("sidewalk:left", "")).to_lower()
+	var right_tag := str(tags.get("sidewalk:right", "")).to_lower()
+	if left_tag != "":
+		left_enabled = left_tag in ["yes", "both", "raised", "lowered", "shared"]
+	if right_tag != "":
+		right_enabled = right_tag in ["yes", "both", "raised", "lowered", "shared"]
+	if general in ["no", "none", "separate"]:
+		left_enabled = left_tag in ["yes", "both", "raised", "lowered", "shared"]
+		right_enabled = right_tag in ["yes", "both", "raised", "lowered", "shared"]
 	if not left_enabled and not right_enabled:
 		return
 	var transforms: Array = parent.get_meta("system_sidewalk_transforms", [])
