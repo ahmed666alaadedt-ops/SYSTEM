@@ -189,6 +189,13 @@ func board_ticket(ticket_id: String, player_id: String) -> bool:
 	if str(ticket.player_id) != player_id or str(ticket.status) != "paid":
 		return false
 	var route: Dictionary = routes.get(str(ticket.route_id), {})
+	var origin_city_id := str(route.get("origin_city_id", ""))
+	var origin_airport: Dictionary = city_airports.get(origin_city_id, {})
+	var player := _find_system_player(player_id)
+	if player != null and not origin_airport.is_empty():
+		var origin_position: Vector3 = origin_airport.get("position", Vector3.ZERO)
+		if player.global_position.distance_to(origin_position) > 350.0:
+			return false
 	ticket.status = "in_transit"
 	ticket.departure_unix = int(Time.get_unix_time_from_system())
 	ticket.arrival_unix = int(ticket.departure_unix) + int(route.get("duration_minutes", 5)) * 60
