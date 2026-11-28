@@ -378,6 +378,41 @@ func _run_validation() -> void:
 		synthetic_root.free()
 		synthetic_index += 1
 	print("Baghdad synthetic worship tagging QA passed: three OSM tagging variants generated polygon footprint meshes without POI duplication.")
+	# Conflicting religion/building tags must remain neutral in the detailed
+	# 200 m amenity layer instead of receiving a false mosque/church silhouette.
+	var conflict_root := Node3D.new()
+	var conflict_feature := {
+		"id": "runtime_worship_conflict",
+		"osm_type": "node",
+		"geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+		"tags": {"amenity": "place_of_worship", "religion": "muslim", "building": "church"}
+	}
+	var conflict_built := regional_urban._build_amenity_feature(conflict_root, conflict_feature)
+	if conflict_built != 1 or not conflict_root.find_children("OSMAmenity_*", "MeshInstance3D", true, false).size() > 0:
+		_fail("Conflicting worship point tags did not remain a neutral amenity marker.")
+		conflict_root.free()
+		return
+	if not conflict_root.find_children("OSMMosque_*", "Node3D", true, false).is_empty() or not conflict_root.find_children("OSMChurch_*", "Node3D", true, false).is_empty():
+		_fail("Conflicting worship point tags were incorrectly assigned a mosque/church silhouette.")
+		conflict_root.free()
+		return
+	conflict_root.free()
+	# Named religious points must retain their Arabic source name in the landmark metadata.
+	var named_church_root := Node3D.new()
+	var named_church := {
+		"id": "runtime_named_church",
+		"osm_type": "node",
+		"geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+		"tags": {"amenity": "place_of_worship", "religion": "christian", "name:ar": "كنيسة اختبار بغداد"}
+	}
+	regional_urban._build_amenity_feature(named_church_root, named_church)
+	var named_church_nodes := named_church_root.find_children("OSMChurch_*", "Node3D", true, false)
+	if named_church_nodes.size() != 1 or str(named_church_nodes[0].get_meta("system_display_name", "")) != "كنيسة اختبار بغداد":
+		_fail("Named Baghdad church point did not preserve its Arabic OSM display name.")
+		named_church_root.free()
+		return
+	named_church_root.free()
+	print("Baghdad worship point QA passed: contradictory tags stay neutral and Arabic church names are retained.")
 	# Verify the expanded OSM amenity source categories render as typed POIs.
 	var poi_cases := [
 		{"tags": {"shop": "supermarket"}, "expected": "shop"},
