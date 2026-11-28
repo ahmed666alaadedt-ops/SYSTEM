@@ -271,7 +271,9 @@ func _load_cell(cell: Vector2i) -> void:
 	for feature in layers.get("railway", []):
 		_build_line_feature(cell_root, feature, 2.2, bridge_material, 0.20, "OSMRailway")
 	for feature in layers.get("landuse", []):
-		_build_area_feature(cell_root, feature, land_material, 0.035, "OSMLanduse")
+		var landuse_tags: Dictionary = feature.get("tags", {})
+		if not _is_sensitive_state_site(landuse_tags):
+			_build_area_feature(cell_root, feature, land_material, 0.035, "OSMLanduse")
 	for feature in layers.get("natural-water", []):
 		_build_area_feature(cell_root, feature, water_material, 0.08, "OSMNaturalWater")
 	for feature in layers.get("wetlands", []):
@@ -2323,7 +2325,7 @@ func _is_sensitive_state_site(tags: Dictionary) -> bool:
 	var military := str(tags.get("military", "")).to_lower()
 	var security := str(tags.get("security", "")).to_lower()
 	var aeroway := str(tags.get("aeroway", "")).to_lower()
-	return military != "" or security != "" or aeroway in ["military", "airbase"] or amenity in ["police", "police_station"] or building in ["military", "bunker", "government"] or office == "government" or landuse == "military"
+	return military != "" or security != "" or aeroway in ["military", "airbase"] or amenity in ["police", "police_station"] or building in ["military", "bunker", "government"] or office == "government" or landuse in ["military", "government"]
 
 
 func _game_worship_presentation_type(tags: Dictionary) -> String:
