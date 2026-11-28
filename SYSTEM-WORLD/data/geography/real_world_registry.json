@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "2026-11-19.1",
+  "version": "2026-11-28.1",
   "coordinate_reference_system": "EPSG:4326",
   "coordinate_order": "latitude_longitude",
   "world_model": "real_earth",
@@ -53,7 +53,117 @@
         "bridges and river crossings",
         "historic landmarks",
         "airports and railway infrastructure"
-      ]
+      ],
+      "landmarks": {
+        "baghdad_grand_festivities_square": {
+          "name": {
+            "ar": "ساحة الاحتفالات الكبرى",
+            "en": "Grand Festivities Square"
+          },
+          "type": "ceremonial_square",
+          "latitude": 33.30587,
+          "longitude": 44.38306,
+          "location": {
+            "ar": "الكرخ، المنطقة الخضراء",
+            "en": "Al-Karkh, Green Zone"
+          },
+          "source_ids": {
+            "osm_way": 835419642
+          },
+          "source_urls": [
+            "https://mapcarta.com/W835419642"
+          ],
+          "geometry_status": "coordinate_reference_verified; detailed_polygon_and_access_geometry_pending",
+          "visual_requirements": [
+            "full parade ground",
+            "reviewing pavilion",
+            "approach avenue",
+            "surrounding landscape and roads"
+          ]
+        },
+        "baghdad_unknown_soldier_monument": {
+          "name": {
+            "ar": "نصب الجندي المجهول",
+            "en": "Monument to the Unknown Soldier"
+          },
+          "type": "memorial_monument",
+          "latitude": 33.30852,
+          "longitude": 44.38916,
+          "location": {
+            "ar": "الكرخ، قرب ساحة الاحتفالات",
+            "en": "Al-Karkh, near Grand Festivities Square"
+          },
+          "source_ids": {
+            "osm_way": 1076927375
+          },
+          "source_urls": [
+            "https://mapcarta.com/W1076927375",
+            "https://rafidainiraq.com/en/unknownsoldier/"
+          ],
+          "geometry_status": "coordinate_reference_verified; monument_mesh_and_site_boundary_pending",
+          "visual_requirements": [
+            "tilted shield-like dome",
+            "spiral tower",
+            "raised circular hill/plaza",
+            "underground museum entrance"
+          ]
+        },
+        "baghdad_victory_arch": {
+          "name": {
+            "ar": "قوس النصر / سيوف القادسية",
+            "en": "Victory Arch / Swords of Qadisiyah"
+          },
+          "type": "memorial_arch",
+          "latitude": 33.30526,
+          "longitude": 44.38645,
+          "location": {
+            "ar": "الكرخ، المنطقة الخضراء، مدخل ساحة الاحتفالات",
+            "en": "Al-Karkh, Green Zone, entrance to Grand Festivities Square"
+          },
+          "source_ids": {
+            "osm_way": 1076927374
+          },
+          "source_urls": [
+            "https://mapcarta.com/W1076927374",
+            "https://architect-atlas.com/buildings/victory-arch-baghdad/"
+          ],
+          "geometry_status": "coordinate_reference_verified; full twin-arch geometry_pending",
+          "visual_requirements": [
+            "two monumental bronze forearms",
+            "crossed steel swords",
+            "accurate height and spacing",
+            "ceremonial road alignment"
+          ]
+        },
+        "baghdad_al_shaheed_monument": {
+          "name": {
+            "ar": "نصب الشهيد",
+            "en": "Al-Shaheed Monument"
+          },
+          "type": "memorial_monument",
+          "latitude": 33.34344,
+          "longitude": 44.44613,
+          "location": {
+            "ar": "الرصافة، قرب قناة الجيش وشارع فلسطين",
+            "en": "Al-Rusafa, near Army Canal and Palestine Street"
+          },
+          "source_ids": {
+            "osm_way": 1089391780
+          },
+          "source_urls": [
+            "https://mapcarta.com/W1089391780",
+            "https://www.archnet.org/sites/433"
+          ],
+          "geometry_status": "coordinate_reference_verified; island_lake_and_site_geometry_pending",
+          "visual_requirements": [
+            "two separated turquoise dome shells",
+            "artificial lake and island",
+            "circular platform",
+            "surrounding gardens, bridges and walkways",
+            "underground museum volume"
+          ]
+        }
+      }
     }
   },
   "data_sources": [
