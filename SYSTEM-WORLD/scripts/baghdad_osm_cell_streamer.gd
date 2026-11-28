@@ -312,7 +312,9 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 	if polygons.is_empty():
 		return 0
 	var height := _building_height(tags)
-	var kind := _building_kind(tags)
+	var kind := _game_building_kind(tags)
+	if _is_sensitive_state_site(tags):
+		kind = "general_building"
 	var feature_id := str(feature.get("id", "unknown"))
 	var built := 0
 	for polygon in polygons:
@@ -444,6 +446,9 @@ func _is_polygon_worship_feature(feature: Dictionary) -> bool:
 
 
 func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
+	var tags: Dictionary = feature.get("tags", {})
+	if _is_sensitive_state_site(tags):
+		return 0
 	var geometry: Dictionary = feature.get("geometry", {})
 	var geometry_type := str(geometry.get("type", ""))
 	# Never derive a centroid marker from a mapped worship footprint. Build the
@@ -466,7 +471,6 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 		point /= float(polygons[0].size())
 	else:
 		return 0
-	var tags: Dictionary = feature.get("tags", {})
 	var amenity := str(tags.get("amenity", "")).to_lower()
 	var shop := str(tags.get("shop", "")).to_lower()
 	var tourism := str(tags.get("tourism", "")).to_lower()
@@ -481,7 +485,7 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	var highway := str(tags.get("highway", "")).to_lower()
 	var facility_type := "public_service"
 	var display_name := "مرفق خدمي"
-	var worship_type := _worship_facility_type(tags)
+	var worship_type := _game_worship_presentation_type(tags)
 	if worship_type != "":
 		facility_type = worship_type
 		match worship_type:
@@ -490,7 +494,7 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 			"church":
 				display_name = "كنيسة"
 			"shrine":
-				display_name = "مزار أو مرقد"
+				display_name = "جامع أو مسجد"
 			"monastery":
 				display_name = "دير أو مؤسسة رهبانية"
 			"religious_tag_conflict":
@@ -565,7 +569,10 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 	var geometry: Dictionary = feature.get("geometry", {})
 	var tags: Dictionary = feature.get("tags", {})
 	var height := _building_height(tags)
-	var kind := _building_kind(tags)
+	var kind := _game_building_kind(tags)
+	var sensitive_site := _is_sensitive_state_site(tags)
+	if sensitive_site:
+		kind = "general_building"
 	var geometry_type := str(geometry.get("type", ""))
 	if geometry_type == "Point":
 		_add_point_marker(parent, geometry.get("coordinates", []), amenity_material, 0.8, "OSMBuildingPoint")
@@ -616,13 +623,16 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		building.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		building.set_meta("osm_feature_id", feature_id)
 		building.set_meta("baghdad_building_type", kind)
-		building.set_meta("osm_building_tag", str(tags.get("building", "yes")))
-		building.set_meta("system_display_name", _building_display_name(kind, tags))
-		building.set_meta("system_source_name", str(tags.get("name", "")))
-		building.set_meta("system_source_name_ar", str(tags.get("name:ar", "")))
-		building.set_meta("system_religion", str(tags.get("religion", "")))
-		building.set_meta("system_denomination", str(tags.get("denomination", "")))
-		building.set_meta("system_worship_classification", _worship_facility_type(tags))
+		building.set_meta("system_display_name", "مبنى معماري" if sensitive_site else _game_building_display_name(kind, tags))
+		if not sensitive_site:
+			building.set_meta("osm_building_tag", str(tags.get("building", "yes")))
+			building.set_meta("system_source_name", str(tags.get("name", "")))
+			building.set_meta("system_source_name_ar", str(tags.get("name:ar", "")))
+			building.set_meta("system_religion", str(tags.get("religion", "")))
+			building.set_meta("system_denomination", str(tags.get("denomination", "")))
+			building.set_meta("system_worship_classification", _worship_facility_type(tags))
+		else:
+			building.set_meta("system_sensitive_site_neutralized", true)
 		building.set_meta("system_geometry_type", str(geometry.get("type", "")))
 		var roof_shape := str(tags.get("roof:shape", "flat")).to_lower()
 		building.set_meta("system_roof_shape", roof_shape)
@@ -642,16 +652,19 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		building.set_meta("system_facade_window_sampling", "even_distribution_across_facades")
 		var body := StaticBody3D.new()
 		body.name = "OSMBuildingCollision_%s" % feature_id
-		body.add_to_group("system_interactable")
-		body.set_meta("osm_feature_id", feature_id)
-		body.set_meta("baghdad_building_type", kind)
-		body.set_meta("osm_building_tag", str(tags.get("building", "yes")))
-		body.set_meta("system_source_name", str(tags.get("name", "")))
-		body.set_meta("system_source_name_ar", str(tags.get("name:ar", "")))
-		body.set_meta("system_religion", str(tags.get("religion", "")))
-		body.set_meta("system_denomination", str(tags.get("denomination", "")))
-		body.set_meta("system_worship_classification", _worship_facility_type(tags))
-		body.set_meta("system_geometry_type", str(geometry.get("type", "")))
+		if not sensitive_site:
+			body.add_to_group("system_interactable")
+			body.set_meta("osm_feature_id", feature_id)
+			body.set_meta("baghdad_building_type", kind)
+			body.set_meta("osm_building_tag", str(tags.get("building", "yes")))
+			body.set_meta("system_source_name", str(tags.get("name", "")))
+			body.set_meta("system_source_name_ar", str(tags.get("name:ar", "")))
+			body.set_meta("system_religion", str(tags.get("religion", "")))
+			body.set_meta("system_denomination", str(tags.get("denomination", "")))
+			body.set_meta("system_worship_classification", _worship_facility_type(tags))
+			body.set_meta("system_geometry_type", str(geometry.get("type", "")))
+		else:
+			body.set_meta("system_sensitive_site_neutralized", true)
 		var footprint_center := _polygon_anchor_point(ring)
 		var footprint_position := Vector3(
 			footprint_center.x,
@@ -667,21 +680,22 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		body.set_meta("system_region_id", "region_baghdad")
 		body.set_meta("system_location_type", 7)
 		body.set_meta("system_fast_travel", false)
-		body.set_meta("system_display_name", _building_display_name(kind, tags))
-		body.set_meta("system_interaction_prompt", "استكشاف معلومات المبنى")
+		if not sensitive_site:
+			body.set_meta("system_display_name", _game_building_display_name(kind, tags))
+			body.set_meta("system_interaction_prompt", "استكشاف معلومات المبنى")
 		var shape := ConcavePolygonShape3D.new()
 		shape.set_faces(mesh.get_faces())
 		var collision := CollisionShape3D.new()
 		collision.shape = shape
 		body.add_child(collision)
 		parent.add_child(body)
-		var approach := _find_building_approach_point(ring, road_features)
+		var approach := {} if sensitive_site else _find_building_approach_point(ring, road_features)
 		if not approach.is_empty():
 			_add_building_approach_marker(parent, approach, feature_id, kind, tags)
 			if kind in ["villa", "palace"]:
 				_add_luxury_residential_entry_details(parent, ring, height, kind, feature_id, approach)
 		built += 1
-		if kind in ["church", "mosque", "shrine", "monastery"]:
+		if not sensitive_site and kind in ["church", "mosque"]:
 			_add_polygon_worship_detail(parent, ring, height, kind, feature_id, tags)
 	return built
 
@@ -1667,7 +1681,9 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 		return 0
 	var tags: Dictionary = feature.get("tags", {})
 	var coordinates: Array = geometry.get("coordinates", [])
-	var worship_type := _worship_facility_type(tags)
+	if _is_sensitive_state_site(tags):
+		return 0
+	var worship_type := _game_worship_presentation_type(tags)
 	if worship_type == "mosque":
 		_build_mosque_landmark(parent, feature, coordinates)
 	elif worship_type == "church":
@@ -2261,6 +2277,30 @@ func _building_height(tags: Dictionary) -> float:
 	if kind in ["commercial", "office", "retail"]:
 		return 12.0
 	return 6.0
+
+
+func _is_sensitive_state_site(tags: Dictionary) -> bool:
+	var amenity := str(tags.get("amenity", "")).to_lower()
+	var building := str(tags.get("building", "")).to_lower()
+	var office := str(tags.get("office", "")).to_lower()
+	var landuse := str(tags.get("landuse", "")).to_lower()
+	var military := str(tags.get("military", "")).to_lower()
+	var security := str(tags.get("security", "")).to_lower()
+	return military != "" or security != "" or amenity in ["police", "police_station"] or building in ["military", "bunker", "government"] or office == "government" or landuse == "military"
+
+
+func _game_worship_presentation_type(tags: Dictionary) -> String:
+	return "mosque" if _worship_facility_type(tags) == "shrine" else _worship_facility_type(tags)
+
+
+func _game_building_kind(tags: Dictionary) -> String:
+	return "mosque" if _building_kind(tags) == "shrine" else _building_kind(tags)
+
+
+func _game_building_display_name(kind: String, tags: Dictionary) -> String:
+	if _worship_facility_type(tags) == "shrine":
+		return "جامع أو مسجد"
+	return _building_display_name(kind, tags)
 
 
 func _building_kind(tags: Dictionary) -> String:
