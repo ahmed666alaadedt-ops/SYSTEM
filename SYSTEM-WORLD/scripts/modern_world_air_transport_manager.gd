@@ -278,12 +278,20 @@ func _build_civil_terminal(parent: Node3D, city_name: String) -> void:
 	var shell_material := _material(Color(0.58, 0.66, 0.72), 0.34, 0.42)
 	var glass_material := _material(Color(0.12, 0.32, 0.42, 0.82), 0.18, 0.52)
 	var sign_material := _emissive_material(Color(0.12, 0.68, 0.96))
-	_add_box(parent, "PassengerTerminalMain", Vector3(0, 7, 0), Vector3(90, 14, 52), shell_material)
+	_add_box(parent, "TerminalFloorSlab", Vector3(0, 0.5, 0), Vector3(90, 1, 52), shell_material)
+	_add_box(parent, "TerminalRearWall", Vector3(0, 7, -25.5), Vector3(90, 14, 1), shell_material)
+	_add_box(parent, "TerminalLeftWall", Vector3(-44.5, 7, 0), Vector3(1, 14, 52), shell_material)
+	_add_box(parent, "TerminalRightWall", Vector3(44.5, 7, 0), Vector3(1, 14, 52), shell_material)
 	_add_box(parent, "TerminalGlassFacade", Vector3(0, 6.5, 26.4), Vector3(76, 9, 0.8), glass_material)
+	_add_box(parent, "TerminalAutomaticDoorLeft", Vector3(-2.2, 4.5, 26.9), Vector3(2.0, 8, 0.35), window_material)
+	_add_box(parent, "TerminalAutomaticDoorRight", Vector3(2.2, 4.5, 26.9), Vector3(2.0, 8, 0.35), window_material)
 	_add_box(parent, "TerminalRoofCanopy", Vector3(0, 14.5, 0), Vector3(98, 1.2, 58), shell_material)
-	_add_box(parent, "CheckInHall", Vector3(-18, 3.2, 2), Vector3(28, 0.5, 26), glass_material)
-	_add_box(parent, "DepartureHall", Vector3(18, 3.2, 2), Vector3(28, 0.5, 26), glass_material)
+	_add_box(parent, "CheckInHallFloor", Vector3(-18, 1.1, 2), Vector3(28, 0.35, 26), glass_material)
+	_add_box(parent, "DepartureHallFloor", Vector3(18, 1.1, 2), Vector3(28, 0.35, 26), glass_material)
 	_add_box(parent, "BaggageArrivalWing", Vector3(0, 3.5, -30), Vector3(56, 7, 12), shell_material)
+	for column_index in range(8):
+		var column_x := -38.0 + float(column_index) * 10.8
+		_add_box(parent, "TerminalInteriorColumn_%02d" % column_index, Vector3(column_x, 6.8, 0), Vector3(0.8, 12.6, 0.8), shell_material)
 	_add_box(parent, "AirportCitySign", Vector3(0, 17, 27), Vector3(32, 2.4, 0.7), sign_material)
 	for gate_index in range(4):
 		var gate_x := -30.0 + float(gate_index) * 20.0
