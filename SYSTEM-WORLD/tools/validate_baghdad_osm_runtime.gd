@@ -410,7 +410,7 @@ func _run_validation() -> void:
 				return
 		synthetic_root.free()
 		synthetic_index += 1
-	print("Baghdad synthetic worship tagging QA passed: three OSM tagging variants generated polygon footprint meshes without POI duplication.")
+	print("Baghdad synthetic worship tagging QA passed: seven OSM tagging variants generated polygon footprint meshes without POI duplication.")
 	# Exercise the close-range 200 m playable builder, including collision
 	# bodies and source metadata, for shrine and monastery footprints.
 	for core_case in [
