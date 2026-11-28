@@ -142,6 +142,13 @@ func create_ticket(player_id: String, route_id: String, passenger_count: int = 1
 	var route: Dictionary = routes[route_id]
 	if not bool(route.get("enabled", false)) or passenger_count < 1 or passenger_count > int(route.capacity):
 		return {}
+	var origin_city_id := str(route.get("origin_city_id", ""))
+	var origin_airport: Dictionary = city_airports.get(origin_city_id, {})
+	var player := _find_system_player(player_id)
+	if player != null and not origin_airport.is_empty():
+		var origin_position: Vector3 = origin_airport.get("position", Vector3.ZERO)
+		if player.global_position.distance_to(origin_position) > 350.0:
+			return {}
 	var occupied := int(route_ticket_counts.get(route_id, 0))
 	if occupied + passenger_count > int(route.capacity):
 		return {}
