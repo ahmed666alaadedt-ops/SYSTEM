@@ -375,7 +375,9 @@ func _run_validation() -> void:
 		{"building": "religious", "religion": "christian"},
 		{"amenity": "place_of_worship", "religion": "muslim"},
 		{"building": "chapel", "religion": "christian"},
-		{"building": "cathedral", "religion": "christian"}
+		{"building": "cathedral", "religion": "christian"},
+		{"building": "shrine", "name:ar": "مزار اختبار بغداد"},
+		{"building": "monastery", "name:ar": "دير اختبار بغداد"}
 	]:
 		var synthetic := {
 			"id": "runtime_worship_%d" % synthetic_index,
@@ -395,6 +397,17 @@ func _run_validation() -> void:
 			_fail("Synthetic worship polygon did not preserve its actual footprint geometry.")
 			synthetic_root.free()
 			return
+		var synthetic_kind := str(synthetic_meshes[0].get_meta("baghdad_building_type", ""))
+		if synthetic_tags.has("building") and str(synthetic_tags.building) in ["shrine", "monastery"]:
+			if synthetic_kind != str(synthetic_tags.building):
+				_fail("Shrine/monastery footprint lost its mapped architectural class: " + str(synthetic_tags))
+				synthetic_root.free()
+				return
+			var detail_name := "OSMWorshipDetail_%s_runtime_worship_%d" % [synthetic_kind, synthetic_index]
+			if synthetic_root.get_node_or_null(detail_name) == null:
+				_fail("Shrine/monastery polygon did not receive its distinct architectural detail node: " + detail_name)
+				synthetic_root.free()
+				return
 		synthetic_root.free()
 		synthetic_index += 1
 	print("Baghdad synthetic worship tagging QA passed: three OSM tagging variants generated polygon footprint meshes without POI duplication.")
@@ -434,6 +447,26 @@ func _run_validation() -> void:
 		return
 	named_church_root.free()
 	print("Baghdad worship point QA passed: contradictory tags stay neutral and Arabic church names are retained.")
+	# Shrine and monastery point features retain their mapped class and Arabic names.
+	for point_case in [
+		{"type": "shrine", "tags": {"building": "shrine", "name:ar": "مزار نقطي اختباري"}},
+		{"type": "monastery", "tags": {"amenity": "monastery", "name:ar": "دير نقطي اختباري"}}
+	]:
+		var point_root := Node3D.new()
+		var point_feature := {
+			"id": "runtime_" + str(point_case.type) + "_point",
+			"osm_type": "node",
+			"geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+			"tags": point_case.tags
+		}
+		regional_urban._build_amenity_feature(point_root, point_feature)
+		var point_landmarks := point_root.find_children("OSM%s_*" % ("Shrine" if point_case.type == "shrine" else "Monastery"), "Node3D", true, false)
+		if point_landmarks.size() != 1 or str(point_landmarks[0].get_meta("landmark_type", "")) != str(point_case.type) or str(point_landmarks[0].get_meta("system_display_name", "")) != str(point_case.tags["name:ar"]):
+			_fail("Baghdad shrine/monastery point did not preserve its distinct landmark type and Arabic name: " + str(point_case))
+			point_root.free()
+			return
+		point_root.free()
+	print("Baghdad shrine and monastery point QA passed: distinct neutral landmark forms and Arabic OSM names retained.")
 	# Verify the expanded OSM amenity source categories render as typed POIs.
 	var poi_cases := [
 		{"tags": {"shop": "supermarket"}, "expected": "shop"},
