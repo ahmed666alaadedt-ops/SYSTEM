@@ -822,7 +822,7 @@ func _run_validation() -> void:
 		_fail("Baghdad airship scenic route radius, altitude or cruise speed metadata failed.")
 		return
 	var airship_node := air_transport.get_node("BaghdadAirshipCircularRoute/HunterInspiredPassengerAirshipRouteFollower/HunterInspiredBaghdadPassengerAirship")
-	if float(airship_node.get_meta("system_airship_length_m", 0.0)) != 90.0 or int(airship_node.get_meta("system_passenger_capacity_max", 0)) != 60 or not bool(airship_node.get_meta("system_led_advertising", false)):
+	if float(airship_node.get_meta("system_airship_length_m", 0.0)) != 90.0 or int(airship_node.get_meta("system_passenger_capacity_max", 0)) != 60 or int(airship_node.get_meta("system_visible_seat_count", 0)) != 60 or not bool(airship_node.get_meta("system_led_advertising", false)):
 		_fail("Baghdad passenger airship dimensions, capacity or illuminated advertising metadata failed.")
 		return
 	if not air_transport.register_city_airport("qa_baghdad", "Baghdad QA", Vector3.ZERO, "synthetic_test") or not air_transport.register_city_airport("qa_paris", "Paris QA", Vector3(12000.0, 0.0, 0.0), "synthetic_test"):
