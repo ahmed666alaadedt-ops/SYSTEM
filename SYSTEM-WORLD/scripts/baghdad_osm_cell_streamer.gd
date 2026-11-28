@@ -357,7 +357,7 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 		instance.set_meta("system_access_state", "regional_exterior_lod_no_collision_or_interior")
 		parent.add_child(instance)
 		if kind in ["mosque", "church"]:
-			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
+			_add_polygon_worship_detail(parent, ring, height, kind, feature_id, tags)
 		built += 1
 	return built
 
@@ -1022,44 +1022,84 @@ func _building_display_name(kind: String, tags: Dictionary) -> String:
 			return "مبنى في بغداد"
 
 
-func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, height: float, kind: String, feature_id: String) -> void:
+func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, height: float, kind: String, feature_id: String, tags: Dictionary) -> void:
+	# Use the real footprint bounds to scale roof landmarks; never place a
+	# fixed-size landmark that overwhelms a small mapped building.
 	var center := Vector2.ZERO
+	var min_x := INF
+	var max_x := -INF
+	var min_y := INF
+	var max_y := -INF
 	for point in ring:
 		center += point
+		min_x = minf(min_x, point.x)
+		max_x = maxf(max_x, point.x)
+		min_y = minf(min_y, point.y)
+		max_y = maxf(max_y, point.y)
 	center /= float(ring.size())
+	var footprint_width := maxf(1.0, max_x - min_x)
+	var footprint_depth := maxf(1.0, max_y - min_y)
+	var footprint_scale := minf(footprint_width, footprint_depth)
+	var landmark_name := _building_display_name(kind, tags)
 	var detail_root := Node3D.new()
 	detail_root.name = "OSMWorshipDetail_%s_%s" % [kind, feature_id]
 	detail_root.position = Vector3(center.x, _terrain_height(center) + height, center.y)
 	detail_root.set_meta("landmark_type", kind)
 	detail_root.set_meta("osm_feature_id", feature_id)
+	detail_root.set_meta("system_display_name", landmark_name)
+	detail_root.set_meta("system_source_name", str(tags.get("name", "")))
+	detail_root.set_meta("system_source_name_ar", str(tags.get("name:ar", "")))
+	detail_root.set_meta("system_religion", str(tags.get("religion", "")))
+	detail_root.set_meta("system_denomination", str(tags.get("denomination", "")))
+	detail_root.set_meta("system_footprint_width_m", footprint_width)
+	detail_root.set_meta("system_footprint_depth_m", footprint_depth)
 	parent.add_child(detail_root)
 	if kind == "mosque":
+		var dome_radius := clampf(footprint_scale * 0.16, 0.85, 3.2)
+		var dome_height := dome_radius * 1.28
 		var dome := MeshInstance3D.new()
 		dome.name = "RoofDome"
 		var dome_mesh := SphereMesh.new()
-		dome_mesh.radius = 2.2
-		dome_mesh.height = 2.8
+		dome_mesh.radius = dome_radius
+		dome_mesh.height = dome_height
 		dome.mesh = dome_mesh
-		dome.position.y = 1.1
+		dome.position.y = dome_height * 0.38
 		dome.material_override = _building_material_for("mosque")
 		detail_root.add_child(dome)
-		var minaret := MeshInstance3D.new()
-		minaret.name = "MinaretMarker"
-		var minaret_mesh := CylinderMesh.new()
-		minaret_mesh.top_radius = 0.22
-		minaret_mesh.bottom_radius = 0.38
-		minaret_mesh.height = 7.0
-		minaret.mesh = minaret_mesh
-		minaret.position = Vector3(3.0, 3.5, 0.0)
-		minaret.material_override = _building_material_for("mosque")
-		detail_root.add_child(minaret)
+		var minaret_count := 2 if footprint_scale >= 16.0 else 1
+		for index in range(minaret_count):
+			var minaret := MeshInstance3D.new()
+			minaret.name = "Minaret_%02d" % index
+			var minaret_mesh := CylinderMesh.new()
+			var minaret_height := clampf(height * 0.72, 4.0, 15.0)
+			minaret_mesh.top_radius = 0.16
+			minaret_mesh.bottom_radius = 0.30
+			minaret_mesh.height = minaret_height
+			minaret.mesh = minaret_mesh
+			var side := -1.0 if index == 0 else 1.0
+			minaret.position = Vector3(side * minf(footprint_width * 0.28, 5.0), minaret_height * 0.5, 0.0)
+			minaret.material_override = _building_material_for("mosque")
+			detail_root.add_child(minaret)
+		if footprint_scale >= 22.0:
+			for index in range(4):
+				var angle := TAU * float(index) / 4.0
+				var small_dome := MeshInstance3D.new()
+				small_dome.name = "SecondaryDome_%02d" % index
+				var small_mesh := SphereMesh.new()
+				small_mesh.radius = dome_radius * 0.48
+				small_mesh.height = dome_height * 0.48
+				small_dome.mesh = small_mesh
+				small_dome.position = Vector3(cos(angle) * footprint_width * 0.22, dome_height * 0.20, sin(angle) * footprint_depth * 0.22)
+				small_dome.material_override = _building_material_for("mosque")
+				detail_root.add_child(small_dome)
 	else:
 		var tower := MeshInstance3D.new()
 		tower.name = "ChurchBellTower"
 		var tower_mesh := BoxMesh.new()
-		tower_mesh.size = Vector3(1.5, 5.0, 1.5)
+		var tower_height := clampf(height * 0.70, 5.0, 18.0)
+		tower_mesh.size = Vector3(clampf(footprint_scale * 0.12, 1.2, 3.0), tower_height, clampf(footprint_scale * 0.12, 1.2, 3.0))
 		tower.mesh = tower_mesh
-		tower.position = Vector3(3.0, 2.5, 0.0)
+		tower.position = Vector3(footprint_width * 0.28, tower_height * 0.5, -footprint_depth * 0.28)
 		tower.material_override = _building_material_for("church")
 		detail_root.add_child(tower)
 		var cross := MeshInstance3D.new()
@@ -1067,7 +1107,7 @@ func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, heigh
 		var cross_mesh := BoxMesh.new()
 		cross_mesh.size = Vector3(0.35, 2.0, 0.35)
 		cross.mesh = cross_mesh
-		cross.position = Vector3(3.0, 5.7, 0.0)
+		cross.position = tower.position + Vector3(0.0, tower_height * 0.5 + 1.0, 0.0)
 		cross.material_override = _building_material_for("church")
 		detail_root.add_child(cross)
 		var cross_arm := MeshInstance3D.new()
@@ -1075,7 +1115,7 @@ func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, heigh
 		var arm_mesh := BoxMesh.new()
 		arm_mesh.size = Vector3(1.2, 0.3, 0.35)
 		cross_arm.mesh = arm_mesh
-		cross_arm.position = Vector3(3.0, 6.0, 0.0)
+		cross_arm.position = cross.position + Vector3(0.0, 0.3, 0.0)
 		cross_arm.material_override = _building_material_for("church")
 		detail_root.add_child(cross_arm)
 
@@ -1245,15 +1285,14 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 		return 0
 	var tags: Dictionary = feature.get("tags", {})
 	var coordinates: Array = geometry.get("coordinates", [])
-	var worship := str(tags.get("amenity", "")) == "place_of_worship"
-	var religion := str(tags.get("religion", "")).to_lower()
-	var is_mosque := (worship and religion in ["muslim", "islam"]) or str(tags.get("building", "")).to_lower() == "mosque"
-	var is_church := (worship and religion in ["christian", "christianity"]) or str(tags.get("building", "")).to_lower() == "church"
-	if is_mosque:
+	var worship_type := _worship_facility_type(tags)
+	if worship_type == "mosque":
 		_build_mosque_landmark(parent, feature, coordinates)
-	elif is_church:
+	elif worship_type == "church":
 		_build_church_landmark(parent, feature, coordinates)
 	else:
+		# Unknown and contradictory tags stay neutral; never assign a false
+		# religious silhouette to an unresolved OSM point.
 		_add_point_marker(parent, coordinates, amenity_material, 0.48, "OSMAmenity_%s" % str(feature.get("id", "")))
 	return 1
 
@@ -1267,6 +1306,10 @@ func _build_church_landmark(parent: Node3D, feature: Dictionary, coordinates: Ar
 	root.position = Vector3(point.x, _terrain_height(point) + 0.08, point.y)
 	root.set_meta("landmark_type", "church")
 	root.set_meta("osm_feature_id", str(feature.get("id", "")))
+	root.set_meta("system_display_name", _building_display_name("church", feature.get("tags", {})))
+	root.set_meta("system_source_name", str(feature.get("tags", {}).get("name", "")))
+	root.set_meta("system_source_name_ar", str(feature.get("tags", {}).get("name:ar", "")))
+	root.set_meta("system_religion", str(feature.get("tags", {}).get("religion", "")))
 	parent.add_child(root)
 	var stone := _building_material_for("church")
 	var roof := StandardMaterial3D.new()
@@ -1315,6 +1358,10 @@ func _build_mosque_landmark(parent: Node3D, feature: Dictionary, coordinates: Ar
 	root.position = Vector3(point.x, _terrain_height(point) + 0.08, point.y)
 	root.set_meta("landmark_type", "mosque")
 	root.set_meta("osm_feature_id", str(feature.get("id", "")))
+	root.set_meta("system_display_name", _building_display_name("mosque", feature.get("tags", {})))
+	root.set_meta("system_source_name", str(feature.get("tags", {}).get("name", "")))
+	root.set_meta("system_source_name_ar", str(feature.get("tags", {}).get("name:ar", "")))
+	root.set_meta("system_religion", str(feature.get("tags", {}).get("religion", "")))
 	parent.add_child(root)
 	var stone := StandardMaterial3D.new()
 	stone.albedo_color = Color(0.78, 0.72, 0.57)
